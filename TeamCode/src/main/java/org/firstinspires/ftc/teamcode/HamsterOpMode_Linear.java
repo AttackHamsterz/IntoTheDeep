@@ -44,7 +44,7 @@ public class HamsterOpMode_Linear extends LinearOpMode {
         while (!isInterrupted()) {
 
             if (gamepad1.x) {
-               tail.setpower(1.0);
+                tail.setpower(1.0);
             }
             else{
                 tail.setpower(0.0);
