@@ -25,7 +25,7 @@ public class HamsterOpMode_Linear extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phones)
         //leftFoot = hardwareMap.get(DcMotor.class, "leftFoot");
         //rightFoot = hardwareMap.get(DcMotor.class, "rightFoot");
-        tail = hardwareMap.get(Servo.class, "tail");
+        tail = hardwareMap.get(Servo.class, "intake");
         //linear = hardwareMap.get(Servo.class, "linear");
 
 
@@ -41,9 +41,17 @@ public class HamsterOpMode_Linear extends LinearOpMode {
         // Wait for driver to press play
         waitForStart();
 
-        gamepad1
+        while (!isInterrupted()) {
 
-        // Lunch Motion
+            if (gamepad1.x) {
+               tail.setpower(1.0);
+            }
+            else{
+                tail.setpower(0.0);
+            }
+
+
+            // Lunch Motion
         //hamsterMotion.start();
 
         // run until driver pushes stop
