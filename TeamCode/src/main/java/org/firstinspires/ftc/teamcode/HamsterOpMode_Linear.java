@@ -49,7 +49,6 @@ public class HamsterOpMode_Linear extends LinearOpMode {
             else{
                 tail.setpower(0.0);
             }
-
             // Lunch Motion
         //hamsterMotion.start();
 
