@@ -38,8 +38,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.checkerframework.checker.units.qual.A;
-import org.checkerframework.checker.units.qual.C;
+//import org.checkerframework.checker.units.qual.A;
+//import org.checkerframework.checker.units.qual.C;
 
 
 /**
