@@ -5,11 +5,11 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
 public class Motion extends Thread {
-    public static int LOW_POSITION = 3941;
-    public static int MIDDLE_POSITION = 6647;
-    public static int HIGH_POSITION = 9700;
+    public static final int LOW_POSITION = 3941;
+    public static final int MIDDLE_POSITION = 6647;
+    public static final int HIGH_POSITION = 9700;
 
-    public static double AUTO_SPEED = 0.6;
+    public static final double AUTO_SPEED = 0.6;
 
     public static int TRANSLATE_FB = 1060;
     public static int TRANSLATE_LR = 1200;

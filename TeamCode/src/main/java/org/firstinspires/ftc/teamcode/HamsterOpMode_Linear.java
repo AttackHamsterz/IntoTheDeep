@@ -40,7 +40,7 @@ public class HamsterOpMode_Linear extends LinearOpMode {
 
         // Wait for driver to press play
         waitForStart();
-
+/*
         while (!isInterrupted()) {
 
             if (gamepad1.x) {
@@ -49,6 +49,7 @@ public class HamsterOpMode_Linear extends LinearOpMode {
             else{
                 tail.setpower(0.0);
             }
+            */
             // Lunch Motion
         //hamsterMotion.start();
 
@@ -60,6 +61,7 @@ public class HamsterOpMode_Linear extends LinearOpMode {
             telemetry.addData("X Pressed", gamepad1.x);
             telemetry.addData("Y Pressed", gamepad1.y);
             telemetry.update();
+
         }
     }
 }
