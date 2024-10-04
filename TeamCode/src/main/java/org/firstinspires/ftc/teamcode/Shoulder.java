@@ -20,6 +20,7 @@ public class Shoulder extends Thread {
     //var for motor counts
     private int totalCounts;
     private boolean isMoving = false;
+    private boolean ignoreGamepad = false;
     private int targetPos = 0;
     private int threshold = 20;
 
@@ -35,5 +36,8 @@ public class Shoulder extends Thread {
         this.gamepad = gamepad;
         this.shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+    }
+   public void ignoreGamepad () {
+        ignoreGamepad = true;
     }
 }
