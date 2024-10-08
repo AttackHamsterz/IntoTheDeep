@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 //extends standard setup op mode
-public class AutonomousOpMode {
+public class AutonomousOpMode extends StandardSetupOpMode{
 
     public enum COLOR {
         RED,
@@ -17,10 +17,10 @@ public class AutonomousOpMode {
 
    protected MecanumDrive drive;
 
-   //@Override
+   @Override
    public void runOpMode() throws InterruptedException {
        //Parent opmode call
-       //super.runOpMode();
+       super.runOpMode();
    }
 
    protected void setup(HardwareMap hardwareMap, START_POS startPos, COLOR color) {

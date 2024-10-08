@@ -5,7 +5,7 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.har
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-/*
+
 @Autonomous(name = "Robot Setup Super Class", group = "Robot")
 public class StandardSetupOpMode {
     // Declare Robot Setup Members.
@@ -42,7 +42,7 @@ public class StandardSetupOpMode {
 
 
 }
-*/
+
 
 
 
