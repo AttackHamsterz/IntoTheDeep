@@ -24,6 +24,10 @@ public class Shoulder extends Thread {
     private int targetPos = 0;
     private int threshold = 20;
 
+    public void ignoreGamepad () {
+        ignoreGamepad = true;
+    }
+
     /**
      * Constructor for the shoulder
      * @param shoulderMotor the motor for the shoulder
@@ -36,8 +40,5 @@ public class Shoulder extends Thread {
         this.gamepad = gamepad;
         this.shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-    }
-   public void ignoreGamepad () {
-        ignoreGamepad = true;
     }
 }

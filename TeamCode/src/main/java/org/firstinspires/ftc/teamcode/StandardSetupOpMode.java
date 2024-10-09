@@ -62,6 +62,8 @@ public class StandardSetupOpMode {
         shoulder = new Shoulder(shoulderMotor, gamepad2);
 
 
+
+
     }
 
 
