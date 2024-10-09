@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 //extends standard setup op mode
@@ -29,7 +28,8 @@ public class AutonomousOpMode extends StandardSetupOpMode{
        super.runOpMode();
    }
 
-   protected void setup(HardwareMap hardwareMap, START_POS startPos, COLOR color) {
+   //Add color as a paramater later
+   protected void setup(HardwareMap hardwareMap, START_POS startPos) {
        //variable setup
        drive = new MecanumDrive(hardwareMap, startPose);
        this.startPos = startPos;
