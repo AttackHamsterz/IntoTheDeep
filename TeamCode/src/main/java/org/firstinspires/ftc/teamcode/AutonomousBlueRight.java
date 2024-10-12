@@ -5,10 +5,12 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.har
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.tuning.TuningOpModes;
 
+@Autonomous(name = "Autonomous: Far From Board Blue", group = "Robot")
 public class AutonomousBlueRight extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException{
