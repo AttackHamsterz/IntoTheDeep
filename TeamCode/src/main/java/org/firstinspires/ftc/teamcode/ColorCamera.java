@@ -67,16 +67,16 @@ import java.util.EnumMap;
                 // tell us how many block we can see
                 telemetry.addData("Block count", blocks.length);
                 // go through every block we can see and print out information about that block
+                ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
                 for (int i = 0; i < blocks.length; i++) {
                     telemetry.addData("Block", blocks[i].toString());
                     // checks the color id of what we are looking at to see if it is the one we are looking for
                     if (blocks[i].id == colorId) {
                         // add the block to a list
-                        blocksOfColor.add(blocks[i]);
+                        blocksOnScreen.add(blocks[i]);
                     }
-                    // remove any blocks no longer on the screen TODO
                 }
-
+                blocksOfColor = blocksOnScreen;
                 telemetry.update();
             }
         }
