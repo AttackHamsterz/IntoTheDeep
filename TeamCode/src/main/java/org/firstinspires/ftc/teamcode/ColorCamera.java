@@ -20,10 +20,12 @@ import java.util.EnumMap;
 
         public ColorCamera(String color) {
             // sets the color that we are looking for
-            if (color.equalsIgnoreCase("red")) {
+            if (color.equalsIgnoreCase("yellow")) {
                 colorId = 1;
-            } else if (color.equalsIgnoreCase("blue")) {
+            } else if (color.equalsIgnoreCase("red")) {
                 colorId = 2;
+            } else if (color.equalsIgnoreCase("blue")) {
+                colorId = 3;
             } else {
                 throw new IllegalArgumentException("Please input a valid color");
             }
