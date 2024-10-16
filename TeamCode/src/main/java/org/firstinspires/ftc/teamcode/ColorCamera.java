@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 
     @TeleOp(name = "Sensor: HuskyLens", group = "Sensor")
-    @Disabled
     public class ColorCamera extends LinearOpMode {
 
         private HuskyLens huskyLens;

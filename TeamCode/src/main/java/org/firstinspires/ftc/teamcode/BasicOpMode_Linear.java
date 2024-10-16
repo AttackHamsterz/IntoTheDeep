@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -61,6 +62,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor rearLeftDrive = null;
     private DcMotor rearRightDrive = null;
+    private DcMotor armMotorLeft = null;
+    private DcMotor armMotorRight = null;
+    private DcMotor shoulderMotor = null;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -76,6 +80,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
         frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive"); //ch2
         rearLeftDrive = hardwareMap.get(DcMotor.class, "rearLeftDrive"); //ch1
         rearRightDrive = hardwareMap.get(DcMotor.class, "rearRightDrive"); //ch0
+        //armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor
+        //armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor
+        shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 Motor
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -84,14 +91,25 @@ public class BasicOpMode_Linear extends LinearOpMode {
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         rearRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        //armMotorLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        //armMotorRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        shoulderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulderMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shoulderMotor.setTargetPosition(0);
 
         waitForStart();
         runtime.reset();
 
         // Launch Threads
         Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
+        //Arm arm = new Arm(armMotorLeft, armMotorRight, gamepad2);
+        Shoulder shoulder = new Shoulder(shoulderMotor, gamepad2);
+        //arm.setShoulder(shoulder);
 
         motion.start();
+        shoulder.start();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -107,8 +125,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.update();
         }
         motion.interrupt();
+        shoulder.interrupt();
         try {
             motion.join();
+            shoulder.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
