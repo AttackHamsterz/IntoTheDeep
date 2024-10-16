@@ -132,10 +132,10 @@ public class Motion extends Thread {
         frontRightDrive.setTargetPosition(frontRightPosition);
         rearLeftDrive.setTargetPosition(rearLeftPosition);
         rearRightDrive.setTargetPosition(rearRightPosition);
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // will wait till in position
         frontLeftDrive.setPower(power);
@@ -221,10 +221,10 @@ public class Motion extends Thread {
         rearLeftDrive.setTargetPosition(rearLeftPosition);
         rearRightDrive.setTargetPosition(rearRightPosition);
 
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+       // rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
         frontLeftDrive.setPower(power);

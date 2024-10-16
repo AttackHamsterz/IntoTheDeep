@@ -96,8 +96,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
         shoulderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shoulderMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shoulderMotor.setTargetPosition(0);
+       shoulderMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         waitForStart();
         runtime.reset();
@@ -122,6 +121,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Front Right Motor", "(%7d)", frontRightDrive.getCurrentPosition());
             telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
             telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
+            telemetry.addData("Shoulder Counts", "(%7d)", shoulder.getShoulderCounts());
             telemetry.update();
         }
         motion.interrupt();

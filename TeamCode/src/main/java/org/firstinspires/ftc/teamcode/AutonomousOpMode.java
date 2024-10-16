@@ -37,7 +37,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
        //Class Setup
        // super.arm.setShoulder(shoulder);
        //super.arm.ignoreGamepad();
-       super.shoulder.ignoreGamepad();
+       //super.shoulder.ignoreGamepad();
        super.shoulder.start();
    }
 
