@@ -61,8 +61,8 @@ public class StandardSetupOpMode extends LinearOpMode {
 
         //Build the classes and give in an object
         motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, null);
-        arm = new Arm(armMotorLeft, armMotorRight, null);
-        shoulder = new Shoulder(shoulderMotor, gamepad2);
+        arm = new Arm(armMotorLeft, armMotorRight, null, null);
+        shoulder = new Shoulder(shoulderMotor, arm, gamepad2);
         arm.setShoulder(shoulder);
 
 
