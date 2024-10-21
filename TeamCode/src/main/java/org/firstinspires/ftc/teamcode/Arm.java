@@ -117,9 +117,11 @@ public class Arm extends Thread{
             int pos = (ARM_SPEED >= 0) ? MIN_POS:MAX_POS;
             //Sets the arm pos based on the pos we just calculated
             setArmPosition(ARM_SPEED, pos);
-/*
+
             if (shoulder != null) {
+                shoulder.setHold(false);
                 //Gets the shoulder's current position
+                /*
                 int shoulderCounts = shoulder.getShoulderCounts();
                 //Checks if the shoulder is close to the floor
                 if (shoulderCounts > Shoulder.MIN_POS_ARM_OUT) {
@@ -136,9 +138,11 @@ public class Arm extends Thread{
                         shoulder.setShoulderPosition(0.75, newPos);
                     }
                 }
+
+                 */
             }
 
- */
+
         }
     }
 }

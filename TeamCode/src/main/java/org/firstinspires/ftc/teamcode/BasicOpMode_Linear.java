@@ -138,9 +138,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
             telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
             telemetry.addData("Shoulder Counts", "(%7d)", shoulder.getShoulderCounts());
-            telemetry.addData("Shoulder Pos", "(%7d)", shoulderMotor.getCurrentPosition());
             telemetry.addData("Arm Counts Left", arm.getArmCountsLeft());
             telemetry.addData("Arm Counts Right", arm.getArmCountsRight());
+            telemetry.addData("Arm Ratio", arm.getArmRatio());
+            telemetry.addData("Shoulder Max", shoulder.MAX_POS);
+            telemetry.addData("Shoulder Min", shoulder.MIN_POS);
             telemetry.update();
         }
         motion.interrupt();

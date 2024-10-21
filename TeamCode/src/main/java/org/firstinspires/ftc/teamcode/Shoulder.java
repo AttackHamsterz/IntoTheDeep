@@ -10,17 +10,28 @@ public class Shoulder extends Thread {
     private static final double MAX_SHOULDER_SPEED = 1;
 
     //Setting up variables for min and max pos
-    private int MIN_POS;
-    private int MAX_POS;
+    public int MIN_POS;
+    public int MAX_POS;
 
     //Pre-set min and max pos based on if the arm is in or out
     public static int MIN_POS_ARM_IN = 0;
     public static int MAX_POS_ARM_IN = -1400;
-    // public static int MIN_POS_ARM_OUT = -225;
-    //  public static int MAX_POS_ARM_OUT = -1400;
+    // change later
+    public static int MIN_POS_ARM_OUT = -335;
+    public static int MAX_POS_ARM_OUT = -1400;
+
+    public static int HANG_HEIGHT_LOWER;
+    public static int HANG_HEIGHT_UPPER;
+
+    //Bucket Heights
+    public static int LOWER_BUCKET = -844;
+    public static int UPPER_BUCKET = -1242;
+
+    //Other Heights
+    public static int SEARCH_HEIGHT = -187;
 
     //Amount arm will move for manual adjustments
-    public static int SHOULDER_MANUAL = 100;
+    //public static int SHOULDER_MANUAL = 100;
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
@@ -31,14 +42,12 @@ public class Shoulder extends Thread {
     private boolean ignoreGamepad = false;
     private boolean isMoving = false;
     private int targetPos = 0;
-    public int pos;
-/*
+    private boolean hold = false;
+
     public void ignoreGamepad () {
         ignoreGamepad = true;
     }
 
-
- */
 
     /**
      * Constructor for the shoulder
@@ -64,12 +73,16 @@ public class Shoulder extends Thread {
         return totalCounts;
     }
 
+    public void setHold(boolean hold) {
+        this.hold = hold;
+    }
+
     /**
      * Gets the ratio of shoulder base off its position
      *
      * @return double between 0.0-1.0
      */
-/*
+
     public double getShoulderRatio() {
         //Sets a position variable of the robot's current position
         double pos = shoulderMotor.getCurrentPosition();
@@ -91,9 +104,6 @@ public class Shoulder extends Thread {
         return (double) shoulderMotor.getCurrentPosition() / MAX_POS_ARM_IN;
     }
 
- */
-
-
     /**
      * Sets the position of the shoulder
      *
@@ -108,34 +118,38 @@ public class Shoulder extends Thread {
         shoulderMotor.setPower(power);
     }
 
+    public  void  setShoulderPosition(double power, int position) {
+        //Sets the power to the inputted power, clips the power to make sure it is within 0-1
+        power = Range.clip(power, MIN_SHOULDER_SPEED, MAX_SHOULDER_SPEED);
+        //Sets the position of the shoulder
+        shoulderMotor.setTargetPosition(position);
+        shoulderMotor.setPower(power);
+    }
+
 
 
     @Override
     public void run() {
-        boolean hold = false;
         while (!isInterrupted()) {
-            //Sets total counts to the shoulder's current position
+            //Sets the min pos to an int value based on how far the arm is out
+            MIN_POS = (int) Math.round(arm.getArmRatio() * (double)(MIN_POS_ARM_OUT-MIN_POS_ARM_IN)) + SEARCH_HEIGHT;
+            //Sets the max pos to an int value based on how far the arm is out
+            MAX_POS = MAX_POS_ARM_OUT;
 
             float power = gamepad.right_stick_y;
-/*
-            if (!hold) {
-                totalCounts = shoulderMotor.getCurrentPosition();
-            }
-
- */
 
             if (!hold && Math.abs(power) < 0.15) {
                 shoulderMotor.setPower(0.75);
-                shoulderMotor.setTargetPosition(totalCounts);
+                shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MAX_POS, MIN_POS));
                 hold = true;
             } else if (power < -0.15) {
                 shoulderMotor.setPower(Math.abs(power));
-                shoulderMotor.setTargetPosition(MAX_POS_ARM_IN);
+                shoulderMotor.setTargetPosition(MAX_POS);
                 hold = false;
                 totalCounts = shoulderMotor.getCurrentPosition();
             } else if (power > 0.15) {
                 shoulderMotor.setPower(power);
-                shoulderMotor.setTargetPosition(MIN_POS_ARM_IN);
+                shoulderMotor.setTargetPosition(MIN_POS);
                 hold = false;
                 totalCounts = shoulderMotor.getCurrentPosition();
             }
