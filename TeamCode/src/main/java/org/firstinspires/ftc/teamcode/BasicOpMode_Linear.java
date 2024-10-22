@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -61,6 +62,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor rearLeftDrive = null;
     private DcMotor rearRightDrive = null;
+    private DcMotor armMotorLeft = null;
+    private DcMotor armMotorRight = null;
+    private DcMotor shoulderMotor = null;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -76,6 +80,9 @@ public class BasicOpMode_Linear extends LinearOpMode {
         frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive"); //ch2
         rearLeftDrive = hardwareMap.get(DcMotor.class, "rearLeftDrive"); //ch1
         rearRightDrive = hardwareMap.get(DcMotor.class, "rearRightDrive"); //ch0
+        armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor
+        armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor
+        shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 Motor
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -85,13 +92,37 @@ public class BasicOpMode_Linear extends LinearOpMode {
         rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         rearRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
+        armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        shoulderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armMotorLeft.setTargetPosition(0);
+        armMotorRight.setTargetPosition(0);
+        shoulderMotor.setTargetPosition(0);
+
+        shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         waitForStart();
         runtime.reset();
 
         // Launch Threads
         Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
+        Arm arm = new Arm(armMotorLeft, armMotorRight, gamepad2, null);
+        Shoulder shoulder = new Shoulder(shoulderMotor, arm, gamepad2);
+        arm.setShoulder(shoulder);
 
         motion.start();
+        shoulder.start();
+        arm.start();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
@@ -100,15 +131,27 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y);
             telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad1.right_stick_x, gamepad1.right_stick_y);
+            telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad2.left_stick_x, gamepad2.left_stick_y);
+            telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad2.right_stick_x, gamepad2.right_stick_y);
             telemetry.addData("Front Left Motor", "(%7d)", frontLeftDrive.getCurrentPosition());
             telemetry.addData("Front Right Motor", "(%7d)", frontRightDrive.getCurrentPosition());
             telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
             telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
+            telemetry.addData("Shoulder Counts", "(%7d)", shoulder.getShoulderCounts());
+            telemetry.addData("Arm Counts Left", arm.getArmCountsLeft());
+            telemetry.addData("Arm Counts Right", arm.getArmCountsRight());
+            telemetry.addData("Arm Ratio", arm.getArmRatio());
+            telemetry.addData("Shoulder Max", shoulder.MAX_POS);
+            telemetry.addData("Shoulder Min", shoulder.MIN_POS);
             telemetry.update();
         }
         motion.interrupt();
+        shoulder.interrupt();
+        arm.interrupt();
         try {
             motion.join();
+            shoulder.join();
+            arm.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
