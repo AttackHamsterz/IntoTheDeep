@@ -148,17 +148,17 @@ public class Shoulder extends Thread {
             } else if (gamepad.b) {
                 //Drive position
             } else if (gamepad.y) {
-                //Between line 1 and 2 front
+                //Bucket height high
             } else if (gamepad.x) {
-                //Between line 2 and 3 front
+                //Bucket Height Low
             } else if (gamepad.dpad_down) {
-                //On floor back
+                //Hang Low Bar
             } else if (gamepad.dpad_up) {
-                //Between line 1 and 2 back
+                //Hang High Bar
             } else if (gamepad.dpad_left) {
-                //Between line 2 and 3 back
-            } else if (gamepad.dpad_up) {
-                //Straight up and down
+                //Score Bar Low
+            } else if (gamepad.dpad_right) {
+                //Score Bar High
             }
         }
     }
