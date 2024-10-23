@@ -132,24 +132,24 @@ public class Shoulder extends Thread {
     public void run() {
         while (!isInterrupted()) {
             //Sets the min pos to an int value based on how far the arm is out
-            MIN_POS = (int) Math.round(arm.getArmRatio() * (double)(MIN_POS_ARM_OUT-MIN_POS_ARM_IN)) + SEARCH_HEIGHT;
+            //MIN_POS = (int) Math.round(arm.getArmRatio() * (double)(MIN_POS_ARM_OUT-MIN_POS_ARM_IN)) + SEARCH_HEIGHT;
             //Sets the max pos to an int value based on how far the arm is out
-            MAX_POS = MAX_POS_ARM_OUT;
+            //MAX_POS = MAX_POS_ARM_OUT;
 
             float power = gamepad.right_stick_y;
 
             if (!hold && Math.abs(power) < 0.15) {
-                shoulderMotor.setPower(0.75);
-                shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MAX_POS, MIN_POS));
+                shoulderMotor.setPower(0.9);
+                shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MAX_POS_ARM_IN, MIN_POS_ARM_IN));
                 hold = true;
             } else if (power < -0.15) {
                 shoulderMotor.setPower(Math.abs(power));
-                shoulderMotor.setTargetPosition(MAX_POS);
+                shoulderMotor.setTargetPosition(MAX_POS_ARM_IN);
                 hold = false;
                 totalCounts = shoulderMotor.getCurrentPosition();
             } else if (power > 0.15) {
                 shoulderMotor.setPower(power);
-                shoulderMotor.setTargetPosition(MIN_POS);
+                shoulderMotor.setTargetPosition(MIN_POS_ARM_IN);
                 hold = false;
                 totalCounts = shoulderMotor.getCurrentPosition();
             }
