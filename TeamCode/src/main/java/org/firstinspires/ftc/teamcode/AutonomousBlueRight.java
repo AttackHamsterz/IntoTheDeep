@@ -56,7 +56,7 @@ public class AutonomousBlueRight extends LinearOpMode {
             // This action will grab a sample from the submersible
             // and then stow for travel (retract the arm and set the shoulder)
             ParallelAction snagSample = new ParallelAction(
-                    drive.actionBuilder(beginPose)
+                    drive.actionBuilder(drive.pose)
                             .lineToX(25)
                             .build(),
                     new Action() {
