@@ -34,11 +34,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
-//import org.checkerframework.checker.units.qual.A;
-//import org.checkerframework.checker.units.qual.C;
-
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -71,7 +66,6 @@ public class BasicOpMode_Linear extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-
         // Initialize the hardware variables. Note
         // that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
@@ -94,13 +88,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
         armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
-
         shoulderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         armMotorLeft.setTargetPosition(0);
@@ -125,8 +116,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
         arm.start();
 
         // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-
+        while (opModeIsActive())
+        {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y);
@@ -137,12 +128,11 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Front Right Motor", "(%7d)", frontRightDrive.getCurrentPosition());
             telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
             telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
-            telemetry.addData("Shoulder Counts", "(%7d)", shoulder.getShoulderCounts());
-            telemetry.addData("Arm Counts Left", arm.getArmCountsLeft());
-            telemetry.addData("Arm Counts Right", arm.getArmCountsRight());
+            telemetry.addData("Shoulder Motor", "(%7d)", shoulderMotor.getCurrentPosition());
+            telemetry.addData("Arm Counts Left", armMotorLeft.getCurrentPosition());
+            telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
             telemetry.addData("Arm Ratio", arm.getArmRatio());
-            telemetry.addData("Shoulder Max", shoulder.MAX_POS);
-            telemetry.addData("Shoulder Min", shoulder.MIN_POS);
+            telemetry.addData("Shoulder Ratio", shoulder.getShoulderRatio());
             telemetry.update();
         }
         motion.interrupt();

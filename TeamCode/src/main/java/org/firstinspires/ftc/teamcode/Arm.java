@@ -5,27 +5,35 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
 public class Arm extends Thread{
-    //Min and max speed of the arm
-    private static final double MIN_ARM_SPEED = -1;
-    private static final double MAX_ARM_SPEED = 1;
+    // Min and max speed of the arm
+    private static final double MIN_ARM_SPEED = -1.0;
+    private static final double MAX_ARM_SPEED = 1.0;
+    private static final double TRIM_POWER = 0.15;
+    private static final double HOLD_POWER = 0.9;
 
-    //Min and max pos of the arm
+    // Min and max pos of the arm
     private static final int MIN_POS = 0;
     private static final int MAX_POS = 2780;
 
-    //Vars for the arm motors
+    // Vars for the arm motors
     private final DcMotor armMotorLeft;
     private final DcMotor armMotorRight;
-    //Var for the shoulder and gamepad for the constructor
+
+    // Var for the shoulder and gamepad for the constructor
     private Shoulder shoulder;
     private final Gamepad gamepad;
-    //Vars for keeping track of the arm's position
-    private int totalCountsLeft;
-    private int totalCountsRight;
 
     private boolean ignoreGamepad = false;
+    private boolean hold = false;
 
-    public void ignoreGamepad() {ignoreGamepad = true;}
+    /**
+     * Allows a user to toggle using the gamepad
+     * @param ignoreGamepad true to ingonre gamepad inputs
+     */
+    public void ignoreGamepad(boolean ignoreGamepad)
+    {
+        this.ignoreGamepad = ignoreGamepad;
+    }
 
     /**
      * Constructor for the arm
@@ -51,38 +59,32 @@ public class Arm extends Thread{
     }
 
     /**
-     * Gets the position of the first arm motor
-     * @return totalCounts1, the position of the first arm motor
-     */
-    protected int getArmCountsLeft() {
-        return totalCountsLeft;
-    }
-
-    /**
-     * Gets the position of the second arm motor
-     * @return totalCounts2, the position of the second arm motor
-     */
-    protected int getArmCountsRight() {
-        return totalCountsRight;
-    }
-
-    /**
      * Gets the ratio from 0 to 1 inclusive of how far the arm is extended
      * @return [0, 1]
      */
-    public double getArmRatio() {return Range.clip((double) totalCountsLeft / (double) MAX_POS, 0.0, 1.0);}
+    public double getArmRatio()
+    {
+        return Range.clip((double) (armMotorLeft.getCurrentPosition() - MIN_POS) / (double) (MAX_POS - MIN_POS), 0.0, 1.0);
+    }
 
     /**
      * Sets the position of the arm
-     * @param power the power of the arm
-     * @param position a value 0-2180 that sets the arm position
+     * @param power the power of the arm's movements
+     * @param position arm position
      */
     public void setArmPosition(double power, int position) {
+        // Ensure inputs are valid
         power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
-        armMotorLeft.setPower(power);
-        armMotorRight.setPower(power);
+        position = Range.clip(position, MIN_POS, MAX_POS);
+
+        // Set new position and power the motors
         armMotorLeft.setTargetPosition(position);
         armMotorRight.setTargetPosition(position);
+        armMotorLeft.setPower(power);
+        armMotorRight.setPower(power);
+
+        // Tell the shoulder to update - TODO this should just tell it the new MIN_POS if necessary
+        if (shoulder != null) shoulder.setHold(false);
     }
 
     /**
@@ -91,58 +93,60 @@ public class Arm extends Thread{
      * @param position a value 0.0-1.0 which determines the position
      */
     public void setArmPosition(double power, double position) {
-        //Makes sure the power is between 0-1
+        // Make sure inputs are valid
         power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
-        //Sets the power of both arm motors
+        position = Range.clip(position, 0.0, 1.0);
+
+        // Calculate new position, set it and power the motors
+        int pos = Range.clip((int)Math.round(position * (MAX_POS - MIN_POS)) + MIN_POS, MIN_POS, MAX_POS);
+        armMotorLeft.setTargetPosition(pos);
+        armMotorRight.setTargetPosition(pos);
         armMotorLeft.setPower(power);
         armMotorRight.setPower(power);
-        //Sets the position of both arms based on the position given
-        //Multiplies the range of the arm movement by the position and adds the min pos (in case min pos isn't zero)
-        armMotorLeft.setTargetPosition((int) ((MAX_POS-MIN_POS) * position) + MIN_POS);
-        armMotorRight.setTargetPosition((int) ((MAX_POS-MIN_POS) * position) + MIN_POS);
+
+        // Tell the shoulder to update - TODO this should just tell it the new MIN_POS if necessary
+        if (shoulder != null) shoulder.setHold(false);
+    }
+
+    /**
+     * This sets hold externally (forces a new hold value if false)
+     * @param hold
+     */
+    public void setHold(boolean hold) {
+        this.hold = hold;
     }
 
     @Override
     public void run() {
         while (!isInterrupted()) {
-
-            //Gets the current position of the arm
-            totalCountsLeft = armMotorLeft.getCurrentPosition();
-            totalCountsRight = armMotorRight.getCurrentPosition();
-
-            //Sets the arm speed to a number -1 through 1 based on the left stick's position
-            double ARM_SPEED = (ignoreGamepad) ? 0: gamepad.left_stick_y;
-            //If the arm speed is positive, then we move the arm towards the min pos
-            //If the arm speed is negative, then we move the arm towards the max pos
-            int pos = (ARM_SPEED >= 0) ? MIN_POS:MAX_POS;
-            //Sets the arm pos based on the pos we just calculated
-            setArmPosition(ARM_SPEED, pos);
-
-            if (shoulder != null) {
-                shoulder.setHold(false);
-                //Gets the shoulder's current position
-                /*
-                int shoulderCounts = shoulder.getShoulderCounts();
-                //Checks if the shoulder is close to the floor
-                if (shoulderCounts > Shoulder.MIN_POS_ARM_OUT) {
-                    //Finds the ratio of the shoulder in the floor zone
-                    //Divides shoulder's current position int the zone by the full range of the floor zone
-                    double shoulderRatio = (double) (shoulderCounts - Shoulder.MIN_POS_ARM_IN) / (double) (Shoulder.MIN_POS_ARM_OUT-Shoulder.MIN_POS_ARM_IN);
-                    //Gets the arm ratio, which is how far the arm is extended
-                    double armRatio = getArmRatio();
-                    //Checks if the arm is too far extended
-                    if (armRatio > shoulderRatio) {
-                        //Multiplies the full range of the floor zone by the arm ratio and adds the min pos (in case the min pos wasn't 0)
-                        //Places the shoulder in the floor zone based on the arm ratio
-                        int newPos = (int) ((double) (Shoulder.MIN_POS_ARM_OUT-Shoulder.MIN_POS_ARM_IN) * armRatio) + Shoulder.MIN_POS_ARM_IN;
-                        shoulder.setShoulderPosition(0.75, newPos);
-                    }
+            if(!ignoreGamepad)
+            {
+                // Sets the arm speed to a number -1 through 1 based on the left stick's position
+                double power = gamepad.left_stick_y;
+                if (!hold && Math.abs(power) <= TRIM_POWER) {
+                    int pos = Range.clip(armMotorLeft.getCurrentPosition(),MIN_POS,MAX_POS);
+                    armMotorLeft.setTargetPosition(pos);
+                    armMotorRight.setTargetPosition(pos);
+                    armMotorLeft.setPower(HOLD_POWER);
+                    armMotorRight.setPower(HOLD_POWER);
+                    hold = true;
+                    if (shoulder != null) shoulder.setHold(false);
+                } else if (power < -TRIM_POWER) {
+                    armMotorLeft.setTargetPosition(MIN_POS);
+                    armMotorRight.setTargetPosition(MIN_POS);
+                    armMotorLeft.setPower(Math.abs(power));
+                    armMotorRight.setPower(Math.abs(power));
+                    hold = false;
+                    if (shoulder != null) shoulder.setHold(false);
+                } else if (power > TRIM_POWER) {
+                    armMotorLeft.setTargetPosition(MAX_POS);
+                    armMotorRight.setTargetPosition(MAX_POS);
+                    armMotorLeft.setPower(power);
+                    armMotorRight.setPower(power);
+                    hold = false;
+                    if (shoulder != null) shoulder.setHold(false);
                 }
-
-                 */
             }
-
-
         }
     }
 }
