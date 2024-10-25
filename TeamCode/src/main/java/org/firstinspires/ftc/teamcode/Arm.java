@@ -147,6 +147,13 @@ public class Arm extends Thread{
                     if (shoulder != null) shoulder.setHold(false);
                 }
             }
+
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(50);
+            } catch (InterruptedException e) {
+                interrupt();
+            }
         }
     }
 }

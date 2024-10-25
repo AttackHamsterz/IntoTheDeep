@@ -143,6 +143,13 @@ public class Shoulder extends Thread {
                     hold = false;
                 }
             }
+
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(50);
+            } catch (InterruptedException e) {
+                interrupt();
+            }
         }
     }
 }

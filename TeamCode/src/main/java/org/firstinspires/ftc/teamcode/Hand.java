@@ -201,6 +201,13 @@ public class Hand extends Thread{
                     wrist.setPosition(Range.clip(wrist.getPosition()+MANUAL_SPIN_INCREMENT, MIN_POS, MAX_POS));
                 }
             }
+
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(50);
+            } catch (InterruptedException e) {
+                interrupt();
+            }
         }
     }
 }
