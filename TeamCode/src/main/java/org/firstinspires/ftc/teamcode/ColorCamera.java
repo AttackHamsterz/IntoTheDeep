@@ -44,17 +44,17 @@ import java.util.EnumMap;
         public HuskyLens.Block getClosestBlock() {
             HuskyLens.Block[] blocks = huskyLens.blocks();
             ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
-            for (int i = 0; i < blocks.length; i++) {
+            for (HuskyLens.Block block : blocks) {
                 // add any yellow blocks
-                if (blocks[i].id == 1) {
-                    blocksOnScreen.add(blocks[i]);
+                if (block.id == 1) {
+                    blocksOnScreen.add(block);
                 }
             }
             if (blocksOnScreen.isEmpty()) {
-                for (int i = 0; i < blocks.length; i++) {
+                for (HuskyLens.Block block : blocks) {
                     // look for any blocks that are not the color we are excluding
-                    if (blocks[i].id != excludeColorId) {
-                        blocksOnScreen.add(blocks[i]);
+                    if (block.id != excludeColorId) {
+                        blocksOnScreen.add(block);
                     }
                 }
             }

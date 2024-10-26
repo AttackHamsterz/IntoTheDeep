@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -11,19 +13,19 @@ public class Hand extends Thread{
 
     private static final double MIN_POWER = 0.0;  // Full reverse power
     private static final double MAX_POWER = 1.0;  // Full forward power
-    private static final double GRAB_POWER = 0.0;
+    private static final double GRAB_POWER = 1.0;
     private static final double SPIN_POWER = 0.2; // Amount to add or remove from no-power [0.0,0.5]
-    private static final double NO_POWER = 0.5; // Continous servo stop
+    private static final double NO_POWER = 0.0; // Continous servo stop
     private static final double RELEASE_POWER = 1.0;
 
     private static final double MIN_TRIGGER = 0.1;
     private static final double MANUAL_SPIN_INCREMENT = 0.05;
-    private static final long INTAKE_MS = 1000;
+    private static final long INTAKE_MS = 500;
     private static final long RELEASE_MS = 1000;
     private static final long SPIN_MS = 500;
 
-    private Servo left;
-    private Servo right;
+    private CRServo left;
+    private CRServo right;
     private Servo wrist;
     private boolean ignoreGamepad;
     private final Gamepad gamepad;
@@ -36,11 +38,12 @@ public class Hand extends Thread{
      * @param wrist Wrist servo that rotates 0 to 180 with 90 as default
      * @param gamepad Tool gamepad
      */
-    public Hand(Servo left, Servo right, Servo wrist, Gamepad gamepad)
+    public Hand(CRServo left, CRServo right, Servo wrist, Gamepad gamepad)
     {
         this.left = left;
         this.right = right;
         this.wrist = wrist;
+        this.wrist.setPosition(CTR_POS);
         this.gamepad = gamepad;
         this.ignoreGamepad = false;
         this.stopThread = new Thread();
@@ -57,7 +60,7 @@ public class Hand extends Thread{
 
     /**
      * Method to reset the stop continuous servos thread
-     * @param duration_ms
+     * @param duration_ms how long before turning off the servos in milliseconds
      */
     private void resetStopThread(long duration_ms)
     {
@@ -68,8 +71,8 @@ public class Hand extends Thread{
         stopThread = new Thread(() -> {
             try {
                 sleep(duration_ms);
-                left.setPosition(NO_POWER);
-                right.setPosition(NO_POWER);
+                left.setPower(NO_POWER);
+                right.setPower(NO_POWER);
             } catch (InterruptedException e) {
             }
         });
@@ -86,8 +89,20 @@ public class Hand extends Thread{
     private void startServosForTime(double leftPower, double rightPower, long duration_ms)
     {
         // Start the servos
-        left.setPosition(Range.clip(leftPower, MIN_POWER, MAX_POWER));
-        right.setPosition(Range.clip(rightPower, MIN_POWER, MAX_POWER));
+        if (leftPower < 0) {
+            left.setDirection(CRServo.Direction.REVERSE);
+        } else {
+            left.setDirection(CRServo.Direction.FORWARD);
+        }
+
+        if (rightPower < 0) {
+            right.setDirection(CRServo.Direction.REVERSE);
+        } else {
+            right.setDirection(CRServo.Direction.FORWARD);
+        }
+
+        left.setPower(Range.clip(Math.abs(leftPower), MIN_POWER, MAX_POWER));
+        right.setPower(Range.clip(Math.abs(rightPower), MIN_POWER, MAX_POWER));
 
         // Schedule the stop (always in the future)
         resetStopThread(Math.abs(duration_ms));
@@ -115,7 +130,7 @@ public class Hand extends Thread{
     {
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
-        startServosForTime( RELEASE_POWER - 0.1, RELEASE_POWER, ms);
+        startServosForTime( -RELEASE_POWER,RELEASE_POWER, ms);
     }
 
     /**
@@ -126,7 +141,7 @@ public class Hand extends Thread{
      */
     public void grab(long ms)
     {
-        startServosForTime(GRAB_POWER, GRAB_POWER, ms);
+        startServosForTime(GRAB_POWER, -GRAB_POWER, ms);
     }
 
     /**
@@ -139,9 +154,9 @@ public class Hand extends Thread{
     public void rotate(long ms, boolean left)
     {
         if(left)
-            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER - SPIN_POWER, ms);
+            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER + SPIN_POWER, ms);
         else
-            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER + SPIN_POWER, ms);
+            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER - SPIN_POWER, ms);
     }
 
     /**

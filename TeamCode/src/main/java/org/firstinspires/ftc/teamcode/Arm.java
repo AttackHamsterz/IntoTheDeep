@@ -13,7 +13,7 @@ public class Arm extends Thread{
 
     // Min and max pos of the arm
     private static final int MIN_POS = 0;
-    private static final int MAX_POS = 2780;
+    private static final int MAX_POS = 2700;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
