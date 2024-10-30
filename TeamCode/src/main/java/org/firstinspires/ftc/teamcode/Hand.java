@@ -16,12 +16,12 @@ public class Hand extends Thread{
     private static final double GRAB_POWER = 1.0;
     private static final double SPIN_POWER = 0.2; // Amount to add or remove from no-power [0.0,0.5]
     private static final double NO_POWER = 0.0; // Continous servo stop
-    private static final double RELEASE_POWER = 1.0;
+    private static final double RELEASE_POWER = 0.5;
 
     private static final double MIN_TRIGGER = 0.1;
     private static final double MANUAL_SPIN_INCREMENT = 0.05;
-    private static final long INTAKE_MS = 500;
-    private static final long RELEASE_MS = 1000;
+    private static final long INTAKE_MS = 200;
+    private static final long RELEASE_MS = 800;
     private static final long SPIN_MS = 500;
 
     private CRServo left;

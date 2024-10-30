@@ -6,14 +6,14 @@ import com.qualcomm.robotcore.util.Range;
 
 public class Arm extends Thread{
     // Min and max speed of the arm
-    private static final double MIN_ARM_SPEED = -1.0;
-    private static final double MAX_ARM_SPEED = 1.0;
+    private static final double MIN_ARM_SPEED = -0.9;
+    private static final double MAX_ARM_SPEED = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.9;
+    private static final double HOLD_POWER = 0.4;
 
     // Min and max pos of the arm
     private static final int MIN_POS = 0;
-    private static final int MAX_POS = 2700;
+    private static final int MAX_POS = 1900;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;

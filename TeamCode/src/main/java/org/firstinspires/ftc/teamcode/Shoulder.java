@@ -6,28 +6,28 @@ import com.qualcomm.robotcore.util.Range;
 
 public class Shoulder extends Thread {
     //Variables for shoulder speed
-    private static final double MIN_SHOULDER_SPEED = -1.0;
+    private static final double MIN_SHOULDER_SPEED = 0.8;
     private static final double MAX_SHOULDER_SPEED = 1.0;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.9;
+    private static final double HOLD_POWER = 0.5;
 
     // Pre-set min and max pos based on if the arm is in or out
-    public static int MIN_POS_ARM_IN = -10;
-    public static int MIN_POS_ARM_OUT = -350;
-    public static int MAX_POS = -1400;
+    public static int MIN_POS_ARM_IN = 10;
+    public static int MIN_POS_ARM_OUT = 679;
+    public static int MAX_POS = 3475;
     public static double DELTA_MIN_POS_ARM = (double)(MIN_POS_ARM_OUT - MIN_POS_ARM_IN);
 
     // Sample heights TODO - set to heights off ground and maintain given arm ratio
-    public static int SAMPLE_HEIGHT_LOWER = -450;
-    public static int SAMPLE_HEIGHT_UPPER = -700;
+    public static int SAMPLE_HEIGHT_LOWER = 450;
+    public static int SAMPLE_HEIGHT_UPPER = 700;
     public static int SAMPLE_HOOK_DROP = 150;
 
     // Bucket Heights TODO - set to heights off ground and maintain given arm ratio
-    public static int LOWER_BUCKET = -844;
-    public static int UPPER_BUCKET = -1242;
+    public static int LOWER_BUCKET = 2444;
+    public static int UPPER_BUCKET = 3059;
 
     // Other Heights TODO - set to height off ground and maintain given arm ratio
-    public static int SEARCH_HEIGHT = -187;
+    public static int SEARCH_HEIGHT = 187;
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
@@ -96,7 +96,7 @@ public class Shoulder extends Thread {
         power = Range.clip(power, MIN_SHOULDER_SPEED, MAX_SHOULDER_SPEED);
 
         // Sets the position of the shoulder
-        shoulderMotor.setTargetPosition(Range.clip(position, MAX_POS, MIN_POS));
+        shoulderMotor.setTargetPosition(Range.clip(position, MIN_POS, MAX_POS));
         shoulderMotor.setPower(power);
     }
 
@@ -112,7 +112,7 @@ public class Shoulder extends Thread {
 
         // Sets the position of the shoulder
         position = Range.clip(position, 0.0, 1.0);
-        int pos = Range.clip( (int)Math.round(position * (double)(MAX_POS - MIN_POS))+MIN_POS, MAX_POS, MIN_POS);
+        int pos = Range.clip( (int)Math.round(position * (double)(MAX_POS - MIN_POS))+MIN_POS, MIN_POS, MAX_POS);
         shoulderMotor.setTargetPosition(pos);
         shoulderMotor.setPower(power);
     }
@@ -124,21 +124,21 @@ public class Shoulder extends Thread {
             armRatio = arm.getArmRatio();
 
             // Ground protection, sets min shoulder value based on how far the arm is out
-            MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
+            //MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
 
             // Check gamepad for user input
             if(!ignoreGamepad) {
                 float power = gamepad.right_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MAX_POS, MIN_POS));
+                    shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MIN_POS_ARM_IN, MAX_POS));
                     shoulderMotor.setPower(HOLD_POWER);
                     hold = true;
                 } else if (power < -TRIM_POWER) {
-                    shoulderMotor.setTargetPosition(MAX_POS);
+                    shoulderMotor.setTargetPosition(MIN_POS_ARM_IN);
                     shoulderMotor.setPower(Math.abs(power));
                     hold = false;
                 } else if (power > TRIM_POWER) {
-                    shoulderMotor.setTargetPosition(MIN_POS);
+                    shoulderMotor.setTargetPosition(MAX_POS);
                     shoulderMotor.setPower(power);
                     hold = false;
                 }

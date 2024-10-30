@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.Arrays;
 
     @TeleOp(name = "Sensor: HuskyLens", group = "Sensor")
     public class ColorCamera extends LinearOpMode {
@@ -19,16 +19,15 @@ import java.util.EnumMap;
         // the largest width we'd expect from a valid game piece
         private int maxWidth;
         // center of the screen
-        private final int CENTER_X = 160;
-        private final int CENTER_Y = 120;
-        // a list to store the blocks with the same item we are looking for
-        private ArrayList<HuskyLens.Block> blocksOfColor = new ArrayList<>();
+        public static final int CENTER_X = 160;
+        public static final int CENTER_Y = 120;
 
-        public ColorCamera(String color) {
+        public ColorCamera(HuskyLens huskyLens, String colorExclude) {
+            this.huskyLens = huskyLens;
             // sets the color that we are looking for
-            if (color.equalsIgnoreCase("red")) {
+            if (colorExclude.equalsIgnoreCase("red")) {
                 excludeColorId = 2;
-            } else if (color.equalsIgnoreCase("blue")) {
+            } else if (colorExclude.equalsIgnoreCase("blue")) {
                 excludeColorId = 3;
             } else {
                 throw new IllegalArgumentException("Please input a valid color");
@@ -59,16 +58,16 @@ import java.util.EnumMap;
                 }
             }
             // make sure there are blocks on the screen with the color we are looking for
-            if (!blocksOfColor.isEmpty()) {
+            if (!blocksOnScreen.isEmpty()) {
                 // 400 is the longest distance possible on the camera screen
                 double smallestDist = 400;
                 int smallestDistIndex = 0;
                 // use pythagorean theorem to draw a line from the camera to each block's position
                 // whichever block has the shortest distance is the block we are closest to
-                for (int i = 0; i < blocksOfColor.size(); i++) {
+                for (int i = 0; i < blocksOnScreen.size(); i++) {
                     // get the distance of the block from the center of the screen
-                    int xDiff = Math.abs(CENTER_X - blocksOfColor.get(i).x);
-                    int yDiff = Math.abs(CENTER_Y - blocksOfColor.get(i).y);
+                    int xDiff = Math.abs(CENTER_X - blocksOnScreen.get(i).x);
+                    int yDiff = Math.abs(CENTER_Y - blocksOnScreen.get(i).y);
 
                     double dist = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
 
@@ -78,9 +77,15 @@ import java.util.EnumMap;
                     }
                 }
 
-                return blocksOfColor.get(smallestDistIndex);
+                return blocksOnScreen.get(smallestDistIndex);
             }
             return null;
+        }
+
+        public ArrayList<HuskyLens.Block> getAllBlocks () {
+           ArrayList<HuskyLens.Block> blocks = new ArrayList<>();
+            blocks.addAll(Arrays.asList(huskyLens.blocks()));
+            return blocks;
         }
 
         @Override
@@ -112,15 +117,6 @@ import java.util.EnumMap;
                 //ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
                 for (HuskyLens.Block block : blocks) {
                     telemetry.addData("Block", block.toString());
-                    // checks the color id of what we are looking at to see if it is the one we are looking for
-                    /*
-                    if (blocks[i].id != excludeColorId) {
-                        // check if
-                        // add the block to a list
-                        blocksOnScreen.add(blocks[i]);
-                    }
-
-                     */
                 }
                // blocksOfColor = blocksOnScreen;
                 telemetry.update();

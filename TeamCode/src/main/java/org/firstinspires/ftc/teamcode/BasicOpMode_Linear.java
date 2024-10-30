@@ -96,7 +96,7 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
         armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        shoulderMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         wristServo.setDirection(Servo.Direction.FORWARD);
         leftHandServo.setDirection(CRServo.Direction.FORWARD);
