@@ -67,6 +67,22 @@ public class Arm extends Thread{
         return Range.clip((double) (armMotorLeft.getCurrentPosition() - MIN_POS) / (double) (MAX_POS - MIN_POS), 0.0, 1.0);
     }
 
+    public void gotoMin(double power)
+    {
+        setArmPosition( power, MIN_POS);
+    }
+
+    public void gotoMax(double power)
+    {
+        setArmPosition(power, MAX_POS);
+    }
+
+    public void halt()
+    {
+        armMotorLeft.setPower(0);
+        armMotorRight.setPower(0);
+    }
+
     /**
      * Sets the position of the arm
      * @param power the power of the arm's movements
