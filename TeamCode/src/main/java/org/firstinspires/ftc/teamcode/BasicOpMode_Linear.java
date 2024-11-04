@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -118,7 +119,8 @@ public class BasicOpMode_Linear extends LinearOpMode {
         runtime.reset();
 
         // Launch Threads
-        Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
+        //Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
+        MecanumDrive motion = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), gamepad1);
         Arm arm = new Arm(armMotorLeft, armMotorRight, gamepad2, null);
         Shoulder shoulder = new Shoulder(shoulderMotor, arm, gamepad2);
         arm.setShoulder(shoulder);
