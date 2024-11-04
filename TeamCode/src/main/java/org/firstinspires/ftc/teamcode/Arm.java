@@ -20,7 +20,7 @@ public class Arm extends BodyPart {
     private final DcMotor armMotorLeft;
     private final DcMotor armMotorRight;
 
-    // Var for the shoulder and gamepad for the constructor
+    // Var for the shoulder
     private Shoulder shoulder;
     private boolean hold = false;
 
@@ -158,7 +158,7 @@ public class Arm extends BodyPart {
 
             // Short sleep to keep this loop from saturating
             try {
-                sleep(50);
+                sleep(LOOP_PAUSE_MS);
             } catch (InterruptedException e) {
                 interrupt();
             }

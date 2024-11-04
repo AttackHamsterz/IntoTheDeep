@@ -154,9 +154,9 @@ public class Hand extends Thread{
     public void rotate(long ms, boolean left)
     {
         if(left)
-            startServosForTime(NO_POWER/* + SPIN_POWER*/, NO_POWER + SPIN_POWER, ms);
+            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER + SPIN_POWER / 2, ms);
         else
-            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER /*- SPIN_POWER*/, ms);
+            startServosForTime(NO_POWER + SPIN_POWER / 2, NO_POWER - SPIN_POWER, ms);
     }
 
     /**
@@ -215,6 +215,12 @@ public class Hand extends Thread{
                 else if (gamepad.dpad_right) {
                     wrist.setPosition(Range.clip(wrist.getPosition()+MANUAL_SPIN_INCREMENT, MIN_POS, MAX_POS));
                 }
+
+                // If the user pressed a button to hang or bucket, turn the sample
+                if(gamepad.x)
+                    hangSample();
+                else if(gamepad.y)
+                    bucket();
             }
 
             // Short sleep to keep this loop from saturating

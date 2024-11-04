@@ -69,6 +69,7 @@ public class Shoulder extends BodyPart {
     private static final double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.1;
+    private static final double MODE_POWER = 0.6;
     private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
@@ -89,6 +90,9 @@ public class Shoulder extends BodyPart {
     private double armRatio;
     private int MIN_POS;
 
+    // Mode for the shoulder
+    private Mode mode;
+
     /**
      * Constructor for the shoulder
      *
@@ -100,6 +104,7 @@ public class Shoulder extends BodyPart {
         this.arm = arm;
         this.gamepad = gamepad;
         this.shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.mode = Mode.NONE;
     }
 
     @Override
@@ -177,6 +182,11 @@ public class Shoulder extends BodyPart {
         protectMotors(position);
     }
 
+    public void setMode(Mode mode)
+    {
+        this.mode = mode;
+    }
+
     @Override
     public void run() {
         while (!isInterrupted()) {
@@ -186,7 +196,7 @@ public class Shoulder extends BodyPart {
             // Ground protection, sets min shoulder value based on how far the arm is out
             MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
 
-            // Check gamepad for user input
+            // Check gamepad for user input (any input cancels the mode)
             if(!ignoreGamepad) {
                 float power = gamepad.right_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
@@ -197,17 +207,35 @@ public class Shoulder extends BodyPart {
                     // holds the shoulder stick down forever
                     setPosition(Math.abs(power), MIN_POS);
                     hold = false;
+                    mode = Mode.NONE;
                 } else if (power > TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick up forever
                     setPosition(power, MAX_POS);
                     hold = false;
+                    mode = Mode.NONE;
                 }
+                if(gamepad.a)
+                    mode = Mode.SEARCH;
+                else if(gamepad.b)
+                    mode = Mode.GROUND;
+                else if(gamepad.x)
+                    mode = Mode.HIGH_BAR;
+                else if(gamepad.y)
+                    mode = Mode.LOW_BUCKET;
+            }
+
+            // Always satisfy the mode if no buttons were pressed
+            if(mode != Mode.NONE)
+            {
+                int newPos = (int)Math.round(armRatio * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
+                if(Math.abs(newPos - getCurrentPosition()) > CLOSE_ENOUGH_TICKS)
+                    setPosition(MODE_POWER, newPos);
             }
 
             // Short sleep to keep this loop from saturating
             try {
-                sleep(50);
+                sleep(LOOP_PAUSE_MS);
             } catch (InterruptedException e) {
                 interrupt();
             }

@@ -14,6 +14,9 @@ public abstract class BodyPart extends Thread{
     protected static final int CLOSE_ENOUGH_TICKS = 10; // Turn off the other motor when we are close
     protected Thread protectionThread = new Thread();
 
+    // Loop saturation protection
+    protected static final long LOOP_PAUSE_MS = 50;
+
     // Force implementing classes to implement the run class
     // This implements the things this body part can do in parallel with
     // other body parts
@@ -28,7 +31,7 @@ public abstract class BodyPart extends Thread{
 
     /**
      * Get the current body part position for use in safing motors.
-     * @return
+     * @return the position in ticks
      */
     public abstract int getCurrentPosition();
 
@@ -54,9 +57,9 @@ public abstract class BodyPart extends Thread{
         Integer position = new Integer(targetPosition);
         protectionThread = new Thread(() -> {
             try{
-                do {
+                while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
                     sleep(MOTOR_CHECK_PERIOD_MS);
-                }while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS);
+                };
                 safeHold();
             } catch (InterruptedException e) {
             }
