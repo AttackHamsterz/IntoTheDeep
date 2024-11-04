@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
-import android.graphics.Color;
 
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -9,10 +7,6 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.teamcode.tuning.TuningOpModes;
-
-import java.util.ArrayList;
 
 @TeleOp(name = "Test: Camera Calibration", group = "Linear Opmode")
 public class CameraCalibrationOpMode_Linear extends LinearOpMode {
@@ -125,7 +119,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
          */
 
         // Put the shoulder into search height position with very little holding power
-        shoulder.setPosition(0.3, Shoulder.SEARCH_HEIGHT);
+        shoulder.setPosition(0.3, Shoulder.Mode.SEARCH.armInPos());
 
         // We could also do this by mapping the error we measure directly into
         // a correction.  That may be good enough instead of needing PIDs.
@@ -196,9 +190,9 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
                             // Drive the arm while there is still error
                             int ticks = (int)Math.round(errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y);
                             telemetry.addData("ticks", ticks);
-                            telemetry.addData("Arm Pos", arm.getArmPosition());
+                            telemetry.addData("Arm Pos", arm.getCurrentPosition());
                             telemetry.update();
-                            arm.setArmPosition(0.3*Math.signum(ticks), arm.getArmPosition()+ticks);
+                            arm.setPosition(0.3*Math.signum(ticks), arm.getCurrentPosition()+ticks);
 
 
                         }
