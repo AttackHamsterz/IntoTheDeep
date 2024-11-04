@@ -9,7 +9,7 @@ public class Shoulder extends Thread {
     private static final double MIN_SHOULDER_SPEED = 0.8;
     private static final double MAX_SHOULDER_SPEED = 1.0;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.5;
+    private static final double HOLD_POWER = 0.3;
 
     // Pre-set min and max pos based on if the arm is in or out
     public static int MIN_POS_ARM_IN = 10;
@@ -27,7 +27,7 @@ public class Shoulder extends Thread {
     public static int UPPER_BUCKET = 3059;
 
     // Other Heights TODO - set to height off ground and maintain given arm ratio
-    public static int SEARCH_HEIGHT = 187;
+    public static int SEARCH_HEIGHT = 535;
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;

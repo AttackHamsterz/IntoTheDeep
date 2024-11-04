@@ -12,8 +12,8 @@ public class Arm extends Thread{
     private static final double HOLD_POWER = 0.4;
 
     // Min and max pos of the arm
-    private static final int MIN_POS = 0;
-    private static final int MAX_POS = 1900;
+    public static final int MIN_POS = 0;
+    public static final int MAX_POS = 1900;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
@@ -26,6 +26,9 @@ public class Arm extends Thread{
     private boolean ignoreGamepad = false;
     private boolean hold = false;
 
+    public int getArmPosition() {
+       return Math.round((float) (armMotorLeft.getCurrentPosition() + armMotorRight.getCurrentPosition()) / 2);
+    }
     /**
      * Allows a user to toggle using the gamepad
      * @param ignoreGamepad true to ingonre gamepad inputs

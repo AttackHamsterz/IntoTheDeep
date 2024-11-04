@@ -20,7 +20,7 @@ public class Hand extends Thread{
 
     private static final double MIN_TRIGGER = 0.1;
     private static final double MANUAL_SPIN_INCREMENT = 0.05;
-    private static final long INTAKE_MS = 200;
+    private static final long INTAKE_MS = 100;
     private static final long RELEASE_MS = 500;
     private static final long SPIN_MS = 400;
 
