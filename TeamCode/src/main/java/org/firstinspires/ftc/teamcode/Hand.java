@@ -14,7 +14,7 @@ public class Hand extends Thread{
     private static final double MIN_POWER = 0.0;  // Full reverse power
     private static final double MAX_POWER = 1.0;  // Full forward power
     private static final double GRAB_POWER = 1.0;
-    private static final double SPIN_POWER = 0.2; // Amount to add or remove from no-power [0.0,0.5]
+    private static final double SPIN_POWER = 0.4; // Amount to add or remove from no-power [0.0,0.5]
     private static final double NO_POWER = 0.0; // Continous servo stop
     private static final double RELEASE_POWER = 0.5;
 
@@ -130,7 +130,7 @@ public class Hand extends Thread{
     {
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
-        startServosForTime( -RELEASE_POWER,RELEASE_POWER, ms);
+        startServosForTime( RELEASE_POWER,-RELEASE_POWER, ms);
     }
 
     /**
@@ -141,7 +141,7 @@ public class Hand extends Thread{
      */
     public void grab(long ms)
     {
-        startServosForTime(GRAB_POWER, -GRAB_POWER, ms);
+        startServosForTime(-GRAB_POWER, GRAB_POWER, ms);
     }
 
     /**
@@ -154,9 +154,9 @@ public class Hand extends Thread{
     public void rotate(long ms, boolean left)
     {
         if(left)
-            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER + SPIN_POWER, ms);
+            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER /*+ SPIN_POWER*/, ms);
         else
-            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER - SPIN_POWER, ms);
+            startServosForTime(NO_POWER /*- SPIN_POWER*/, NO_POWER - SPIN_POWER, ms);
     }
 
     /**
@@ -192,11 +192,11 @@ public class Hand extends Thread{
                 }
                 // Left trigger runs sample intake
                 else if (gamepad.left_trigger > MIN_TRIGGER) {
-                    grab(INTAKE_MS);
+                    release(RELEASE_MS);
                 }
                 // Right trigger runs sample release
                 else if (gamepad.right_trigger > MIN_TRIGGER) {
-                    release(RELEASE_MS);
+                    grab(INTAKE_MS);
                 }
 
                 // DPAD-Up forces a sample vertical to hang
