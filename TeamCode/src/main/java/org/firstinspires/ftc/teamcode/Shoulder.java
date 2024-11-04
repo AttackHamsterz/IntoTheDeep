@@ -4,7 +4,27 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class Shoulder extends Thread {
+    public static enum MODE {
+        GROUND,
+        SEARCH,
+        LOW_BAR,
+        HIGH_BAR,
+        LOW_BUCKET,
+        HIGH_BUCKET
+    }
+    public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
+            0, // Ground
+            535, // Search
+            1420, // Low Bar
+            1400, // High Bar
+            2444, // Low Bucket
+            3059 // High Bucket
+    ));
+
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_SPEED = 0.8;
     private static final double MAX_SHOULDER_SPEED = 1.0;
@@ -20,14 +40,27 @@ public class Shoulder extends Thread {
     // Sample heights TODO - set to heights off ground and maintain given arm ratio
     public static int SAMPLE_HEIGHT_LOWER = 450;
     public static int SAMPLE_HEIGHT_UPPER = 700;
-    public static int SAMPLE_HOOK_DROP = 150;
+    public static int SAMPLE_HOOK_DROP = 500;
+
+    public static int SAMPLE_HEIGHT_LOWER_ARM_IN = 1420;
+    public static int SAMPLE_HEIGHT_LOWER_ARM_OUT;
+
+    public static int SAMPLE_HEIGHT_UPPER_ARM_IN = 2618;
+    public static int SAMPLE_HEIGHT_UPPER_ARM_OUT;
 
     // Bucket Heights TODO - set to heights off ground and maintain given arm ratio
-    public static int LOWER_BUCKET = 2444;
-    public static int UPPER_BUCKET = 3059;
+    public static int LOWER_BUCKET = 2894;
+    public static int UPPER_BUCKET = 3010;
+
+    public static int LOWER_BUCKET_ARM_IN = 2894;
+    public static int LOWER_BUCKET_ARM_OUT = 1830;
 
     // Other Heights TODO - set to height off ground and maintain given arm ratio
     public static int SEARCH_HEIGHT = 535;
+
+    public static int SEARCH_HEIGHT_ARM_IN = 535;
+    public static int SEARCH_HEIGHT_ARM_OUT = 750;
+
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
@@ -124,7 +157,7 @@ public class Shoulder extends Thread {
             armRatio = arm.getArmRatio();
 
             // Ground protection, sets min shoulder value based on how far the arm is out
-            //MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
+            MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
 
             // Check gamepad for user input
             if(!ignoreGamepad) {

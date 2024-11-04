@@ -154,9 +154,9 @@ public class Hand extends Thread{
     public void rotate(long ms, boolean left)
     {
         if(left)
-            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER /*+ SPIN_POWER*/, ms);
+            startServosForTime(NO_POWER/* + SPIN_POWER*/, NO_POWER + SPIN_POWER, ms);
         else
-            startServosForTime(NO_POWER /*- SPIN_POWER*/, NO_POWER - SPIN_POWER, ms);
+            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER /*- SPIN_POWER*/, ms);
     }
 
     /**

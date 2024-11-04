@@ -31,11 +31,11 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
     private CRServo rightHandServo = null;
 
     // center of the screen
-    public static final int CENTER_X = 180;
+    public static final int CENTER_X = 160;
     public static final int CENTER_Y = 180;
     public static final int CLOSE_ENOUGH = 5;
 
-    private static final double INCHES_PER_PIXEL_Y = (double) 19 /240;
+    private static final double INCHES_PER_PIXEL_Y = (double) 19 / 240;
     private static final double ROTATIONS_PER_INCH_Y = (double) Arm.MAX_POS/16.5;
 
     private HuskyLens.Block closestBlock;
@@ -97,6 +97,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
 
         telemetry.update();
         waitForStart();
+        telemetry.update();
 
         // Threads
         Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
@@ -107,9 +108,10 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
 
         motion.start();
         //shoulder.start();
-       // arm.start();
+        arm.start();
         hand.start();
 
+        /*
         // Create a PID controller for the arm (shooting for 0 error in y)
         // TODO - Tune this First (disable turnController while tuning)
         PIDController armController = new PIDController(0.06, 0.06, 0.015);
@@ -120,6 +122,8 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
         PIDController turnController = new PIDController( 1.0, 0.1, 0.01);
         turnController.setSetpoint(0);
 
+         */
+
         // Put the shoulder into search height position with very little holding power
         shoulder.setPosition(0.3, Shoulder.SEARCH_HEIGHT);
 
@@ -129,25 +133,15 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
         boolean xDone = false;
         boolean yDone = false;
         while(opModeIsActive()) {
-            telemetry.addData("shoulder pos", shoulderMotor.getCurrentPosition());
 
             // While a is pressed on the tool gamepad
             if(gamepad2.a) {
                 // the color tracking algorithm returns a block around the location of the colored object
                 // from that block, we can figure out the location of our object
-                HuskyLens.Block[] blocks = huskyLens.blocks();
-                telemetry.addData("Block count", blocks.length);
-                HuskyLens.Block block = colorCamera.getClosestBlock();
-                // we found a block
-                if (block != null) {
-                    telemetry.addData("Closest Block", block.toString());
-                    // get the location of the closest block
-                    int blockCenterX = block.x;
-                    double errorX = blockCenterX - CENTER_X;
-                    int blockCenterY = block.y;
-                    double errorY = CENTER_Y - blockCenterY;
+
                     // If this is the first time we've seen the button pressed
                     // Reset the PID
+                    /*
                     if(!pressed) {
                         pressed = true;
                         xDone = false;
@@ -158,14 +152,16 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
 
                     if(!xDone) {
                         // Measure the current block error (x dimension)
-                        blockCenterX = block.x;
-                         errorX = blockCenterX - CENTER_X;
+                        int blockCenterX = block.x;
+                        double errorX = blockCenterX - CENTER_X;
                         xDone = Math.abs(errorX) < CLOSE_ENOUGH;
 
                         // If we're not close enough
                         if(!xDone) {
+                            xDone = true;
                             // Convert error to a rotation angle with the PID
                             double turnAngle = turnController.calculate(errorX);
+
 
                             // Rotate the robot to align the tool
                             // TODO - scale this by how extended the arm is
@@ -175,26 +171,41 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
                         }
                     }
 
-                    if(!yDone) {
-                        // Measure current block error (y dimension)
-                        blockCenterY = block.y;
-                        errorY = CENTER_Y - blockCenterY;
-                        telemetry.addData("errorY", errorY);
-                        yDone = Math.abs(errorY) < CLOSE_ENOUGH;
+                     */
 
-                        // If we're not close enough
-                        if(!yDone) {
+                    if(!yDone) {
+                        HuskyLens.Block[] blocks = huskyLens.blocks();
+                        telemetry.addData("Block count", blocks.length);
+                        HuskyLens.Block block = colorCamera.getClosestBlock();
+                        // we found a block
+                        if (block != null) {
+                            telemetry.addData("Closest Block", block.toString());
+                            int blockCenterY = block.y;
+                            double errorY = CENTER_Y - blockCenterY;
+                            telemetry.addData("errorY", errorY);
+                            //yDone = Math.abs(errorY) < CLOSE_ENOUGH;
+
+                            // If we're not close enough
+                            //if(!yDone) {
                             // Convert error to an arm extension or retraction
-                            double armPower = armController.calculate(errorY);
+                            //double armPower = armController.calculate(errorY);
 
                             // TODO - if the arm is fully extended/retracted
                             // we actually need to motion forward/backward
 
                             // Drive the arm while there is still error
-                            double ticks = errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y;
+                            int ticks = (int)Math.round(errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y);
                             telemetry.addData("ticks", ticks);
                             telemetry.addData("Arm Pos", arm.getArmPosition());
+                            telemetry.update();
                             arm.setArmPosition(0.3*Math.signum(ticks), arm.getArmPosition()+ticks);
+
+
+                        }
+                        yDone = true;
+                        // Measure current block error (y dimension)
+
+
 
                             /*
                             if (armPower < 0)
@@ -205,7 +216,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
                              */
 
 
-                        }
+                        //}
                     }
 
                     // TODO - add logic to spin the wrist
@@ -216,21 +227,26 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
                     // USB camera until we get a limelight 3a
 
                     // Moving one could cause error in the other, check again
-                    xDone = yDone = xDone && yDone;
-                } // if we don't find the block
+                    //xDone = yDone = xDone && yDone;
+                }  else {
+                yDone = false;
+                // if we don't find the block
+            }
 
                 // TODO - If we're all done, plunge and grab
                     // To avoid saturating the loop and let our PID's work
                     Thread.sleep(100); // Delay for next iteration
 
+            /*
             }
             else if (pressed){
                 pressed = false;
-                arm.halt();
+                //arm.halt();
             }
 
+             */
 
-            telemetry.update();
+
         }
         motion.interrupt();
         shoulder.interrupt();

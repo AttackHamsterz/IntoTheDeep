@@ -143,9 +143,10 @@ public class Arm extends Thread{
                 // Sets the arm speed to a number -1 through 1 based on the left stick's position
                 double power = gamepad.left_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    int pos = Range.clip(armMotorLeft.getCurrentPosition(),MIN_POS,MAX_POS);
-                    armMotorLeft.setTargetPosition(pos);
-                    armMotorRight.setTargetPosition(pos);
+                    int posLeft = Range.clip(armMotorLeft.getCurrentPosition(),MIN_POS,MAX_POS);
+                    int posRight = Range.clip(armMotorRight.getCurrentPosition(),MIN_POS,MAX_POS);
+                    armMotorLeft.setTargetPosition(posLeft);
+                    armMotorRight.setTargetPosition(posRight);
                     armMotorLeft.setPower(HOLD_POWER);
                     armMotorRight.setPower(HOLD_POWER);
                     hold = true;
