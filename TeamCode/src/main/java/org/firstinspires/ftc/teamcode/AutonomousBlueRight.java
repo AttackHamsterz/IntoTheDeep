@@ -37,7 +37,7 @@ public class AutonomousBlueRight extends LinearOpMode {
                     new Action() {
                         @Override
                         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                            //shoulder.setPosition(highSample);
+                            //Shoulder.SAMPLE_HEIGHT_UPPER();
                             return false;
                         }
                     },
@@ -55,7 +55,7 @@ public class AutonomousBlueRight extends LinearOpMode {
 
             // This action will grab a sample from the submersible
             // and then stow for travel (retract the arm and set the shoulder)
-            ParallelAction snagSample = new ParallelAction(
+            ParallelAction grabSample = new ParallelAction(
                     drive.actionBuilder(drive.pose)
                             .lineToX(25)
                             .build(),
@@ -78,24 +78,63 @@ public class AutonomousBlueRight extends LinearOpMode {
             // extending the arm.  With arm extended fingers release and we stow for travel.
             // It might make sense to stay out of our partners way by dropping in the lower bucket.
             ParallelAction toBucket = new ParallelAction(
+                    drive.actionBuilder(drive.pose)
+                            //movement code
+                            .build(),
+                    new Action() {
+                        @Override
+                        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                            //shoulder.setPosition(topBucket);
+                            //arms.setPosition(out);
+                            //fingers.release();
+                            //arms.setPosition(stow);
+                            //shoulder.setPosition(search);
+                            return false;
+                        }
+                    }
 
             );
 
             // This action will determine where we are (might check apiril tags as well)
             // Then move to grab another floor sample, finally stowing for travel.
             ParallelAction floorSample = new ParallelAction(
-
+                    drive.actionBuilder(drive.pose)
+                        //movement code
+                        //moving to the three lines with the samples
+                        //may just be turning with no movement
+                        .build(),
+                    new Action() {
+                        @Override
+                        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                            //arms.setPosition(out);
+                            //fingers.search();
+                            //fingers.pickup();
+                            //arms.setPosition(stow);
+                            return false;
+                        }
+                    }
             );
 
             // Determine where we are and how we have to move to park correctly
             ParallelAction park = new ParallelAction(
-
+                    drive.actionBuilder(drive.pose)
+                            //movement code
+                            //moving to the three lines with the samples
+                            //may just be turning with no movement
+                            .build(),
+                    new Action() {
+                        @Override
+                        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                            //shoulder.setPosition(hang);
+                            return false;
+                        }
+                    }
             );
 
             waitForStart();
 
             Actions.runBlocking(sampleDrop);
-            Actions.runBlocking(snagSample);
+            Actions.runBlocking(grabSample);
             Actions.runBlocking(toBucket);
             Actions.runBlocking(floorSample);
             Actions.runBlocking(toBucket);
