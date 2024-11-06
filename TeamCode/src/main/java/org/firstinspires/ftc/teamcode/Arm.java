@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Arm extends BodyPart {
     // Arm speeds
@@ -26,17 +30,38 @@ public class Arm extends BodyPart {
 
     /**
      * Constructor for the arm
-     * @param armMotorLeft the motor for the first arm
-     * @param armMotorRight the motor for the second arm
+     * @param hardwareMap map with arm parts
      * @param gamepad the gamepad used to control the arm
      */
-    public Arm(DcMotor armMotorLeft, DcMotor armMotorRight, Gamepad gamepad, Shoulder shoulder) {
-        this.armMotorLeft = armMotorLeft;
-        this.armMotorRight = armMotorRight;
+    public Arm(HardwareMap hardwareMap, Gamepad gamepad, Shoulder shoulder) {
+        // Assignments
+        armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
+        armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
         this.gamepad = gamepad;
         this.shoulder = shoulder;
-        this.armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        this.armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Setup
+        armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        armMotorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armMotorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotorLeft.setTargetPosition(0);
+        armMotorRight.setTargetPosition(0);
+        armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    /**
+     * Method adds important things to telemetry
+     * @param telemetry
+     */
+    public void debugTelemetry(Telemetry telemetry)
+    {
+        telemetry.addData("Arm Counts Left", armMotorLeft.getCurrentPosition());
+        telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
+        telemetry.addData("Arm Ratio", getArmRatio());
     }
 
     @Override
@@ -105,21 +130,19 @@ public class Arm extends BodyPart {
 
     /**
      * This sets hold externally (forces a new hold if false)
-     * @param hold
+     * @param hold if true we implement a hold call
      */
     public void setHold(boolean hold) {
         this.hold = hold;
     }
 
     @Override
-    public void safeHold()
+    public void safeHold(int position)
     {
-        /**
-         * We've noticed the motors fighting themselves while holding (rigid tool end).
-         * Two ways to fix this I think:
-         *   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
-         *   2) Power one motor for hold and test
-         */
+        // We've noticed the motors fighting themselves while holding (rigid tool end).
+        // Two ways to fix this I think:
+        //   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
+        //   2) Power one motor for hold and test
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
@@ -132,6 +155,13 @@ public class Arm extends BodyPart {
             armMotorLeft.setTargetPosition(posRight);
             armMotorRight.setPower(HOLD_POWER);
             armMotorLeft.setPower(NO_POWER);
+        }
+
+        // This is belt slip protection
+        if(position <= MIN_POS)
+        {
+            // TODO - If we are at ARM_IN and the motor ticks don't match, one of them slipped
+            // so we should reset the encoder counts here to reset for full extension
         }
 
         // I've stopped moving, tell the shoulder to recheck safety one last time
@@ -149,7 +179,7 @@ public class Arm extends BodyPart {
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 double power = gamepad.left_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    safeHold();
+                    safeHold(armMotorLeft.getCurrentPosition());
                     hold = true;
                 } else if (power < -TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver

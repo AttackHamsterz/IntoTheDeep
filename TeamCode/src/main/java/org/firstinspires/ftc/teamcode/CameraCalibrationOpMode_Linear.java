@@ -9,20 +9,10 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "Test: Camera Calibration", group = "Linear Opmode")
-public class CameraCalibrationOpMode_Linear extends LinearOpMode {
+public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
     HuskyLens huskyLens;
     ColorCamera colorCamera;
-    private DcMotor frontLeftDrive = null;
-    private DcMotor frontRightDrive = null;
-    private DcMotor rearLeftDrive = null;
-    private DcMotor rearRightDrive = null;
-    private DcMotor armMotorLeft = null;
-    private DcMotor armMotorRight = null;
-    private DcMotor shoulderMotor = null;
-    private Servo wristServo = null;
-    private CRServo leftHandServo = null;
-    private CRServo rightHandServo = null;
 
     // center of the screen
     public static final int CENTER_X = 160;
@@ -43,45 +33,9 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-// get the camera from the config
+        // get the camera from the hardware map
         huskyLens = hardwareMap.get(HuskyLens.class, "huskylens");
         colorCamera = new ColorCamera(huskyLens, "red");
-
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive"); //ch3
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive"); //ch2
-        rearLeftDrive = hardwareMap.get(DcMotor.class, "rearLeftDrive"); //ch1
-        rearRightDrive = hardwareMap.get(DcMotor.class, "rearRightDrive"); //ch0
-        armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor
-        armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor
-        shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor
-        wristServo = hardwareMap.get(Servo.class, "wristServo"); //ch0 expansion hub Servo
-        leftHandServo = hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Servo
-        rightHandServo = hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Servo
-
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rearRightDrive.setDirection(DcMotor.Direction.REVERSE);
-
-        armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        wristServo.setDirection(Servo.Direction.FORWARD);
-        leftHandServo.setDirection(CRServo.Direction.FORWARD);
-        rightHandServo.setDirection(CRServo.Direction.FORWARD);
-
-        shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        armMotorLeft.setTargetPosition(0);
-        armMotorRight.setTargetPosition(0);
-        shoulderMotor.setTargetPosition(0);
-
-        shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // check to see if the device is working
         if (!huskyLens.knock()) {
@@ -93,21 +47,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
         // start the color recognition algorithm
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
 
-        telemetry.update();
-        waitForStart();
-        telemetry.update();
-
-        // Threads
-        Motion motion = new Motion(frontLeftDrive, frontRightDrive, rearLeftDrive, rearRightDrive, gamepad1);
-        Arm arm = new Arm(armMotorLeft, armMotorRight, gamepad2, null);
-        Shoulder shoulder = new Shoulder(shoulderMotor, arm, gamepad2);
-        arm.setShoulder(shoulder);
-        Hand hand = new Hand(leftHandServo, rightHandServo, wristServo, gamepad2);
-
-        motion.start();
-        shoulder.start();
-        arm.start();
-        hand.start();
+        super.runOpMode();
 
         /*
         // Create a PID controller for the arm (shooting for 0 error in y)
@@ -252,17 +192,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
 
 
         }
-        motion.interrupt();
-        shoulder.interrupt();
-        arm.interrupt();
-        hand.interrupt();
-        try {
-            motion.join();
-            shoulder.join();
-            arm.join();
-            hand.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+        waitForCompletion();
     }
 }
