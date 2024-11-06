@@ -47,6 +47,11 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         // start the color recognition algorithm
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
 
+        // Attempt to get image data
+        // TODO - plug husky into any ic2 port except 0
+        byte[] data = huskyLens.getDeviceClient().read(0x30); // 0x30 is REQUEST_PHOTO, 0x31 is SEND_PHOTO, 0x38 is SEND_SCREENSHOT, 0x39 is SAVE_SCREENSHOT
+        telemetry.addData("Byte from REQUEST_PHOTO", data.length);
+
         super.runOpMode();
 
         /*
