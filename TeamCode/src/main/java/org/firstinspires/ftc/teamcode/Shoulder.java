@@ -42,6 +42,9 @@ public class Shoulder extends Thread {
     private double armRatio;
     private int MIN_POS;
 
+    public static void SAMPLE_HEIGHT_LOWER() {
+    }
+
     /**
      * Allows a user to set or unset the gamepad buttons
      * @param ignoreGamepad
