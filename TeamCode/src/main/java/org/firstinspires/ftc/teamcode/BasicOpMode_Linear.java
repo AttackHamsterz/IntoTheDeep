@@ -56,10 +56,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor frontLeftDrive = null;
-    private DcMotor frontRightDrive = null;
-    private DcMotor rearLeftDrive = null;
-    private DcMotor rearRightDrive = null;
+    //private DcMotor frontLeftDrive = null;
+    //private DcMotor frontRightDrive = null;
+    //private DcMotor rearLeftDrive = null;
+    //private DcMotor rearRightDrive = null;
     private DcMotor armMotorLeft = null;
     private DcMotor armMotorRight = null;
     private DcMotor shoulderMotor = null;
@@ -76,10 +76,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive"); //ch3
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive"); //ch2
-        rearLeftDrive = hardwareMap.get(DcMotor.class, "rearLeftDrive"); //ch1
-        rearRightDrive = hardwareMap.get(DcMotor.class, "rearRightDrive"); //ch0
+        //frontLeftDrive = hardwareMap.get(DcMotor.class, "frontLeftDrive"); //ch3
+        //frontRightDrive = hardwareMap.get(DcMotor.class, "frontRightDrive"); //ch2
+        //rearLeftDrive = hardwareMap.get(DcMotor.class, "rearLeftDrive"); //ch1
+        //rearRightDrive = hardwareMap.get(DcMotor.class, "rearRightDrive"); //ch0
         armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor
         armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor
         shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor
@@ -90,10 +90,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rearRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        //frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        //frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        //rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        //rearRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -140,10 +140,10 @@ public class BasicOpMode_Linear extends LinearOpMode {
             telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad1.right_stick_x, gamepad1.right_stick_y);
             telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad2.left_stick_x, gamepad2.left_stick_y);
             telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad2.right_stick_x, gamepad2.right_stick_y);
-            telemetry.addData("Front Left Motor", "(%7d)", frontLeftDrive.getCurrentPosition());
-            telemetry.addData("Front Right Motor", "(%7d)", frontRightDrive.getCurrentPosition());
-            telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
-            telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
+            //telemetry.addData("Front Left Motor", "(%7d)", frontLeftDrive.getCurrentPosition());
+            //telemetry.addData("Front Right Motor", "(%7d)", frontRightDrive.getCurrentPosition());
+            //telemetry.addData("Rear Left Motor", "(%7d)", rearLeftDrive.getCurrentPosition());
+            //telemetry.addData("Rear Right Motor", "(%7d)", rearRightDrive.getCurrentPosition());
             telemetry.addData("Shoulder Motor", "(%7d)", shoulderMotor.getCurrentPosition());
             telemetry.addData("Arm Counts Left", armMotorLeft.getCurrentPosition());
             telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
