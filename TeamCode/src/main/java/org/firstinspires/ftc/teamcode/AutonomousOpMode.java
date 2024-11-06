@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
 //extends standard setup op mode
@@ -40,12 +41,6 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                     @Override
                     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                         shoulder.setMode(Shoulder.Mode.HIGH_BAR);
-                        return false;
-                    }
-                },
-                new Action() {
-                    @Override
-                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                         arm.setPosition(0.9,1000);
                         sleep(500);
                         shoulder.dropSample();
@@ -68,8 +63,13 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                     @Override
                     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                         shoulder.setMode(Shoulder.Mode.SEARCH);
+                        arm.setPosition(0.5, 1000);
                         //hand.search();
                         //hand.pickup();
+                        shoulder.setMode(Shoulder.Mode.GROUND);
+                        sleep(200);
+                        hand.grab(500);
+                        sleep(500);
                         arm.gotoMin(0.5);
                         return false;
                     }
