@@ -9,7 +9,7 @@ public class Arm extends BodyPart {
     private static final double MIN_ARM_SPEED = -0.9;
     private static final double MAX_ARM_SPEED = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.4;
+    private static final double HOLD_POWER = 0.2;
     private static final double NO_POWER = 0.0;
 
     // Min and max pos of the arm
@@ -121,10 +121,18 @@ public class Arm extends BodyPart {
          *   2) Power one motor for hold and test
          */
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
-        armMotorRight.setTargetPosition(posLeft);
-        armMotorLeft.setTargetPosition(posLeft);
-        armMotorRight.setPower(NO_POWER);
-        armMotorLeft.setPower(HOLD_POWER);
+        int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
+        if (posLeft < posRight) {
+            armMotorRight.setTargetPosition(posLeft);
+            armMotorLeft.setTargetPosition(posLeft);
+            armMotorRight.setPower(NO_POWER);
+            armMotorLeft.setPower(HOLD_POWER);
+        } else {
+            armMotorRight.setTargetPosition(posRight);
+            armMotorLeft.setTargetPosition(posRight);
+            armMotorRight.setPower(HOLD_POWER);
+            armMotorLeft.setPower(NO_POWER);
+        }
 
         // I've stopped moving, tell the shoulder to recheck safety one last time
         if (shoulder != null) shoulder.setHold(false);
