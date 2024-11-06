@@ -4,50 +4,94 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
-public class Shoulder extends Thread {
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class Shoulder extends BodyPart {
+
+    // Modes allow the shoulder to adjust to maintain constant heights from the ground.
+    // Mode also provides a valid index into our tick arrays
+    // Reminder - moving the shoulder with the joystick will cancel the mode
+    public static enum Mode {
+        GROUND(0),         // Tool is on the ground in this mode
+        SEARCH(1),         // Tool is at search height in this mode
+        LOW_BAR(2),        // Tool will place sample on the low bar in this mode
+        HIGH_BAR(3),       // Tool will place sample on the high bar in this mode
+        LOW_BUCKET(4),     // Tool will place sample in the low bucket in this mode
+        HIGH_BUCKET(5),    // Tool will place sample in high bucket
+        HANG(6),           // Straight Up
+        NONE(7);           // Tool can do whatever it wants in this mode
+
+        private final int value;
+        private Mode(int value){
+            this.value = value;
+        }
+        public int value(){
+            return value;
+        }
+        public int armInPos(){
+            return ARM_IN_POS.get(value);
+        }
+        public int armOutPos(){
+            return ARM_OUT_POS.get(value);
+        }
+    }
+
+    // Shoulder positions for each mode when the arm is all the way in
+    public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
+            10,   // Ground
+            535,  // Search
+            1420, // Low Bar
+            2618, // High Bar
+            2894, // Low Bucket
+            3059, // High Bucket
+            3470, // Hang
+            10    // None is like ground
+    ));
+
+    // Shoulder positions for each mode when the arm is all the way out
+    public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
+            680,  // Ground
+            900,  // Search
+            1300, // Low Bar
+            1650, // High Bar
+            1830, // Low Bucket
+            3059, // High Bucket
+            3470, // Hang
+            680   // None is like ground
+    ));
+
+    // Number of ticks to latch a sample onto a bar
+    public static int SAMPLE_HOOK_DROP = 500;
+
     //Variables for shoulder speed
-    private static final double MIN_SHOULDER_SPEED = -0.5;
-    private static final double MAX_SHOULDER_SPEED = 1;
+    private static final double MIN_SHOULDER_POWER = -0.5;
+    private static final double MAX_SHOULDER_POWER = 0.9;
+    private static final double TRIM_POWER = 0.15;
+    private static final double HOLD_POWER = 0.1;
+    private static final double MODE_POWER = 0.6;
+    private static final double NO_POWER = 0.0;
 
-    //Setting up variables for min and max pos
-    public int MIN_POS;
-    public int MAX_POS;
-
-    //Pre-set min and max pos based on if the arm is in or out
-    public static int MIN_POS_ARM_IN = 0;
-    public static int MAX_POS_ARM_IN = -1400;
-    // change later
-    public static int MIN_POS_ARM_OUT = -335;
-    public static int MAX_POS_ARM_OUT = -1400;
-
-    public static int HANG_HEIGHT_LOWER;
-    public static int HANG_HEIGHT_UPPER;
-
-    //Bucket Heights
-    public static int LOWER_BUCKET = -844;
-    public static int UPPER_BUCKET = -1242;
-
-    //Other Heights
-    public static int SEARCH_HEIGHT = -187;
-
-    //Amount arm will move for manual adjustments
-    //public static int SHOULDER_MANUAL = 100;
+    // Pre-set min and max pos based on if the arm is in or out
+    // TODO - phase these out for mode values
+    public static int MIN_POS_ARM_IN = ARM_IN_POS.get(Mode.SEARCH.value());
+    public static int MIN_POS_ARM_OUT = ARM_OUT_POS.get(Mode.SEARCH.value());
+    public static int MAX_POS = ARM_IN_POS.get(Mode.HANG.value());
+    public static double DELTA_MIN_POS_ARM = (double)(MIN_POS_ARM_OUT - MIN_POS_ARM_IN);
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
     private final Arm arm;
-    private final Gamepad gamepad;
-    //Var for motor counts
-    private int totalCounts;
-    private boolean ignoreGamepad = false;
-    private boolean isMoving = false;
-    private int targetPos = 0;
+
+    // Var for motor counts
     private boolean hold = false;
 
-    public void ignoreGamepad () {
-        ignoreGamepad = true;
-    }
+    // Values for arm ratio and floor protection
+    private double armRatio;
+    private int MIN_POS;
 
+    // Mode for the shoulder
+    private Mode mode;
 
     /**
      * Constructor for the shoulder
@@ -55,106 +99,146 @@ public class Shoulder extends Thread {
      * @param shoulderMotor the motor for the shoulder
      * @param gamepad       the gamepad used for controlling the shoulder
      */
-    //Add in arm later
     public Shoulder(DcMotor shoulderMotor, Arm arm, Gamepad gamepad) {
         this.shoulderMotor = shoulderMotor;
         this.arm = arm;
         this.gamepad = gamepad;
         this.shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        this.mode = Mode.NONE;
+    }
 
+    @Override
+    public int getCurrentPosition() {
+        return shoulderMotor.getCurrentPosition();
+    }
+
+    @Override
+    public void safeHold()
+    {
+        // We've noticed the motors consuming lots of power while holding.  This should
+        // lower the power when we don't need to move.
+        shoulderMotor.setTargetPosition(shoulderMotor.getCurrentPosition());
+        shoulderMotor.setPower(HOLD_POWER);
+
+        // Cancel any pending safeHolds
+        protectionThread.interrupt();
     }
 
     /**
-     * Function to get motor counts
-     *
-     * @return total counts
+     * This sets hold externally (forces a new hold value if false)
+     * @param hold
      */
-    protected int getShoulderCounts() {
-        return totalCounts;
-    }
-
     public void setHold(boolean hold) {
         this.hold = hold;
     }
 
     /**
-     * Gets the ratio of shoulder base off its position
+     * This lets us tell the shoulder what our target arm ratio is so that ground protection
+     * can pre-emptively move.
+     * @param targetArmRatio
+     */
+    public void targetArmRatio(double targetArmRatio)
+    {
+        // Ensure arm ratio is in a valid range
+        armRatio = Range.clip(targetArmRatio, 0, 1.0);
+
+        // Convert target arm ratio to the new shoulder position
+        MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
+
+        // Move the shoulder if necessary
+        if(MIN_POS > shoulderMotor.getCurrentPosition())
+            setPosition(shoulderMotor.getPower(), MIN_POS);
+    }
+
+    /**
+     * Gets the ratio of shoulder position 0.0 is floor, 1.0 is straight up
+     * Ratio will change based on MIN_POS set in while loop
      *
      * @return double between 0.0-1.0
      */
-
     public double getShoulderRatio() {
         //Sets a position variable of the robot's current position
         double pos = shoulderMotor.getCurrentPosition();
-        //Checks to see if the arm is between 0 and -225
-        if (pos > MIN_POS_ARM_OUT) {
-            //Returns a double between 0.0-1.0 based on where the shoulder is between 0 and -225
-            return Range.clip(((double) pos - MIN_POS_ARM_IN) / ((double) MIN_POS_ARM_OUT - (double) MIN_POS_ARM_IN), 0.0, 1.0);
-            //Checks to see if the arm is between -2417 and -2657
-        } else if (pos < MAX_POS_ARM_OUT) {
-            //Returns a double between 0.0-1.0 based on where the shoulder is between -2417 and -2657
-            return Range.clip(((double) pos - MAX_POS_ARM_IN) / ((double) MAX_POS_ARM_OUT - (double) MAX_POS_ARM_IN), 0.0, 1.0);
-        } else {
-            //Returns 1.0 if the arm is outside the prior two ranges
-            return 1.0;
-        }
-    }
-
-    public double shoulderAngle() {
-        return (double) shoulderMotor.getCurrentPosition() / MAX_POS_ARM_IN;
+        return Range.clip( (double)(shoulderMotor.getCurrentPosition() - MIN_POS) / (double)(MAX_POS - MIN_POS), 0.0, 1.0);
     }
 
     /**
      * Sets the position of the shoulder
      *
-     * @param power    double, power of the shoulder motor
-     * @param position int, position/angle to set the shoulder to
+     * @param power    power of the shoulder motor
+     * @param position position to set the shoulder to
      */
-    public void setPosition(double power, int position) {
-        //Sets the power to the inputted power, clips the power to make sure it is within 0-1
-        power = Range.clip(power, MIN_SHOULDER_SPEED, MAX_SHOULDER_SPEED);
-        //Sets the position of the shoulder
-        shoulderMotor.setTargetPosition(Range.clip(position, MIN_POS_ARM_IN, MIN_POS_ARM_IN));
-        shoulderMotor.setPower(power);
-    }
+    public void setPosition(double power, int position)
+    {
+        // Sets the power to the inputted power, clips the power
+        power = Range.clip(power, MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
+        position = Range.clip(position, MIN_POS, MAX_POS);
 
-    public  void  setShoulderPosition(double power, int position) {
-        //Sets the power to the inputted power, clips the power to make sure it is within 0-1
-        power = Range.clip(power, MIN_SHOULDER_SPEED, MAX_SHOULDER_SPEED);
-        //Sets the position of the shoulder
+        // Sets the position of the shoulder
         shoulderMotor.setTargetPosition(position);
         shoulderMotor.setPower(power);
+
+        // Generate a new motor protection thread
+        protectMotors(position);
     }
 
-
+    public void setMode(Mode mode)
+    {
+        this.mode = mode;
+    }
 
     @Override
     public void run() {
         while (!isInterrupted()) {
-            //Sets the min pos to an int value based on how far the arm is out
-            MIN_POS = (int) Math.round(arm.getArmRatio() * (double)(MIN_POS_ARM_OUT-MIN_POS_ARM_IN)) + SEARCH_HEIGHT;
-            //Sets the max pos to an int value based on how far the arm is out
-            MAX_POS = MAX_POS_ARM_OUT;
+            // Always get the current arm ratio (use this to maintain heights given arm reach)
+            armRatio = arm.getArmRatio();
 
-            float power = gamepad.right_stick_y;
+            // Ground protection, sets min shoulder value based on how far the arm is out
+            MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
 
-            if (!hold && Math.abs(power) < 0.15) {
-                shoulderMotor.setPower(0.75);
-                shoulderMotor.setTargetPosition(Range.clip(shoulderMotor.getCurrentPosition(), MAX_POS, MIN_POS));
-                hold = true;
-            } else if (power < -0.15) {
-                shoulderMotor.setPower(Math.abs(power));
-                shoulderMotor.setTargetPosition(MAX_POS);
-                hold = false;
-                totalCounts = shoulderMotor.getCurrentPosition();
-            } else if (power > 0.15) {
-                shoulderMotor.setPower(power);
-                shoulderMotor.setTargetPosition(MIN_POS);
-                hold = false;
-                totalCounts = shoulderMotor.getCurrentPosition();
+            // Check gamepad for user input (any input cancels the mode)
+            if(!ignoreGamepad) {
+                float power = gamepad.right_stick_y;
+                if (!hold && Math.abs(power) <= TRIM_POWER) {
+                    safeHold();
+                    hold = true;
+                } else if (power < -TRIM_POWER) {
+                    // Calling setPosition here adds the motor protection, even if the driver
+                    // holds the shoulder stick down forever
+                    setPosition(Math.abs(power), MIN_POS);
+                    hold = false;
+                    mode = Mode.NONE;
+                } else if (power > TRIM_POWER) {
+                    // Calling setPosition here adds the motor protection, even if the driver
+                    // holds the shoulder stick up forever
+                    setPosition(power, MAX_POS);
+                    hold = false;
+                    mode = Mode.NONE;
+                }
+                if(gamepad.a)
+                    mode = Mode.SEARCH;
+                else if(gamepad.b)
+                    mode = Mode.GROUND;
+                else if(gamepad.x)
+                    mode = Mode.HIGH_BAR;
+                else if(gamepad.y)
+                    mode = Mode.LOW_BUCKET;
             }
 
-        }
+            // Always satisfy the mode if no buttons were pressed
+            if(mode != Mode.NONE)
+            {
+                int newPos = (int)Math.round(armRatio * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
+                if(Math.abs(newPos - getCurrentPosition()) > CLOSE_ENOUGH_TICKS)
+                    setPosition(MODE_POWER, newPos);
+            }
 
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(LOOP_PAUSE_MS);
+            } catch (InterruptedException e) {
+                interrupt();
+            }
+        }
     }
 }

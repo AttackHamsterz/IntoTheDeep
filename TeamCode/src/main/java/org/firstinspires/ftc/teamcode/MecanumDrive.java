@@ -35,6 +35,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -52,7 +53,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class MecanumDrive extends Thread{
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
@@ -60,7 +61,7 @@ public final class MecanumDrive {
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
                 RevHubOrientationOnRobot.LogoFacingDirection.UP;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
+                RevHubOrientationOnRobot.UsbFacingDirection.LEFT;
 
         // drive model parameters
         public double inPerTick = 0.0029595430465536;
@@ -114,6 +115,7 @@ public final class MecanumDrive {
 
     public final Localizer localizer;
     public Pose2d pose;
+    private Gamepad gamepad;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -206,8 +208,9 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, Gamepad gamepad) {
         this.pose = pose;
+        this.gamepad = gamepad;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
@@ -217,10 +220,10 @@ public final class MecanumDrive {
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        leftFront = hardwareMap.get(DcMotorEx.class, "frontLeftDrive");
+        leftBack = hardwareMap.get(DcMotorEx.class, "rearLeftDrive");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rearRightDrive");
+        rightFront = hardwareMap.get(DcMotorEx.class, "frontRightDrive");
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -486,5 +489,19 @@ public final class MecanumDrive {
                 defaultTurnConstraints,
                 defaultVelConstraint, defaultAccelConstraint
         );
+    }
+
+    @Override
+    public void run() {
+        while (!isInterrupted()  && gamepad != null) {
+            setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(
+                            -gamepad.left_stick_y,
+                            -gamepad.left_stick_x
+                    ),
+                    -gamepad.right_stick_x
+            ));
+            updatePoseEstimate();
+        }
     }
 }
