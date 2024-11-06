@@ -95,14 +95,40 @@ public class AutonomousBlueRight extends LinearOpMode {
 
             );
 
-            // This action will determine where we are (might check apiril tags as well)
-            // Then move to grab another floor sample, finally stowing for travel.
-            ParallelAction floorSample = new ParallelAction(
+        }
+
+
+        // This action will determine where we are (might check apiril tags as well)
+        // Then move to grab another floor sample, finally stowing for travel.
+        ParallelAction floorSample = new ParallelAction(
+                drive.actionBuilder(drive.pose)
+                        .lineToX()
+                        .build(),
+                new Action() {
+                    @Override
+                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                        //fingers.search();
+                        //fingers.pickup();
+                        //arms.setPosition(stow);
+                        return false;
+                        }
+                    }
 
             );
 
             // Determine where we are and how we have to move to park correctly
             ParallelAction park = new ParallelAction(
+                    drive.actionBuilder(drive.pose)
+                        //find position
+                        //drive to the new position
+                    .build(),
+                    new Action() {
+                        @Override
+                        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                            //arm in stow position
+                            return false;
+                        }
+                    }
 
             );
 
