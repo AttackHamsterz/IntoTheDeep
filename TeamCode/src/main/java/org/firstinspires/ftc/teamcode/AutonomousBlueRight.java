@@ -95,41 +95,40 @@ public class AutonomousBlueRight extends LinearOpMode {
 
             );
 
-        }
-
-
-        // This action will determine where we are (might check apiril tags as well)
-        // Then move to grab another floor sample, finally stowing for travel.
-        ParallelAction floorSample = new ParallelAction(
-                drive.actionBuilder(drive.pose)
-                        .lineToX()
+            // This action will determine where we are (might check apiril tags as well)
+            // Then move to grab another floor sample, finally stowing for travel.
+            ParallelAction floorSample = new ParallelAction(
+                    drive.actionBuilder(drive.pose)
+                        //movement code
+                        //moving to the three lines with the samples
+                        //may just be turning with no movement
                         .build(),
-                new Action() {
-                    @Override
-                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                        //fingers.search();
-                        //fingers.pickup();
-                        //arms.setPosition(stow);
-                        return false;
+                    new Action() {
+                        @Override
+                        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                            //arms.setPosition(out);
+                            //fingers.search();
+                            //fingers.pickup();
+                            //arms.setPosition(stow);
+                            return false;
                         }
                     }
-
             );
 
             // Determine where we are and how we have to move to park correctly
             ParallelAction park = new ParallelAction(
                     drive.actionBuilder(drive.pose)
-                        //find position
-                        //drive to the new position
-                    .build(),
+                            //movement code
+                            //moving to the three lines with the samples
+                            //may just be turning with no movement
+                            .build(),
                     new Action() {
                         @Override
                         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                            //arm in stow position
+                            //shoulder.setPosition(hang);
                             return false;
                         }
                     }
-
             );
 
             waitForStart();
