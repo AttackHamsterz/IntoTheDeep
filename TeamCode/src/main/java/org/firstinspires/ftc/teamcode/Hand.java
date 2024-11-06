@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -14,13 +13,13 @@ public class Hand extends Thread{
     private static final double MIN_POWER = 0.0;  // Full reverse power
     private static final double MAX_POWER = 1.0;  // Full forward power
     private static final double GRAB_POWER = 1.0;
-    private static final double SPIN_POWER = 0.4; // Amount to add or remove from no-power [0.0,0.5]
+    private static final double SPIN_POWER = 0.8; // Amount to add or remove from no-power
     private static final double NO_POWER = 0.0; // Continous servo stop
     private static final double RELEASE_POWER = 0.5;
 
     private static final double MIN_TRIGGER = 0.1;
     private static final double MANUAL_SPIN_INCREMENT = 0.05;
-    private static final long INTAKE_MS = 200;
+    private static final long INTAKE_MS = 100;
     private static final long RELEASE_MS = 500;
     private static final long SPIN_MS = 400;
 
@@ -154,9 +153,9 @@ public class Hand extends Thread{
     public void rotate(long ms, boolean left)
     {
         if(left)
-            startServosForTime(NO_POWER + SPIN_POWER, NO_POWER /*+ SPIN_POWER*/, ms);
+            startServosForTime(NO_POWER - SPIN_POWER, NO_POWER - SPIN_POWER / 2, ms);
         else
-            startServosForTime(NO_POWER /*- SPIN_POWER*/, NO_POWER - SPIN_POWER, ms);
+            startServosForTime(NO_POWER + SPIN_POWER / 2, NO_POWER + SPIN_POWER, ms);
     }
 
     /**
@@ -215,11 +214,17 @@ public class Hand extends Thread{
                 else if (gamepad.dpad_right) {
                     wrist.setPosition(Range.clip(wrist.getPosition()+MANUAL_SPIN_INCREMENT, MIN_POS, MAX_POS));
                 }
+
+                // If the user pressed a button for hang or bucket, get sample ready
+                if(gamepad.x)
+                    hangSample();
+                else if(gamepad.y)
+                    bucket();
             }
 
             // Short sleep to keep this loop from saturating
             try {
-                sleep(50);
+                sleep(BodyPart.LOOP_PAUSE_MS);
             } catch (InterruptedException e) {
                 interrupt();
             }

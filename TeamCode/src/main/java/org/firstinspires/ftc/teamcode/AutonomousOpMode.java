@@ -31,7 +31,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
    //Add color as a paramater later
    protected void setup(HardwareMap hardwareMap, START_POS startPos) {
        //variable setup
-       drive = new MecanumDrive(hardwareMap, startPose);
+       drive = new MecanumDrive(hardwareMap, startPose, gamepad1);
        this.startPos = startPos;
 
        //Class Setup

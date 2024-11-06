@@ -4,36 +4,25 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
-public class Arm extends Thread{
-    // Min and max speed of the arm
+public class Arm extends BodyPart {
+    // Arm speeds
     private static final double MIN_ARM_SPEED = -0.9;
     private static final double MAX_ARM_SPEED = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.4;
+    private static final double HOLD_POWER = 0.2;
+    private static final double NO_POWER = 0.0;
 
     // Min and max pos of the arm
-    private static final int MIN_POS = 0;
-    private static final int MAX_POS = 1900;
+    public static final int MIN_POS = 0;
+    public static final int MAX_POS = 1950;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
     private final DcMotor armMotorRight;
 
-    // Var for the shoulder and gamepad for the constructor
+    // Var for the shoulder
     private Shoulder shoulder;
-    private final Gamepad gamepad;
-
-    private boolean ignoreGamepad = false;
     private boolean hold = false;
-
-    /**
-     * Allows a user to toggle using the gamepad
-     * @param ignoreGamepad true to ingonre gamepad inputs
-     */
-    public void ignoreGamepad(boolean ignoreGamepad)
-    {
-        this.ignoreGamepad = ignoreGamepad;
-    }
 
     /**
      * Constructor for the arm
@@ -50,9 +39,14 @@ public class Arm extends Thread{
         this.armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
+    @Override
+    public int getCurrentPosition() {
+        return armMotorLeft.getCurrentPosition();
+    }
+
     /**
      * Sets the value of the shoulder for initialization
-     * @param shoulder the shoulder motor used
+     * @param shoulder the shoulder object used
      */
     public void setShoulder(Shoulder shoulder) {
         this.shoulder = shoulder;
@@ -69,14 +63,17 @@ public class Arm extends Thread{
 
     public void gotoMin(double power)
     {
-        setArmPosition( power, MIN_POS);
+        setPosition(power, MIN_POS);
     }
 
     public void gotoMax(double power)
     {
-        setArmPosition(power, MAX_POS);
+        setPosition(power, MAX_POS);
     }
 
+    /**
+     * Completely de-power the arm motors (gravity takes over)
+     */
     public void halt()
     {
         armMotorLeft.setPower(0);
@@ -88,7 +85,7 @@ public class Arm extends Thread{
      * @param power the power of the arm's movements
      * @param position arm position
      */
-    public void setArmPosition(double power, int position) {
+    public void setPosition(double power, int position) {
         // Ensure inputs are valid
         power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
         position = Range.clip(position, MIN_POS, MAX_POS);
@@ -99,33 +96,15 @@ public class Arm extends Thread{
         armMotorLeft.setPower(power);
         armMotorRight.setPower(power);
 
-        // Tell the shoulder to update - TODO this should just tell it the new MIN_POS if necessary
-        if (shoulder != null) shoulder.setHold(false);
+        // Generate a new motor protection thread
+        protectMotors(position);
+
+        // Tell the shoulder to update for ground protection
+        if (shoulder != null) shoulder.targetArmRatio((double)(position - MIN_POS) / (double)(MAX_POS - MIN_POS));
     }
 
     /**
-     * Sets the position of the arm based on a value 0.0-1.0
-     * @param power the power of the arm
-     * @param position a value 0.0-1.0 which determines the position
-     */
-    public void setArmPosition(double power, double position) {
-        // Make sure inputs are valid
-        power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
-        position = Range.clip(position, 0.0, 1.0);
-
-        // Calculate new position, set it and power the motors
-        int pos = Range.clip((int)Math.round(position * (MAX_POS - MIN_POS)) + MIN_POS, MIN_POS, MAX_POS);
-        armMotorLeft.setTargetPosition(pos);
-        armMotorRight.setTargetPosition(pos);
-        armMotorLeft.setPower(power);
-        armMotorRight.setPower(power);
-
-        // Tell the shoulder to update - TODO this should just tell it the new MIN_POS if necessary
-        if (shoulder != null) shoulder.setHold(false);
-    }
-
-    /**
-     * This sets hold externally (forces a new hold value if false)
+     * This sets hold externally (forces a new hold if false)
      * @param hold
      */
     public void setHold(boolean hold) {
@@ -133,40 +112,61 @@ public class Arm extends Thread{
     }
 
     @Override
+    public void safeHold()
+    {
+        /**
+         * We've noticed the motors fighting themselves while holding (rigid tool end).
+         * Two ways to fix this I think:
+         *   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
+         *   2) Power one motor for hold and test
+         */
+        int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
+        int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
+        if (posLeft < posRight) {
+            armMotorRight.setTargetPosition(posLeft);
+            armMotorLeft.setTargetPosition(posLeft);
+            armMotorRight.setPower(NO_POWER);
+            armMotorLeft.setPower(HOLD_POWER);
+        } else {
+            armMotorRight.setTargetPosition(posRight);
+            armMotorLeft.setTargetPosition(posRight);
+            armMotorRight.setPower(HOLD_POWER);
+            armMotorLeft.setPower(NO_POWER);
+        }
+
+        // I've stopped moving, tell the shoulder to recheck safety one last time
+        if (shoulder != null) shoulder.setHold(false);
+
+        // Cancel any pending safeHolds
+        protectionThread.interrupt();
+    }
+
+    @Override
     public void run() {
         while (!isInterrupted()) {
             if(!ignoreGamepad)
             {
-                // Sets the arm speed to a number -1 through 1 based on the left stick's position
+                // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 double power = gamepad.left_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    int pos = Range.clip(armMotorLeft.getCurrentPosition(),MIN_POS,MAX_POS);
-                    armMotorLeft.setTargetPosition(pos);
-                    armMotorRight.setTargetPosition(pos);
-                    armMotorLeft.setPower(HOLD_POWER);
-                    armMotorRight.setPower(HOLD_POWER);
+                    safeHold();
                     hold = true;
-                    if (shoulder != null) shoulder.setHold(false);
                 } else if (power < -TRIM_POWER) {
-                    armMotorLeft.setTargetPosition(MIN_POS);
-                    armMotorRight.setTargetPosition(MIN_POS);
-                    armMotorLeft.setPower(Math.abs(power));
-                    armMotorRight.setPower(Math.abs(power));
+                    // Calling setArmPosition here adds the motor protection, even if the driver
+                    // holds the retraction stick down forever
+                    setPosition(Math.abs(power), MIN_POS);
                     hold = false;
-                    if (shoulder != null) shoulder.setHold(false);
                 } else if (power > TRIM_POWER) {
-                    armMotorLeft.setTargetPosition(MAX_POS);
-                    armMotorRight.setTargetPosition(MAX_POS);
-                    armMotorLeft.setPower(power);
-                    armMotorRight.setPower(power);
+                    // Calling setArmPosition here adds the motor protection, even if the driver
+                    // holds the extension stick up forever
+                    setPosition(power, MAX_POS);
                     hold = false;
-                    if (shoulder != null) shoulder.setHold(false);
                 }
             }
 
             // Short sleep to keep this loop from saturating
             try {
-                sleep(50);
+                sleep(LOOP_PAUSE_MS);
             } catch (InterruptedException e) {
                 interrupt();
             }
