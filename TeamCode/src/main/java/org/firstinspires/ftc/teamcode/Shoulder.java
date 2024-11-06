@@ -23,6 +23,7 @@ public class Shoulder extends BodyPart {
         NONE(7);           // Tool can do whatever it wants in this mode
 
         private final int value;
+
         private Mode(int value){
             this.value = value;
         }

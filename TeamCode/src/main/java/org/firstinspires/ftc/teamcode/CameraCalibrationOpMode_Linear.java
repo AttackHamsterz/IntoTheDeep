@@ -29,8 +29,12 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
     public static final int CENTER_Y = 180;
     public static final int CLOSE_ENOUGH = 5;
 
+    // y=mx+b where y is inches and x is the y pixel location
+    private static final double M = -11.429;
+    private static final double B = 2000.0;
+
     private static final double INCHES_PER_PIXEL_Y = (double) 19 / 240;
-    private static final double ROTATIONS_PER_INCH_Y = (double) Arm.MAX_POS/16.5;
+    private static final double ROTATIONS_PER_INCH_Y = (double) Arm.MAX_POS/20.0;
 
     private HuskyLens.Block closestBlock;
     private int closestBlockX;
@@ -101,7 +105,7 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
         Hand hand = new Hand(leftHandServo, rightHandServo, wristServo, gamepad2);
 
         motion.start();
-        //shoulder.start();
+        shoulder.start();
         arm.start();
         hand.start();
 
@@ -119,7 +123,8 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
          */
 
         // Put the shoulder into search height position with very little holding power
-        shoulder.setPosition(0.3, Shoulder.Mode.SEARCH.armInPos());
+        shoulder.setMode(Shoulder.Mode.SEARCH);
+        //shoulder.setPosition(0.3, Shoulder.Mode.SEARCH.armInPos());
 
         // We could also do this by mapping the error we measure directly into
         // a correction.  That may be good enough instead of needing PIDs.
@@ -188,7 +193,12 @@ public class CameraCalibrationOpMode_Linear extends LinearOpMode {
                             // we actually need to motion forward/backward
 
                             // Drive the arm while there is still error
-                            int ticks = (int)Math.round(errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y);
+                            //int ticks = (int)Math.round(errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y);
+                            int ticks = (int) Math.round((blockCenterY * M + B));
+                            telemetry.addData("blockCenterY", blockCenterY);
+                            telemetry.addData("M", M);
+                            telemetry.addData("Mx", blockCenterY*M);
+                            telemetry.addData("B", B);
                             telemetry.addData("ticks", ticks);
                             telemetry.addData("Arm Pos", arm.getCurrentPosition());
                             telemetry.update();
