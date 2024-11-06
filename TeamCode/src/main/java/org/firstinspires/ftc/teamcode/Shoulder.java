@@ -39,24 +39,24 @@ public class Shoulder extends BodyPart {
 
     // Shoulder positions for each mode when the arm is all the way in
     public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
-            10,   // Ground
-            535,  // Search
-            1420, // Low Bar
-            2618, // High Bar
-            2894, // Low Bucket
-            3059, // High Bucket
-            3470, // Hang
+            143,   // Ground
+            543,  // Search
+            1421, // Low Bar
+            2609, // High Bar
+            2889, // Low Bucket
+            3102, // High Bucket
+            3296, // Hang
             10    // None is like ground
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
-            680,  // Ground
-            900,  // Search
-            1300, // Low Bar
-            1650, // High Bar
-            1830, // Low Bucket
-            3059, // High Bucket
+            500,  // Ground
+            685,  // Search
+            1136, // Low Bar
+            1752, // High Bar
+            1839, // Low Bucket
+            3102, // High Bucket
             3470, // Hang
             680   // None is like ground
     ));
@@ -74,8 +74,8 @@ public class Shoulder extends BodyPart {
 
     // Pre-set min and max pos based on if the arm is in or out
     // TODO - phase these out for mode values
-    public static int MIN_POS_ARM_IN = ARM_IN_POS.get(Mode.SEARCH.value());
-    public static int MIN_POS_ARM_OUT = ARM_OUT_POS.get(Mode.SEARCH.value());
+    public static int MIN_POS_ARM_IN = ARM_IN_POS.get(Mode.GROUND.value());
+    public static int MIN_POS_ARM_OUT = ARM_OUT_POS.get(Mode.GROUND.value());
     public static int MAX_POS = ARM_IN_POS.get(Mode.HANG.value());
     public static double DELTA_MIN_POS_ARM = (double)(MIN_POS_ARM_OUT - MIN_POS_ARM_IN);
 

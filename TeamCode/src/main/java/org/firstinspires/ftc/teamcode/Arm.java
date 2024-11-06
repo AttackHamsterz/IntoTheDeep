@@ -14,7 +14,7 @@ public class Arm extends BodyPart {
 
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
-    public static final int MAX_POS = 1950;
+    public static final int MAX_POS = 2000;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
