@@ -32,12 +32,12 @@ public class AutonomousBlueRight extends LinearOpMode {
             // while the fingers release the sample.
             ParallelAction sampleDrop = new ParallelAction(
                     drive.actionBuilder(beginPose)
-                            .lineToX(20)
+                            .lineToX(20.5)
                             .build(),
                     new Action() {
                         @Override
                         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                            //Shoulder.SAMPLE_HEIGHT_UPPER();
+                            //Shoulder.MODE();
                             return false;
                         }
                     },

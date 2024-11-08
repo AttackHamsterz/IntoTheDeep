@@ -32,12 +32,12 @@ public class AutonomousBlueLeft extends LinearOpMode {
             // while the fingers release the sample.
             ParallelAction sampleDrop = new ParallelAction(
                     drive.actionBuilder(beginPose)
-                            .lineToX(20)
+                            .lineToX(20.5)
                             .build(),
                     new Action() {
                         @Override
                         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                            //Shoulder.SAMPLE_HEIGHT_UPPER();
+                            //Shoulder.set_mode();
                             return false;
                         }
                     },
@@ -79,7 +79,9 @@ public class AutonomousBlueLeft extends LinearOpMode {
             // It might make sense to stay out of our partners way by dropping in the lower bucket.
             ParallelAction toBucket = new ParallelAction(
                     drive.actionBuilder(drive.pose)
-                            //movement code
+                            //Turn 90 to the left
+                            //Drive to the bins (staying between the samples and the grids closest to wall)
+                            //Turn to face the bins
                             .build(),
                     new Action() {
                         @Override
@@ -99,9 +101,7 @@ public class AutonomousBlueLeft extends LinearOpMode {
             // Then move to grab another floor sample, finally stowing for travel.
             ParallelAction floorSample = new ParallelAction(
                     drive.actionBuilder(drive.pose)
-                            //movement code
-                            //moving to the three lines with the samples
-                            //may just be turning with no movement
+                            //turning 180 to face three samples
                             .build(),
                     new Action() {
                         @Override
@@ -118,9 +118,7 @@ public class AutonomousBlueLeft extends LinearOpMode {
             // Determine where we are and how we have to move to park correctly
             ParallelAction park = new ParallelAction(
                     drive.actionBuilder(drive.pose)
-                            //movement code
-                            //moving to the three lines with the samples
-                            //may just be turning with no movement
+                            //moving to the white triangle
                             .build(),
                     new Action() {
                         @Override
