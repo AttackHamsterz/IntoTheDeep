@@ -1,4 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-public class AutonomousRedLeft {
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
+@Autonomous(name = "Autonomous: Red Left", group = "Robot")
+public class AutonomousRedLeft extends AutonomousLeft {
+    @Override
+    public void runOpMode() throws InterruptedException {
+        setup(AutonomousOpMode.COLOR.RED, AutonomousOpMode.SIDE.LEFT);
+        super.runOpMode();
+    }
 }

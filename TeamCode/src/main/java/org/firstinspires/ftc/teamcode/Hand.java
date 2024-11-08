@@ -2,8 +2,11 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Hand extends Thread{
     private static final double MIN_POS = 0.0; // -90 degrees
@@ -32,20 +35,35 @@ public class Hand extends Thread{
 
     /**
      * Construct the hand with 3 servos and a gamepad
-     * @param left Left finger continuous running mode servo
-     * @param right Right finger continuous running mode servo
-     * @param wrist Wrist servo that rotates 0 to 180 with 90 as default
+     * @param hardwareMap map including hand parts
      * @param gamepad Tool gamepad
      */
-    public Hand(CRServo left, CRServo right, Servo wrist, Gamepad gamepad)
+    public Hand(HardwareMap hardwareMap, Gamepad gamepad)
     {
-        this.left = left;
-        this.right = right;
-        this.wrist = wrist;
-        this.wrist.setPosition(CTR_POS);
+        // Initial assignments
+        this.wrist = hardwareMap.get(Servo.class, "wristServo"); //ch0 expansion hub Servo
+        this.left = hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Servo
+        this.right = hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Servo
         this.gamepad = gamepad;
+
+        // Initial setup
+        this.wrist.setDirection(Servo.Direction.FORWARD);
+        this.left.setDirection(CRServo.Direction.FORWARD);
+        this.right.setDirection(CRServo.Direction.FORWARD);
+        this.wrist.setPosition(CTR_POS);
         this.ignoreGamepad = false;
         this.stopThread = new Thread();
+    }
+
+    /**
+     * Method adds important things to telemetry
+     * @param telemetry
+     */
+    public void debugTelemetry(Telemetry telemetry)
+    {
+        telemetry.addData("Wrist Position", wrist.getPosition());
+        telemetry.addData("Left Hand Power", left.getPower());
+        telemetry.addData("Right Hand Power", right.getPower());
     }
 
     /**
