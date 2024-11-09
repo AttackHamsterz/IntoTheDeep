@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +16,7 @@ public class Shoulder extends BodyPart {
     // Modes allow the shoulder to adjust to maintain constant heights from the ground.
     // Mode also provides a valid index into our tick arrays
     // Reminder - moving the shoulder with the joystick will cancel the mode
-    public static enum Mode {
+    public enum Mode {
         GROUND(0),         // Tool is on the ground in this mode
         SEARCH(1),         // Tool is at search height in this mode
         LOW_BAR(2),        // Tool will place sample on the low bar in this mode
@@ -23,7 +27,8 @@ public class Shoulder extends BodyPart {
         NONE(7);           // Tool can do whatever it wants in this mode
 
         private final int value;
-        private Mode(int value){
+
+        Mode(int value){
             this.value = value;
         }
         public int value(){
@@ -77,7 +82,7 @@ public class Shoulder extends BodyPart {
     public static int MIN_POS_ARM_IN = ARM_IN_POS.get(Mode.GROUND.value());
     public static int MIN_POS_ARM_OUT = ARM_OUT_POS.get(Mode.GROUND.value());
     public static int MAX_POS = ARM_IN_POS.get(Mode.HANG.value());
-    public static double DELTA_MIN_POS_ARM = (double)(MIN_POS_ARM_OUT - MIN_POS_ARM_IN);
+    public static double DELTA_MIN_POS_ARM = MIN_POS_ARM_OUT - MIN_POS_ARM_IN;
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
@@ -96,15 +101,39 @@ public class Shoulder extends BodyPart {
     /**
      * Constructor for the shoulder
      *
-     * @param shoulderMotor the motor for the shoulder
+     * @param hardwareMap map with shoulder parts
      * @param gamepad       the gamepad used for controlling the shoulder
      */
-    public Shoulder(DcMotor shoulderMotor, Arm arm, Gamepad gamepad) {
-        this.shoulderMotor = shoulderMotor;
+    public Shoulder(HardwareMap hardwareMap, Arm arm, Gamepad gamepad) {
+        // Assignments
+        shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor;
         this.arm = arm;
         this.gamepad = gamepad;
-        this.shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Setup
+        shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulderMotor.setTargetPosition(0);
+        shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.mode = Mode.NONE;
+    }
+
+    /**
+     * Method adds important things to telemetry
+     * @param telemetry place to put telemetry
+     */
+    public void debugTelemetry(Telemetry telemetry)
+    {
+        telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
+        telemetry.addData("Shoulder Ratio", getShoulderRatio());
+    }
+
+    /**
+     * Method to drop the shoulder to hook the sample onto the bar
+     */
+    public void dropSample()
+    {
+        setPosition(MODE_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
     }
 
     @Override
@@ -113,7 +142,7 @@ public class Shoulder extends BodyPart {
     }
 
     @Override
-    public void safeHold()
+    public void safeHold(int position)
     {
         // We've noticed the motors consuming lots of power while holding.  This should
         // lower the power when we don't need to move.
@@ -126,7 +155,7 @@ public class Shoulder extends BodyPart {
 
     /**
      * This sets hold externally (forces a new hold value if false)
-     * @param hold
+     * @param hold true externally forces us to hold
      */
     public void setHold(boolean hold) {
         this.hold = hold;
@@ -135,7 +164,7 @@ public class Shoulder extends BodyPart {
     /**
      * This lets us tell the shoulder what our target arm ratio is so that ground protection
      * can pre-emptively move.
-     * @param targetArmRatio
+     * @param targetArmRatio [0,1]
      */
     public void targetArmRatio(double targetArmRatio)
     {
@@ -159,7 +188,7 @@ public class Shoulder extends BodyPart {
     public double getShoulderRatio() {
         //Sets a position variable of the robot's current position
         double pos = shoulderMotor.getCurrentPosition();
-        return Range.clip( (double)(shoulderMotor.getCurrentPosition() - MIN_POS) / (double)(MAX_POS - MIN_POS), 0.0, 1.0);
+        return Range.clip( (pos - (double)MIN_POS) / (double)(MAX_POS - MIN_POS), 0.0, 1.0);
     }
 
     /**
@@ -200,7 +229,7 @@ public class Shoulder extends BodyPart {
             if(!ignoreGamepad) {
                 float power = gamepad.right_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    safeHold();
+                    safeHold(shoulderMotor.getCurrentPosition());
                     hold = true;
                 } else if (power < -TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver

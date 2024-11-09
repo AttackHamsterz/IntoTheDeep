@@ -22,6 +22,7 @@ public class ColorCamera extends LinearOpMode {
     public static final int CENTER_X = 180;
     public static final int CENTER_Y = 180;
 
+
     public ColorCamera(HuskyLens huskyLens, String colorExclude) {
         this.huskyLens = huskyLens;
         // sets the color that we are looking for

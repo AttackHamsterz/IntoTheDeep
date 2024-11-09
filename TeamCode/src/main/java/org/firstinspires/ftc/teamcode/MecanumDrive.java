@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
@@ -116,6 +117,7 @@ public final class MecanumDrive extends Thread{
     public final Localizer localizer;
     public Pose2d pose;
     private Gamepad gamepad;
+    private boolean ignoreGamepad;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -211,6 +213,7 @@ public final class MecanumDrive extends Thread{
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, Gamepad gamepad) {
         this.pose = pose;
         this.gamepad = gamepad;
+        this.ignoreGamepad = false;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
@@ -244,6 +247,17 @@ public final class MecanumDrive extends Thread{
         localizer =  new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
+    }
+
+    /**
+     * Method adds important things to telemetry
+     * @param telemetry
+     */
+    public void debugTelemetry(Telemetry telemetry)
+    {
+        telemetry.addData("Robot Position x", pose.position.x);
+        telemetry.addData("Robot Position y", pose.position.y);
+        telemetry.addData("Robot Heading (deg)", Math.toDegrees(pose.heading.toDouble()));
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -493,7 +507,7 @@ public final class MecanumDrive extends Thread{
 
     @Override
     public void run() {
-        while (!isInterrupted()  && gamepad != null) {
+        while (!isInterrupted()  && gamepad != null && !ignoreGamepad) {
             setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad.left_stick_y,
@@ -503,5 +517,14 @@ public final class MecanumDrive extends Thread{
             ));
             updatePoseEstimate();
         }
+    }
+
+    /**
+     * Externally disable the gamepad
+     * @param ignoreGamepad
+     */
+    public void setIgnoreGamepad(boolean ignoreGamepad)
+    {
+        this.ignoreGamepad = ignoreGamepad;
     }
 }

@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.util.Range;
 
 public abstract class BodyPart extends Thread{
     // Gamepad variables
@@ -26,20 +25,21 @@ public abstract class BodyPart extends Thread{
     /**
      * This method should put all motors in this body part into a safe hold mode that uses low
      * power.  It's up to each body part to do that for itself.
+     * @param position Tasked position for use in the setHold method
      */
-    public abstract void safeHold();
+    public abstract void safeHold(int position);
 
     /**
-     * Get the current body part position for use in safing motors.
+     * Get the current body part position for use in safe-ing motors.
      * @return the position in ticks
      */
     public abstract int getCurrentPosition();
 
     /**
      * Allows a user to toggle using the gamepad
-     * @param ignoreGamepad true to ingonre gamepad inputs
+     * @param ignoreGamepad true to ignore gamepad inputs
      */
-    public void ignoreGamepad(boolean ignoreGamepad)
+    public void setIgnoreGamepad(boolean ignoreGamepad)
     {
         this.ignoreGamepad = ignoreGamepad;
     }
@@ -59,8 +59,8 @@ public abstract class BodyPart extends Thread{
             try{
                 while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
                     sleep(MOTOR_CHECK_PERIOD_MS);
-                };
-                safeHold();
+                }
+                safeHold(targetPosition);
             } catch (InterruptedException e) {
             }
         });
