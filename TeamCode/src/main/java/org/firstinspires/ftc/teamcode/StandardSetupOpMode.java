@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "Robot Setup Super Class", group = "Robot")
@@ -17,16 +19,23 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Hand hand;
     // TODO - add camera here
     protected boolean ignoreGamepad = false;
+    protected final Pose2d startPose = new Pose2d(0,0,0);
+
+    protected RevBlinkinLedDriver blinkin;
 
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
-        legs = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), gamepad1);
+        legs = new MecanumDrive(hardwareMap, startPose, gamepad1);
         arm = new Arm(hardwareMap, gamepad2, null);
         shoulder = new Shoulder(hardwareMap, arm, gamepad2);
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
         setIgnoreGamepad(ignoreGamepad);
+
+        // LED setup
+        blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
