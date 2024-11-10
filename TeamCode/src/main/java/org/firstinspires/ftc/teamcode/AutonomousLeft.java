@@ -21,6 +21,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         // Park in climb 1 area
 
+        /*
         // This action will move to the top bucket to drop off a sample
         // First it looks at the robots current position, calculates how it has to move
         // to the bucket and moves there (careful about our partner).
@@ -83,5 +84,6 @@ public class AutonomousLeft extends AutonomousOpMode{
                 }
         );
         Actions.runBlocking(park);
+        */
     }
 }

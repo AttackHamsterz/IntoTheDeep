@@ -34,8 +34,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // get the camera from the hardware map
-        huskyLens = hardwareMap.get(HuskyLens.class, "huskylens");
-        colorCamera = new ColorCamera(huskyLens, "red");
+        colorCamera = new ColorCamera(hardwareMap, COLOR.BLUE);
 
         // check to see if the device is working
         if (!huskyLens.knock()) {

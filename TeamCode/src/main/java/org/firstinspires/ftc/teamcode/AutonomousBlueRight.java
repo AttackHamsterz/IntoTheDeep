@@ -8,7 +8,7 @@ public class AutonomousBlueRight extends AutonomousRight
     @Override
     public void runOpMode() throws InterruptedException
     {
-        setup(AutonomousOpMode.COLOR.BLUE, AutonomousOpMode.SIDE.RIGHT);
+        setup(AutonomousOpMode.COLOR.BLUE, AutonomousOpMode.SIDE.RIGHT, true);
         super.runOpMode();
     }
 }

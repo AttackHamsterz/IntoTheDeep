@@ -96,7 +96,7 @@ public class Shoulder extends BodyPart {
     private int MIN_POS;
 
     // Mode for the shoulder
-    private Mode mode;
+    private Mode mode = Mode.NONE;
 
     /**
      * Constructor for the shoulder
