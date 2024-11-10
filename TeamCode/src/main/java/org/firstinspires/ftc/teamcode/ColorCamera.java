@@ -43,7 +43,7 @@ public class ColorCamera extends Thread {
 
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.TWINKLES_FOREST_PALETTE);
     }
 
     /**
@@ -104,15 +104,15 @@ public class ColorCamera extends Thread {
 
             // Indicate color we have locked on to
             if(block == null)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
             else if(block.id == YELLOW_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_HEARTBEAT_MEDIUM);
-            else if(block.id == BLUE_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE);
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
             else if(block.id == RED_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_RED);
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            else if(block.id == BLUE_ID)
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
             else
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
             // If the gamepad is pressed search and pickup
 

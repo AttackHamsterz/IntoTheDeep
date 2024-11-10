@@ -51,6 +51,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.start();
         arm.start();
         hand.start();
+        camera.start();
     }
 
     /**
@@ -91,10 +92,13 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.interrupt();
         arm.interrupt();
         hand.interrupt();
+        camera.interrupt();
+
         legs.join();
         shoulder.join();
         arm.join();
         hand.join();
+        camera.join();
     }
 }
 
