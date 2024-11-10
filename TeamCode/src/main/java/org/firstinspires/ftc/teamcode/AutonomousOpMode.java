@@ -21,19 +21,6 @@ import java.util.List;
 //extends standard setup op mode
 public class AutonomousOpMode extends StandardSetupOpMode{
 
-    public enum COLOR {
-        RED,
-        BLUE
-    }
-
-    public enum SIDE {
-        LEFT,
-        RIGHT
-    }
-
-    protected COLOR color;
-    protected SIDE side;
-
     @Override
     public void runOpMode() throws InterruptedException {
         super.runOpMode();
@@ -82,18 +69,4 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         // and then stow for travel (retract the arm and set the shoulder)
         // TODO
     }
-
-    /**
-     * Method sets up this specific autonomous class
-     * @param color color robot should use (and always yellow)
-     * @param side side robot is starting on
-     */
-   protected void setup(COLOR color, SIDE side) {
-       // Always ignore gamepads for autonomous
-       this.ignoreGamepad = true;
-
-       // Setup side and color for this autonomous opmode
-       this.color = color;
-       this.side = side;
-   }
 }

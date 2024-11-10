@@ -1,63 +1,67 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.dfrobot.HuskyLens;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-@TeleOp(name = "Sensor: HuskyLens", group = "Sensor")
-public class ColorCamera extends LinearOpMode {
+public class ColorCamera extends Thread {
 
     private HuskyLens huskyLens;
-    // variable to store the color id we don't want to look for
-    private int excludeColorId;
+    private RevBlinkinLedDriver blinkin;
+
+    // variable to store the color of alliance
+    private static int YELLOW_ID = 1;
+    private static int RED_ID = 2;
+    private static int BLUE_ID = 3;
+    private StandardSetupOpMode.COLOR allianceColor;
+    private int colorId;
+
     // the largest height we'd expect from a valid game piece
     private int maxHeight;
     // the largest width we'd expect from a valid game piece
     private int maxWidth;
-    // center of the screen
-    public static final int CENTER_X = 180;
-    public static final int CENTER_Y = 180;
+    // Point for good pick-up
+    public static final int TARGET_X = 160;
+    public static final int TARGET_Y = 180;
+
+    // Point for captured
+    public static final int CAPTURE_X = 160;
+    public static final int CAPTURE_Y = 200;
+
+    // Search variables
+    public static final int CLOSE_ENOUGH = 5;
 
 
-    public ColorCamera(HuskyLens huskyLens, String colorExclude) {
-        this.huskyLens = huskyLens;
-        // sets the color that we are looking for
-        if (colorExclude.equalsIgnoreCase("red")) {
-            excludeColorId = 2;
-        } else if (colorExclude.equalsIgnoreCase("blue")) {
-            excludeColorId = 3;
-        } else {
-            throw new IllegalArgumentException("Please input a valid color");
-        }
+    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color) {
+        // Camera setup
+        this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
+        this.allianceColor = color;
+        colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+
+        // LED setup
+        this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
     }
-
-
 
     /**
      * Gets the block that is closest to the camera and has the same color as we are looking for
      * @return The closest block or null if there are no blocks
      */
     public HuskyLens.Block getClosestBlock() {
-        HuskyLens.Block[] blocks = huskyLens.blocks();
+        // Find yellow blocks first
+        HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
         ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
-        for (HuskyLens.Block block : blocks) {
-            // add any yellow blocks
-            if (block.id == 1) {
-                blocksOnScreen.add(block);
-            }
-        }
+        blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+
+        // No yellow blocks, find alliance blocks
         if (blocksOnScreen.isEmpty()) {
-            for (HuskyLens.Block block : blocks) {
-                // look for any blocks that are not the color we are excluding
-                if (block.id != excludeColorId) {
-                    blocksOnScreen.add(block);
-                }
-            }
+            HuskyLens.Block[] allianceBlocks = huskyLens.blocks(colorId);
+            blocksOnScreen.addAll(Arrays.asList(allianceBlocks));
         }
+
         // make sure there are blocks on the screen with the color we are looking for
         if (!blocksOnScreen.isEmpty()) {
             // 400 is the longest distance possible on the camera screen
@@ -67,11 +71,10 @@ public class ColorCamera extends LinearOpMode {
             // whichever block has the shortest distance is the block we are closest to
             for (int i = 0; i < blocksOnScreen.size(); i++) {
                 // get the distance of the block from the center of the screen
-                int xDiff = Math.abs(CENTER_X - blocksOnScreen.get(i).x);
-                int yDiff = Math.abs(CENTER_Y - blocksOnScreen.get(i).y);
+                int xDiff = Math.abs(TARGET_X - blocksOnScreen.get(i).x);
+                int yDiff = Math.abs(TARGET_Y - blocksOnScreen.get(i).y);
 
-                double dist = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
-
+                double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
                 if (dist < smallestDist) {
                     smallestDist = dist;
                     smallestDistIndex = i;
@@ -83,46 +86,42 @@ public class ColorCamera extends LinearOpMode {
         return null;
     }
 
-    public ArrayList<HuskyLens.Block> getAllBlocks () {
-        ArrayList<HuskyLens.Block> blocks = new ArrayList<>();
-        blocks.addAll(Arrays.asList(huskyLens.blocks()));
-        return blocks;
-    }
-
     @Override
-    public void runOpMode() {
-        // get the camera from the config
-        huskyLens = hardwareMap.get(HuskyLens.class, "huskylens");
-
+    public void run() {
         // check to see if the device is working
-        if (!huskyLens.knock()) {
-            telemetry.addData(">>", "Problem communicating with " + huskyLens.getDeviceName());
-        } else {
-            telemetry.addData(">>", "Press start to continue");
-        }
+        if (!huskyLens.knock())
+            return;
 
         // start the color recognition algorithm
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
 
-        telemetry.update();
-        waitForStart();
+        while (!isInterrupted()) {
 
-        while(opModeIsActive()) {
+            // Find the closest block
+            HuskyLens.Block block = getClosestBlock();
 
-            // the color tracking algorithm returns a block around the location of the colored object
-            // from that block, we can figure out the location of our object
-            HuskyLens.Block[] blocks = huskyLens.blocks();
-            // tell us how many block we can see
-            telemetry.addData("Block count", blocks.length);
-            // go through every block we can see and print out information about that block
-            //ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
-            for (HuskyLens.Block block : blocks) {
-                telemetry.addData("Block", block.toString());
+            // TODO - is it captured?
+
+            // Indicate color we have locked on to
+            if(block == null)
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
+            else if(block.id == YELLOW_ID)
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_HEARTBEAT_MEDIUM);
+            else if(block.id == BLUE_ID)
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE);
+            else if(block.id == RED_ID)
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_RED);
+            else
+                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN);
+
+            // If the gamepad is pressed search and pickup
+
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(BodyPart.LOOP_PAUSE_MS);
+            } catch (InterruptedException e) {
+                interrupt();
             }
-            // blocksOfColor = blocksOnScreen;
-            telemetry.update();
-
         }
     }
-
 }
