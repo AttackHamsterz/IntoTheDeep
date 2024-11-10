@@ -35,16 +35,16 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         // while the fingers release the sample.
         ParallelAction sampleDrop = new ParallelAction(
                 legs.actionBuilder(legs.pose)
-                        .lineToX(20)
+                        .lineToX(2)
                         .build(),
                 new Action() {
                     @Override
                     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                         shoulder.setMode(Shoulder.Mode.HIGH_BAR);
                         arm.setPosition(0.9,1000);
-                        sleep(500);
+                        sleep(2000);
                         shoulder.dropSample();
-                        sleep(100);
+                        sleep(2000);
                         hand.release(500);
                         return false;
                     }
@@ -57,7 +57,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         ParallelAction grabSample = new ParallelAction(
                 // Makayla said move forward until we are touching the submersible
                 legs.actionBuilder(legs.pose)
-                        .lineToX(25)
+                        .lineToX(23)
                         .build(),
                 new Action() {
                     @Override
@@ -67,9 +67,9 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                         //hand.search();
                         //hand.pickup();
                         shoulder.setMode(Shoulder.Mode.GROUND);
-                        sleep(200);
+                        sleep(2000);
                         hand.grab(500);
-                        sleep(500);
+                        sleep(2000);
                         arm.gotoMin(0.5);
                         return false;
                     }
