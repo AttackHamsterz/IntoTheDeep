@@ -133,6 +133,7 @@ public class Shoulder extends BodyPart {
      */
     public void dropSample()
     {
+        setMode(Mode.NONE);
         setPosition(MODE_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
     }
 

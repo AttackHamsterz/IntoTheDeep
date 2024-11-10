@@ -31,7 +31,6 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
         Action initialAction = telemetryPacket -> {
-            hand.grab(200);
             shoulder.setMode(Shoulder.Mode.HIGH_BAR);
             return false;
         };
@@ -40,11 +39,11 @@ public class AutonomousOpMode extends StandardSetupOpMode{
             return false;
         };
         Action rotateSampleAction = telemetryPacket -> {
-            hand.rotate(750, false);
+            hand.grab(200);
             return false;
         };
         Action dropAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.SEARCH);
+            shoulder.dropSample();
             return false;
         };
 
@@ -58,8 +57,8 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                 dropAction,
                 new SleepAction(1.5));
         Action dropDriveAction = legs.actionBuilder(startPose)
-                .waitSeconds(0.2)
-                .lineToX(20)
+                .waitSeconds(1)
+                .lineToX(21)
                 .build();
 
         ParallelAction dropSample = new ParallelAction(dropToolAction, dropDriveAction);
