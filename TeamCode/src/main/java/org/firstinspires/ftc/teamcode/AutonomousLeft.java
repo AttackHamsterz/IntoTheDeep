@@ -17,10 +17,14 @@ public class AutonomousLeft extends AutonomousOpMode{
     public void runOpMode() throws InterruptedException{
         super.runOpMode();
 
+        // If we grabbed a sample from the center, drive and place in lower bucket
         Action driveBin = legs.actionBuilder(legs.pose)
-                .turn(Math.toRadians(180))
+                .turn(Math.toRadians(90))
                 .waitSeconds(1)
-                .strafeToConstantHeading(new Vector2d(17, 54))
+                .lineToYConstantHeading(40)
+                .waitSeconds(1.5)
+                .turn(Math.toRadians(70))
+                .waitSeconds(1)
                 .build();
 
         Action raiseShoulderAction = telemetryPacket -> {
@@ -29,22 +33,73 @@ public class AutonomousLeft extends AutonomousOpMode{
         };
 
         Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(0.9, 1500);
+            arm.setPosition(0.9, 1700);
           return false;
+        };
+
+        Action releaseSample = telemetryPacket -> {
+            hand.bucket();
+            hand.release(1000);
+            return false;
+        };
+
+        Action fullRetractArmAction = telemetryPacket -> {
+            arm.gotoMin(0.9);
+            return false;
         };
 
 
         Action toBin = new SequentialAction(
                 driveBin,
                 raiseShoulderAction,
-                new SleepAction(1),
+                new SleepAction(0.5),
                 extendArmAction,
-                new SleepAction(5)
+                new SleepAction(1),
+                releaseSample,
+                new SleepAction(1),
+                fullRetractArmAction,
+                new SleepAction(0.5)
         );
         Actions.runBlocking(toBin);
-        // If we grabbed a sample from the center, drive and place in lower bucket
+
 
         // Cycle from bucket to floor samples
+
+        Action lowerShoulder = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.SEARCH);
+          return false;
+        };
+
+        Action moveToSample = legs.actionBuilder(legs.pose)
+                .turn(Math.toRadians(200))
+                .waitSeconds(1)
+                .lineToXConstantHeading(45)
+                .build();
+
+        Action extendArm = telemetryPacket -> {
+            arm.setPosition(0.9, 600);
+            return false;
+        };
+
+        Action pickupAction = telemetryPacket -> {
+            hand.hangSample();
+            hand.grab(1000);
+            shoulder.setMode(Shoulder.Mode.GROUND);
+            return false;
+        };
+
+        Action cycleSample = new SequentialAction(
+                lowerShoulder,
+                new SleepAction(1),
+                moveToSample,
+                new SleepAction(1),
+                extendArm,
+                new SleepAction(1),
+                pickupAction,
+                new SleepAction(1)
+        );
+        Actions.runBlocking(cycleSample);
+
 
         // Park in climb 1 area
 
