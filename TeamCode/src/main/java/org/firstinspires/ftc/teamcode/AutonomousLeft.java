@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
@@ -15,6 +17,31 @@ public class AutonomousLeft extends AutonomousOpMode{
     public void runOpMode() throws InterruptedException{
         super.runOpMode();
 
+        Action driveBin = legs.actionBuilder(legs.pose)
+                .turn(Math.toRadians(180))
+                .waitSeconds(1)
+                .strafeToConstantHeading(new Vector2d(17, 54))
+                .build();
+
+        Action raiseShoulderAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
+          return false;
+        };
+
+        Action extendArmAction = telemetryPacket -> {
+            arm.setPosition(0.9, 1500);
+          return false;
+        };
+
+
+        Action toBin = new SequentialAction(
+                driveBin,
+                raiseShoulderAction,
+                new SleepAction(1),
+                extendArmAction,
+                new SleepAction(5)
+        );
+        Actions.runBlocking(toBin);
         // If we grabbed a sample from the center, drive and place in lower bucket
 
         // Cycle from bucket to floor samples

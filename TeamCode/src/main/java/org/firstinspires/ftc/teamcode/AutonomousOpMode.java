@@ -58,7 +58,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                 new SleepAction(1.5));
         Action dropDriveAction = legs.actionBuilder(startPose)
                 .waitSeconds(1)
-                .lineToX(21)
+                .lineToX(17)
                 .build();
 
         ParallelAction dropSample = new ParallelAction(dropToolAction, dropDriveAction);
@@ -66,6 +66,47 @@ public class AutonomousOpMode extends StandardSetupOpMode{
 
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
-        // TODO
+        Action retractArmAction = telemetryPacket -> {
+            arm.setPosition(0.9, 500);
+            return false;
+        };
+
+        Action searchAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.SEARCH);
+            return false;
+        };
+
+        Action extendAction = telemetryPacket -> {
+            arm.setPosition(0.9, 1500);
+            return false;
+        };
+
+        Action pickupAction = telemetryPacket -> {
+            hand.grab(1000);
+            shoulder.setMode(Shoulder.Mode.GROUND);
+            return false;
+        };
+
+        Action fullRetract = telemetryPacker -> {
+            arm.gotoMin(0.9);
+            return false;
+        };
+
+        Action grabFromSubmersible = new SequentialAction(
+                retractArmAction,
+                new SleepAction(1),
+                searchAction,
+                new SleepAction(1),
+                extendAction,
+                new SleepAction(1),
+                pickupAction,
+                new SleepAction(1),
+                searchAction,
+                new SleepAction(1),
+                fullRetract,
+                new SleepAction((1))
+
+        );
+        Actions.runBlocking(grabFromSubmersible);
     }
 }
