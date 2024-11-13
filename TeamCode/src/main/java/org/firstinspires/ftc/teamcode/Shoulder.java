@@ -47,7 +47,7 @@ public class Shoulder extends BodyPart {
             143,   // Ground
             543,  // Search
             1421, // Low Bar
-            2609, // High Bar
+            2645, // High Bar
             2889, // Low Bucket
             3102, // High Bucket
             3296, // Hang
@@ -59,7 +59,7 @@ public class Shoulder extends BodyPart {
             500,  // Ground
             685,  // Search
             1136, // Low Bar
-            1752, // High Bar
+            1770, // High Bar
             1839, // Low Bucket
             3102, // High Bucket
             3470, // Hang
@@ -67,7 +67,7 @@ public class Shoulder extends BodyPart {
     ));
 
     // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 500;
+    public static int SAMPLE_HOOK_DROP = 900;
 
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_POWER = -0.5;
@@ -75,6 +75,7 @@ public class Shoulder extends BodyPart {
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.1;
     private static final double MODE_POWER = 0.6;
+    private static final double DROP_POWER = 0.5;
     private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
@@ -134,7 +135,7 @@ public class Shoulder extends BodyPart {
     public void dropSample()
     {
         setMode(Mode.NONE);
-        setPosition(MODE_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
+        setPosition(DROP_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
     }
 
     @Override
