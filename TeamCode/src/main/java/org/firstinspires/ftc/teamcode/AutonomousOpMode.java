@@ -58,7 +58,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                 new SleepAction(1.5));
         Action dropDriveAction = legs.actionBuilder(startPose)
                 .waitSeconds(1)
-                .lineToX(21)
+                .lineToX(20)
                 .build();
 
         ParallelAction dropSample = new ParallelAction(dropToolAction, dropDriveAction);
