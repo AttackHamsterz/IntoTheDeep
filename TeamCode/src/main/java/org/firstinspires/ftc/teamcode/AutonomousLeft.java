@@ -91,11 +91,11 @@ public class AutonomousLeft extends AutonomousOpMode{
         Action cycleSample = new SequentialAction(
                 lowerShoulder,
                 new SleepAction(1),
-                moveToSample,
+                //moveToSample,
                 new SleepAction(1),
-                extendArm,
+                //extendArm,
                 new SleepAction(1),
-                pickupAction,
+                //pickupAction,
                 new SleepAction(1)
         );
         Actions.runBlocking(cycleSample);

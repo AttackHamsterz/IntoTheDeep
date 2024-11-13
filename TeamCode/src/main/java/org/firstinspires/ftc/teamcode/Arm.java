@@ -112,7 +112,10 @@ public class Arm extends BodyPart {
      */
     public void setPosition(double power, int position) {
         // Ensure inputs are valid
-        power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
+        power = Math.abs(Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED));
+        int currentPos = armMotorLeft.getCurrentPosition();
+        power *= Math.signum(position-currentPos);
+
         position = Range.clip(position, MIN_POS, MAX_POS);
 
         // Set new position and power the motors
