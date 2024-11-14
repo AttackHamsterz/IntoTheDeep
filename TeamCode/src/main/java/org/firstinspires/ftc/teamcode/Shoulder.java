@@ -70,12 +70,12 @@ public class Shoulder extends BodyPart {
     public static int SAMPLE_HOOK_DROP = 900;
 
     //Variables for shoulder speed
-    private static final double MIN_SHOULDER_POWER = -0.5;
+    private static final double MIN_SHOULDER_POWER = -0.9;
     private static final double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.1;
     private static final double MODE_POWER = 0.6;
-    private static final double DROP_POWER = 0.5;
+    private static final double DROP_POWER = -0.5;
     private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
@@ -113,6 +113,7 @@ public class Shoulder extends BodyPart {
 
         // Setup
         shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        shoulderMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shoulderMotor.setTargetPosition(0);
         shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -126,6 +127,7 @@ public class Shoulder extends BodyPart {
     public void debugTelemetry(Telemetry telemetry)
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
+        telemetry.addData("Shoulder Power", shoulderMotor.getPower());
         telemetry.addData("Shoulder Ratio", getShoulderRatio());
     }
 
@@ -201,9 +203,14 @@ public class Shoulder extends BodyPart {
      */
     public void setPosition(double power, int position)
     {
-        // Sets the power to the inputted power, clips the power
-        power = Range.clip(power, MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
+        // Check the current position against the target position (do nothing if close enough)
         position = Range.clip(position, MIN_POS, MAX_POS);
+        int currentPos = shoulderMotor.getCurrentPosition();
+        if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
+            return;
+
+        // Ensure inputs are valid (flip sign of power for lowering)
+        power = Range.clip(Math.abs(power) * Math.signum(position-currentPos), MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
 
         // Sets the position of the shoulder
         shoulderMotor.setTargetPosition(position);

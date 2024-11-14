@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class ColorCamera extends Thread {
 
-    private HuskyLens huskyLens;
+    public HuskyLens huskyLens;
     private RevBlinkinLedDriver blinkin;
 
     // variable to store the color of alliance
@@ -25,11 +25,7 @@ public class ColorCamera extends Thread {
     private int maxWidth;
     // Point for good pick-up
     public static final int TARGET_X = 160;
-    public static final int TARGET_Y = 180;
-
-    // Point for captured
-    public static final int CAPTURE_X = 160;
-    public static final int CAPTURE_Y = 200;
+    public static final int TARGET_Y = 186;
 
     // Search variables
     public static final int CLOSE_ENOUGH = 5;
@@ -53,19 +49,21 @@ public class ColorCamera extends Thread {
     public HuskyLens.Block getClosestBlock() {
         // Find yellow blocks first
         HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
+        HuskyLens.Block[] redBlocks = huskyLens.blocks(RED_ID);
+        HuskyLens.Block[] blueBlocks = huskyLens.blocks(BLUE_ID);
         ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
         blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
 
         // No yellow blocks, find alliance blocks
         if (blocksOnScreen.isEmpty()) {
             HuskyLens.Block[] allianceBlocks = huskyLens.blocks(colorId);
-            blocksOnScreen.addAll(Arrays.asList(allianceBlocks));
+            blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
         }
 
         // make sure there are blocks on the screen with the color we are looking for
         if (!blocksOnScreen.isEmpty()) {
-            // 400 is the longest distance possible on the camera screen
-            double smallestDist = 400;
+            // Find closest block to our target
+            double smallestDist = 1000;
             int smallestDistIndex = 0;
             // use pythagorean theorem to draw a line from the camera to each block's position
             // whichever block has the shortest distance is the block we are closest to
