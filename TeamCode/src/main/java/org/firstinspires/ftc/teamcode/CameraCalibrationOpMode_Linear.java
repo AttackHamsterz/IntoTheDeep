@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -18,10 +22,26 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
     // Leg calibration values
     private static final int CENTER_X = 160;
-    private static final int NEAR_DX = 80;
-    private static final int FAR_DX = 100;
-    private static final int NEAR_TY = 3;
-    private static final int FAR_TY = 6;
+    private static final int INCHES_FROM_CENTER = 4;
+    private static final int SHIFT_NEAR_X = 283;
+    private static final int SHIFT_NEAR_Y = 139;
+    private static final double SHIFT_NEAR_M = (double)INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_NEAR_X);
+
+    private static final int SHIFT_FAR_X = 252;
+    private static final int SHIFT_FAR_Y = 109;
+    private static final double SHIFT_FAR_M = (double) INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_FAR_X) ;
+
+    // how much our slop is changing based on y
+    private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
+    private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
+
+
+    public void translate(double inches) {
+        Action move = legs.actionBuilder(legs.pose)
+                .strafeToConstantHeading(new Vector2d(legs.pose.position.x, legs.pose.position.y + inches))
+                .build();
+        Actions.runBlocking(move);
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -54,21 +74,21 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         // a correction.  That may be good enough instead of needing PIDs.
         boolean pressed = false;
         while(opModeIsActive()) {
-            /*
+/*
             // This block helps us calibrate (disable once calibrated)
             HuskyLens.Block block = camera.getClosestBlock();
             if (block != null) {
                 telemetry.addData("Closest Block", block.toString());
                 int blockCenterY = block.y;
-                double errorY = CENTER_Y - blockCenterY;
-                telemetry.addData("errorY", errorY);
                 arm.debugTelemetry(telemetry);
                 legs.debugTelemetry(telemetry);
                 telemetry.update();
                 legs.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                 arm.halt(); // Lets us manually tug the arm for measurements
             }
-            */
+
+ */
+
 
             if(gamepad2.a) {
                 HuskyLens.Block block = camera.getClosestBlock();
@@ -80,10 +100,29 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("B", B);
                     telemetry.addData("deltaTicks", ticks);
                     telemetry.addData("Arm Pos", arm.getCurrentPosition());
-                    arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
+                    //arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
 
                     // TODO - Set new legs position!
                     telemetry.addData("blockCenterX", block.x);
+                    double ySlope = block.y * SHIFT_M + SHIFT_B;
+                    double shift = (block.x-CENTER_X) * ySlope;
+
+                    telemetry.addData("shift near m", SHIFT_NEAR_M);
+                    telemetry.addData("shift far m", SHIFT_FAR_M);
+                    telemetry.addData("shift m", SHIFT_M);
+                    telemetry.addData("shift b", SHIFT_B);
+                    telemetry.addData("y slope", ySlope);
+                    telemetry.addData("shift", shift);
+
+                    if (!pressed) {
+                        translate(shift);
+                        pressed = true;
+                    } else {
+                        pressed = false;
+                    }
+
+
+
 
                     // TODO - Add logic to spin the wrist
                     // This is either openCV on image data
@@ -94,6 +133,8 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.update();
                 }
             }
+
+
 
             // Short sleep to keep this loop from saturating
             sleep(BodyPart.LOOP_PAUSE_MS);
