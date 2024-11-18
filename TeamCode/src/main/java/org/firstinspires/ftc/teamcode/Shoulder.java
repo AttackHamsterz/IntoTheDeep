@@ -50,7 +50,7 @@ public class Shoulder extends BodyPart {
             2645, // High Bar
             2889, // Low Bucket
             3102, // High Bucket
-            3296, // Hang
+            3400, // Hang
             10    // None is like ground
     ));
 
@@ -243,13 +243,13 @@ public class Shoulder extends BodyPart {
                 } else if (power < -TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick down forever
-                    setPosition(Math.abs(power), MIN_POS);
+                    setPosition(Math.abs(power), MAX_POS);
                     hold = false;
                     mode = Mode.NONE;
                 } else if (power > TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick up forever
-                    setPosition(power, MAX_POS);
+                    setPosition(power, MIN_POS);
                     hold = false;
                     mode = Mode.NONE;
                 }

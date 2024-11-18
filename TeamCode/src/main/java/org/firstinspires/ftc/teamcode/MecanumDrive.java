@@ -56,13 +56,13 @@ import java.util.List;
 public final class MecanumDrive extends Thread{
     public static class Params {
         // Mecanum kinematics parameters
-        public double trackWidthInches = 13.1047029966;
-        public double wheelSlipMultiplier = 1.33570679095;
+        public double trackWidthInches = 16.55;
+        public double wheelSlipMultiplier = 1.72;
 
         // feedforward parameters (in inches)
         public double kS = 0.869786849089929;
-        public double kV = 0.2;
-        public double kA = 0.03384;
+        public double kV = 0.15;
+        public double kA = 0.034;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -74,9 +74,9 @@ public final class MecanumDrive extends Thread{
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 1.0;
+        public double axialGain = 0.0;
         public double lateralGain = 0.0;
-        public double headingGain = 3.0; // shared with turn
+        public double headingGain = 0.0; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -414,15 +414,51 @@ public final class MecanumDrive extends Thread{
     @Override
     public void run() {
         while (!isInterrupted()  && gamepad != null && !ignoreGamepad) {
-            setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -gamepad.left_stick_y,
-                            -gamepad.left_stick_x
-                    ),
-                    -gamepad.right_stick_x
-            ));
+            if (gamepad.right_bumper) {
+                rotate(Math.PI/2);
+            } else if (gamepad.left_bumper) {
+                rotate(-Math.PI/2);
+            } else {
+                setDrivePowers(new PoseVelocity2d(
+                        new Vector2d(
+                                -gamepad.left_stick_y,
+                                -gamepad.left_stick_x
+                        ),
+                        -gamepad.right_stick_x
+                ));
+            }
             updatePoseEstimate();
         }
+    }
+
+    public void rotate(double radians) {
+        Action rotate = actionBuilder(pose)
+                .turn(Math.toRadians(radians))
+                .build();
+        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(rotate);
+        /*
+        setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                    0,0
+                ),
+                radians
+        ));
+
+         */
+    }
+
+    public void moveX(int dist) {
+        Action move = actionBuilder(pose)
+                .lineToXConstantHeading(dist)
+                .build();
+        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(move);
+    }
+
+    public void moveY(int dist) {
+        Action move = actionBuilder(pose)
+                .lineToYConstantHeading(dist)
+                .build();
+        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(move);
     }
 
     /**

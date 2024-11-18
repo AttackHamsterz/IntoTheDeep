@@ -18,7 +18,7 @@ public class Arm extends BodyPart {
 
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
-    public static final int MAX_POS = 2000;
+    public static final int MAX_POS = 2200;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
@@ -191,12 +191,12 @@ public class Arm extends BodyPart {
                 } else if (power < -TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver
                     // holds the retraction stick down forever
-                    setPosition(Math.abs(power), MIN_POS);
+                    setPosition(Math.abs(power), MAX_POS);
                     hold = false;
                 } else if (power > TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver
                     // holds the extension stick up forever
-                    setPosition(power, MAX_POS);
+                    setPosition(power, MIN_POS);
                     hold = false;
                 }
             }

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.tuning;
 
 import org.firstinspires.ftc.teamcode.Shoulder;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -35,8 +36,12 @@ public final class SplineTest extends LinearOpMode {
                             //.turn(Math.PI)
                             //.waitSeconds(2.0)
                             // move towards basket
-                            //.lineToY(40)
-                            .lineToX(24)
+                            .lineToX(48)
+                            //.strafeTo(new Vector2d(0, 24))
+                            .waitSeconds(1.0)
+                            .turn(Math.toRadians(-90))
+                            .waitSeconds(1.0)
+                            .lineToY(-40)
                             //.turn(-Math.PI)
                             .build()
             );
