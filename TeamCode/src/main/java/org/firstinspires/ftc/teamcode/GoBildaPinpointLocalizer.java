@@ -88,26 +88,9 @@ public class GoBildaPinpointLocalizer implements Localizer
         odo.resetPosAndIMU();
     }
 
-    public double getx_in()
-    {
-        Pose2D pos_mm = odo.getPosition();
-        return pos_mm.getX(DistanceUnit.INCH);
-    }
-
-    public double gety_in()
-    {
-        Pose2D pos_mm = odo.getPosition();
-        return pos_mm.getY(DistanceUnit.INCH);
-    }
-
-    public double getheading_radians()
-    {
-        Pose2D pos_mm = odo.getPosition();
-        return pos_mm.getHeading(AngleUnit.RADIANS);
-    }
-
     public Pose2d get_pose_estimate()
     {
+        odo.update();
         Pose2D pos_mm = odo.getPosition();
         return new Pose2d(
                 pos_mm.getX(DistanceUnit.INCH),
@@ -117,11 +100,24 @@ public class GoBildaPinpointLocalizer implements Localizer
 
     public PoseVelocity2d get_velocity_estimate()
     {
+        odo.update();
         Pose2D vel_mm_s = odo.getVelocity();
         return new PoseVelocity2d(
                 new Vector2d(
                 vel_mm_s.getX(DistanceUnit.INCH),
                 vel_mm_s.getY(DistanceUnit.INCH)),
                 vel_mm_s.getHeading(AngleUnit.RADIANS));
+    }
+
+    public Pose2D get_ftc_pose()
+    {
+        odo.update();
+        return odo.getPosition();
+    }
+
+    public Pose2D get_ftc_velocity()
+    {
+        odo.update();
+        return odo.getVelocity();
     }
 }

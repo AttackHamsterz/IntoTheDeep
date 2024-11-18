@@ -1,10 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -18,154 +15,92 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        Action driveBin = legs.actionBuilder(legs.pose)
-                .turn(Math.toRadians(90))
-                .waitSeconds(1)
-                .lineToYConstantHeading(40)
-                .waitSeconds(1.5)
-                .turn(Math.toRadians(70))
-                .waitSeconds(1)
-                .build();
-
-        Action raiseShoulderAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
-          return false;
-        };
+        double bucketDropAngle = 170.0;
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(26, 40), Math.toRadians(bucketDropAngle));
+        Action driveTolowBucketDrop = legs.moveToAction(lowBucketDropPose);
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(0.9, 1700);
+            hand.bucket();
           return false;
         };
 
         Action releaseSample = telemetryPacket -> {
-            hand.bucket();
             hand.release(1000);
             return false;
         };
 
-        Action fullRetractArmAction = telemetryPacket -> {
-            arm.gotoMin(0.9);
+        Action retractForPickupAction = telemetryPacket -> {
+            arm.setPosition(0.9, 500);
             return false;
         };
-
 
         Action toBin = new SequentialAction(
-                driveBin,
-                raiseShoulderAction,
-                new SleepAction(0.5),
+                driveTolowBucketDrop,
                 extendArmAction,
-                new SleepAction(1),
+                new SleepAction(2),
                 releaseSample,
                 new SleepAction(1),
-                fullRetractArmAction,
-                new SleepAction(0.5)
-        );
+                retractForPickupAction);
         Actions.runBlocking(toBin);
 
-
         // Cycle from bucket to floor samples
-
         Action lowerShoulder = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.SEARCH);
-          return false;
-        };
-
-        Action moveToSample = legs.actionBuilder(legs.pose)
-                .turn(Math.toRadians(200))
-                .waitSeconds(1)
-                .lineToXConstantHeading(45)
-                .build();
-
-        Action extendArm = telemetryPacket -> {
-            arm.setPosition(0.9, 600);
             return false;
         };
 
-        Action pickupAction = telemetryPacket -> {
+        Action extendArm = telemetryPacket -> {
             hand.hangSample();
+            arm.setPosition(0.9, 800);
+            return false;
+        };
+
+        Action grabAction = telemetryPacket -> {
+            // TODO - Search
             hand.grab(1000);
             shoulder.setMode(Shoulder.Mode.GROUND);
             return false;
         };
 
-        Action cycleSample = new SequentialAction(
-                lowerShoulder,
-                new SleepAction(1),
-                //moveToSample,
-                new SleepAction(1),
-                //extendArm,
-                new SleepAction(1),
-                //pickupAction,
-                new SleepAction(1)
-        );
-        Actions.runBlocking(cycleSample);
+        Action raiseAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
+            return false;
+        };
 
+        // Repeat this 3 times for each floorsample
+        for(int i = 0; i < 3; i++)
+        {
+            // Turn to ground samples, pick one up
+            Action turnToPickup = legs.actionBuilder(legs.getPose())
+                    .turnTo(Math.toRadians(i*5))
+                    .build();
+            Action pickupAction = new SequentialAction(
+                    turnToPickup,
+                    extendArm,
+                    new SleepAction(0.5),
+                    grabAction,
+                    new SleepAction(1.0),
+                    raiseAction
+            );
+            Actions.runBlocking(pickupAction);
 
-        // Park in climb 1 area
+            // Turn to bucket from whatever position we ended up, drop sample in bucket
+            Action turnToBucket = legs.moveToAction(lowBucketDropPose);
+            Action dropAction = new SequentialAction(
+                    turnToBucket,
+                    new SleepAction(1.0),
+                    extendArmAction,
+                    new SleepAction(2),
+                    releaseSample,
+                    new SleepAction(1),
+                    retractForPickupAction
+            );
+            Actions.runBlocking(dropAction);
+        }
 
-        /*
-        // This action will move to the top bucket to drop off a sample
-        // First it looks at the robots current position, calculates how it has to move
-        // to the bucket and moves there (careful about our partner).
-        // While moving it's raising the shoulder,
-        // extending the arm.  With arm extended fingers release and we stow for travel.
-        // It might make sense to stay out of our partners way by dropping in the lower bucket.
-        ParallelAction toBucket = new ParallelAction(
-                legs.actionBuilder(legs.pose)
-                        //movement code
-                        .build(),
-                new Action() {
-                    @Override
-                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                        //shoulder.setPosition(topBucket);
-                        //arms.setPosition(out);
-                        //fingers.release();
-                        //arms.setPosition(stow);
-                        //shoulder.setPosition(search);
-                        return false;
-                    }
-                }
+        // TODO - Park in climb 1 area touching the bar
+        // We are facing the buckets and we just dropped a sample
 
-        );
-        Actions.runBlocking(toBucket);
-
-        // This action will determine where we are (might check apiril tags as well)
-        // Then move to grab another floor sample, finally stowing for travel.
-        ParallelAction floorSample = new ParallelAction(
-                legs.actionBuilder(legs.pose)
-                        //movement code
-                        //moving to the three lines with the samples
-                        //may just be turning with no movement
-                        .build(),
-                new Action() {
-                    @Override
-                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                        //arms.setPosition(out);
-                        //fingers.search();
-                        //fingers.pickup();
-                        //arms.setPosition(stow);
-                        return false;
-                    }
-                }
-        );
-        Actions.runBlocking(floorSample);
-
-        // Determine where we are and how we have to move to park correctly
-        ParallelAction park = new ParallelAction(
-                legs.actionBuilder(legs.pose)
-                        //movement code
-                        //moving to the three lines with the samples
-                        //may just be turning with no movement
-                        .build(),
-                new Action() {
-                    @Override
-                    public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                        //shoulder.setPosition(hang);
-                        return false;
-                    }
-                }
-        );
-        Actions.runBlocking(park);
-        */
     }
 }

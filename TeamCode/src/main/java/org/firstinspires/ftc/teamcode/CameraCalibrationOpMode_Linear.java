@@ -1,9 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -34,14 +30,6 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
     // how much our slop is changing based on y
     private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
-
-
-    public void translate(double inches) {
-        Action move = legs.actionBuilder(legs.pose)
-                .strafeToConstantHeading(new Vector2d(legs.pose.position.x, legs.pose.position.y + inches))
-                .build();
-        Actions.runBlocking(move);
-    }
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -89,7 +77,6 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
  */
 
-
             if(gamepad2.a) {
                 HuskyLens.Block block = camera.getClosestBlock();
                 if (block != null) {
@@ -115,14 +102,11 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("shift", shift);
 
                     if (!pressed) {
-                        translate(shift);
+                        legs.moveY(shift);
                         pressed = true;
                     } else {
                         pressed = false;
                     }
-
-
-
 
                     // TODO - Add logic to spin the wrist
                     // This is either openCV on image data

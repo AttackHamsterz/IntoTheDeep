@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static com.acmerobotics.roadrunner.Actions.now;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -7,7 +9,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Actions;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
@@ -26,15 +28,12 @@ import com.acmerobotics.roadrunner.TimeTurn;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TrajectoryBuilderParams;
 import com.acmerobotics.roadrunner.TurnConstraints;
-import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.DownsampledWriter;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
-//import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -43,6 +42,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
@@ -103,8 +105,8 @@ public final class MecanumDrive extends Thread{
     public final VoltageSensor voltageSensor;
 
     public final Localizer localizer;
-    public Pose2d pose;
-    private Gamepad gamepad;
+    private Pose2d pose;
+    private final Gamepad gamepad;
     private boolean ignoreGamepad;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
@@ -143,24 +145,22 @@ public final class MecanumDrive extends Thread{
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
         localizer = new GoBildaPinpointLocalizer(hardwareMap);
+        ((GoBildaPinpointLocalizer)localizer).reset();
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
 
     /**
      * Method adds important things to telemetry
-     * @param telemetry
+     * @param telemetry place to store telemetry
      */
     public void debugTelemetry(Telemetry telemetry)
     {
-        telemetry.addData("Robot Position x (in)", "%f", pose.position.x);
-        telemetry.addData("Robot Position y (in)", "%f", pose.position.y);
-        telemetry.addData("Robot Heading (deg)", "%f", Math.toDegrees(pose.heading.toDouble()));
         GoBildaPinpointLocalizer plocalizer = (GoBildaPinpointLocalizer)localizer;
-        plocalizer.update();
-        telemetry.addData("Localizer x (in)", "%f", plocalizer.getx_in());
-        telemetry.addData("Localizer y (in)", "%f", plocalizer.gety_in());
-        telemetry.addData("Localizer heading (deg)", "%f", Math.toDegrees(plocalizer.getheading_radians()));
+        Pose2D ftc_pose = plocalizer.get_ftc_pose();
+        telemetry.addData("Localizer x (in)", "%f", ftc_pose.getX(DistanceUnit.INCH));
+        telemetry.addData("Localizer y (in)", "%f", ftc_pose.getY(DistanceUnit.INCH));
+        telemetry.addData("Localizer heading (deg)", "%f", ftc_pose.getHeading(AngleUnit.DEGREES));
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -203,10 +203,10 @@ public final class MecanumDrive extends Thread{
         public boolean run(@NonNull TelemetryPacket p) {
             double t;
             if (beginTs < 0) {
-                beginTs = Actions.now();
+                beginTs = now();
                 t = 0;
             } else {
-                t = Actions.now() - beginTs;
+                t = now() - beginTs;
             }
 
             if (t >= timeTrajectory.duration) {
@@ -295,10 +295,10 @@ public final class MecanumDrive extends Thread{
         public boolean run(@NonNull TelemetryPacket p) {
             double t;
             if (beginTs < 0) {
-                beginTs = Actions.now();
+                beginTs = now();
                 t = 0;
             } else {
-                t = Actions.now() - beginTs;
+                t = now() - beginTs;
             }
 
             if (t >= turn.duration) {
@@ -362,8 +362,6 @@ public final class MecanumDrive extends Thread{
     }
 
     public PoseVelocity2d updatePoseEstimate() {
-        //Twist2dDual<Time> twist = localizer.update();
-        //pose = pose.plus(twist.value());
         GoBildaPinpointLocalizer local = (GoBildaPinpointLocalizer)localizer;
         pose = local.get_pose_estimate();
 
@@ -374,7 +372,6 @@ public final class MecanumDrive extends Thread{
 
         estimatedPoseWriter.write(new PoseMessage(pose));
 
-        //return twist.velocity().value();
         return local.get_velocity_estimate();
     }
 
@@ -431,39 +428,65 @@ public final class MecanumDrive extends Thread{
         }
     }
 
-    public void rotate(double radians) {
-        Action rotate = actionBuilder(pose)
-                .turn(Math.toRadians(radians))
+    public void rotate(double degrees) {
+        Pose2d currentPose = getPose();
+        Action rotate = actionBuilder(currentPose)
+                .turn(currentPose.heading.toDouble() + Math.toRadians(degrees))
                 .build();
-        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(rotate);
-        /*
-        setDrivePowers(new PoseVelocity2d(
-                new Vector2d(
-                    0,0
-                ),
-                radians
-        ));
-
-         */
+        Actions.runBlocking(rotate);
     }
 
-    public void moveX(int dist) {
-        Action move = actionBuilder(pose)
-                .lineToXConstantHeading(dist)
+    public void moveX(double dist) {
+        Pose2d currentPose = getPose();
+        Action move = actionBuilder(currentPose)
+                .lineToXConstantHeading(currentPose.position.x + dist)
                 .build();
-        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(move);
+        Actions.runBlocking(move);
     }
 
-    public void moveY(int dist) {
-        Action move = actionBuilder(pose)
-                .lineToYConstantHeading(dist)
+    public void moveY(double dist) {
+        Pose2d currentPose = getPose();
+        Action move = actionBuilder(currentPose)
+                .lineToYConstantHeading(currentPose.position.y + dist)
                 .build();
-        com.acmerobotics.roadrunner.ftc.Actions.runBlocking(move);
+        Actions.runBlocking(move);
+    }
+
+    /**
+     * Gives the actual current pose estimate of the robot
+     * @return
+     */
+    public Pose2d getPose(){
+        return ((GoBildaPinpointLocalizer) localizer).get_pose_estimate();
+    }
+
+    /**
+     * This method generates a move action that considers the current position.
+     *
+     * @param expected_pose The pose you would like to end with
+     * @return The action you can run in your action list
+     */
+    public Action moveToAction(Pose2d expected_pose)
+    {
+        Pose2d current_pose = ((GoBildaPinpointLocalizer) localizer).get_pose_estimate();
+        return actionBuilder(current_pose)
+                .strafeToLinearHeading(expected_pose.position, expected_pose.heading)
+                .build();
+    }
+
+    /**
+     * Runs an action that should help correct any current position error (subject to calibration)
+     * @param expected_pose
+     */
+    public void removeError(Pose2d expected_pose)
+    {
+        Action move = moveToAction(expected_pose);
+        Actions.runBlocking(move);
     }
 
     /**
      * Externally disable the gamepad
-     * @param ignoreGamepad
+     * @param ignoreGamepad true will ignore gamepad, good for autonomous
      */
     public void setIgnoreGamepad(boolean ignoreGamepad)
     {

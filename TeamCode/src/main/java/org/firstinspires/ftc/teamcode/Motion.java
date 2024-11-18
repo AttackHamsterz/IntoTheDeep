@@ -89,7 +89,7 @@ public class Motion extends Thread {
     }
 
     public void rotate(double degrees) {
-        Action rotate = legs.actionBuilder(legs.pose)
+        Action rotate = legs.actionBuilder(legs.getPose())
                 .turn(Math.toRadians(degrees))
                 .build();
         Actions.runBlocking(rotate);

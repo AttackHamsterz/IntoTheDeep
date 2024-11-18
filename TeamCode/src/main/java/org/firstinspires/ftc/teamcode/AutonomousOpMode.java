@@ -1,24 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.ParallelAction;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
-import com.acmerobotics.roadrunner.TimeTrajectory;
-import com.acmerobotics.roadrunner.TrajectoryActionFactory;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
-//extends standard setup op mode
+// When writing autonomous mode actions, make sure they build very quickly.
+// That basically means don't have any sleeps directly in the action.
+// So for instance if you need to raise the shoulder, and then release that
+// would require a pause.  THe action list would have the pause added to it rather
+// than the individual action.  Eventually we should use an event driven architecture!
 public class AutonomousOpMode extends StandardSetupOpMode{
 
     @Override
@@ -30,15 +24,15 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        Action initialAction = telemetryPacket -> {
+        Action liftShoulderAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.HIGH_BAR);
             return false;
         };
-        Action highbarAction = telemetryPacket -> {
+        Action extendArmAction = telemetryPacket -> {
             arm.setPosition(0.9,900);
             return false;
         };
-        Action rotateSampleAction = telemetryPacket -> {
+        Action extraGrabAction = telemetryPacket -> {
             hand.grab(200);
             return false;
         };
@@ -47,21 +41,21 @@ public class AutonomousOpMode extends StandardSetupOpMode{
             return false;
         };
 
-        Action dropToolAction = new SequentialAction(
-                initialAction,
-                new SleepAction(0.2),
-                highbarAction,
+        double initialWait = 0.25;
+        Action hangSampleToolAction = new SequentialAction(
+                liftShoulderAction,
+                new SleepAction(initialWait),
+                extendArmAction,
+                new SleepAction(0.5),
+                extraGrabAction,
                 new SleepAction(1.0),
-                rotateSampleAction,
-                new SleepAction(2.0),
                 dropAction,
-                new SleepAction(1.5));
-        Action dropDriveAction = legs.actionBuilder(startPose)
-                .waitSeconds(1)
-                .lineToX(26)
-                .build();
+                new SleepAction(0.5));
+        Action hangSampleDriveAction = new SequentialAction(
+                new SleepAction(initialWait),
+                legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
 
-        ParallelAction dropSample = new ParallelAction(dropToolAction, dropDriveAction);
+        ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
         Actions.runBlocking(dropSample);
 
         // This action will grab a sample from the submersible
@@ -101,18 +95,16 @@ public class AutonomousOpMode extends StandardSetupOpMode{
                 retractArmAction,
                 new SleepAction(1),
                 searchAction,
-                new SleepAction(1),
                 extendAction,
                 new SleepAction(1),
                 pickupAction,
                 new SleepAction(1),
                 searchAction,
-                new SleepAction(1),
+                new SleepAction(0.5),
                 fullRetract,
-                new SleepAction(1),
+                new SleepAction(0.5),
                 raiseArmAction,
-                new SleepAction((1))
-
+                new SleepAction(0.5)
         );
         Actions.runBlocking(grabFromSubmersible);
     }
