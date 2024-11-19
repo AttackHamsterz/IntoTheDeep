@@ -34,8 +34,8 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         Action binDrop = new SequentialAction(
                 driveToLowBucketDrop,
-                extendArmAction,
-                new ConsumerAction(arm, releaseSample),
+                new CompleteAction(extendArmAction, arm),
+                releaseSample,
                 new SleepAction(RELEASE_S),
                 retractForPickupAction);
         Actions.runBlocking(binDrop);
@@ -74,20 +74,18 @@ public class AutonomousLeft extends AutonomousOpMode{
             Action pickupAction = new SequentialAction(
                     turnToPickup,
                     lowerAction,
-                    extendArm,
-                    new ConsumerAction(arm, grabAction),
+                    new CompleteAction(extendArm, arm),
+                    grabAction,
                     new SleepAction(GRAB_S),
-                    raiseAction,
-                    new ConsumerAction(shoulder)
-            );
+                    new CompleteAction(raiseAction, shoulder));
             Actions.runBlocking(pickupAction);
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
             Action turnToBucket = legs.moveToAction(lowBucketDropPose);
             Action dropAction = new SequentialAction(
                     turnToBucket,
-                    extendArmAction,
-                    new ConsumerAction(arm, releaseSample),
+                    new CompleteAction(extendArmAction, arm),
+                    releaseSample,
                     new SleepAction(RELEASE_S),
                     retractForPickupAction
             );

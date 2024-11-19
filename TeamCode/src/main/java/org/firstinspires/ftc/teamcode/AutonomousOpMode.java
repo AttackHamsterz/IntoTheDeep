@@ -48,12 +48,11 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
         double initialWait = 0.25;
         Action hangSampleToolAction = new SequentialAction(
-                liftShoulderAction,                     // Start shoulder lift to avoid dragging
-                new SleepAction(initialWait),           // Sleep a little (avoid dragging)
-                extraGrabAction,                        // Tighten sample in grip
-                extendArmAction,                        // Extend arm for sample hang
-                new ConsumerAction(arm, dropAction),    // Run dropAction when arm has extended
-                new ConsumerAction(shoulder));          // Wait for shoulder drop to complete
+                liftShoulderAction,                         // Start shoulder lift to avoid dragging
+                new SleepAction(initialWait),               // Sleep a little (avoid dragging)
+                extraGrabAction,                            // Tighten sample in grip
+                new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
+                new CompleteAction(dropAction, shoulder));  // Run dropAction
 
         Action hangSampleDriveAction = new SequentialAction(
                 new SleepAction(initialWait),           // Sleep a little (avoid dragging)
@@ -91,15 +90,14 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         };
 
         Action grabFromSubmersible = new SequentialAction(
-                retractArmAction,                           // Pull your arm in
-                new ConsumerAction(arm, searchAction),      // Wait for arm to begin search
-                new ConsumerAction(shoulder, extendAction), // Wait for shoulder, then extend arm
-                new ConsumerAction(arm, pickupAction),      // Wait for arm, then pickup sample
+                new CompleteAction(retractArmAction, arm),  // Pull your arm in
+                new CompleteAction(searchAction, shoulder), // Search
+                new CompleteAction(extendAction, arm),      // Extend arm
+                pickupAction,                               // Pickup sample
                 new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
-                searchAction,                               // Back to search position
-                new ConsumerAction(shoulder, fullRetract),  // Wait for shoulder then retract
-                new ConsumerAction(arm, raiseArmAction)     // Wait for arm then raise shoulder (avoids walls)
-        );
+                new CompleteAction(searchAction, shoulder), // Back to search position
+                new CompleteAction(fullRetract, arm),       // Retract arm
+                raiseArmAction);                            // Raise shoulder so avoids walls
         Actions.runBlocking(grabFromSubmersible);
     }
 }
