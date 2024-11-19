@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 public abstract class BodyPart extends Thread{
     // Gamepad variables
     protected Gamepad gamepad;
@@ -15,6 +18,9 @@ public abstract class BodyPart extends Thread{
 
     // Loop saturation protection
     protected static final long LOOP_PAUSE_MS = 50;
+
+    // Consumer pattern objects
+    private List<Consumer<Boolean>> listeners;
 
     // Force implementing classes to implement the run class
     // This implements the things this body part can do in parallel with
@@ -61,9 +67,24 @@ public abstract class BodyPart extends Thread{
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
                 safeHold(targetPosition);
+                notifyListeners();
             } catch (InterruptedException e) {
             }
         });
         protectionThread.start();
+    }
+
+    public void addListener(Consumer<Boolean> listener)
+    {
+        listeners.add(listener);
+    }
+    public void removeListener(Consumer<Boolean> listener)
+    {
+        listeners.remove(listener);
+    }
+    private void notifyListeners()
+    {
+        // We are done, send running false to all registered consumers
+        listeners.forEach(listener -> listener.accept(false));
     }
 }

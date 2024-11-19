@@ -8,7 +8,6 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
 public class AutonomousLeft extends AutonomousOpMode{
-    protected double partnerWaitForSeconds = 0.0;
 
     @Override
     public void runOpMode() throws InterruptedException{
@@ -17,35 +16,32 @@ public class AutonomousLeft extends AutonomousOpMode{
         // If we grabbed a sample from the center, drive and place in lower bucket
         double bucketDropAngle = 170.0;
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(26, 40), Math.toRadians(bucketDropAngle));
-        Action driveTolowBucketDrop = legs.moveToAction(lowBucketDropPose);
+        Action driveToLowBucketDrop = legs.moveToAction(lowBucketDropPose);
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(0.9, 1700);
             hand.bucket();
-          return false;
-        };
-
-        Action releaseSample = telemetryPacket -> {
-            hand.release(1000);
             return false;
         };
-
+        Action releaseSample = telemetryPacket -> {
+            hand.release(RELEASE_MS);
+            return false;
+        };
         Action retractForPickupAction = telemetryPacket -> {
             arm.setPosition(0.9, 500);
             return false;
         };
 
-        Action toBin = new SequentialAction(
-                driveTolowBucketDrop,
+        Action binDrop = new SequentialAction(
+                driveToLowBucketDrop,
                 extendArmAction,
-                new SleepAction(2),
-                releaseSample,
-                new SleepAction(1),
+                new ConsumerAction(arm, releaseSample),
+                new SleepAction(RELEASE_S),
                 retractForPickupAction);
-        Actions.runBlocking(toBin);
+        Actions.runBlocking(binDrop);
 
         // Cycle from bucket to floor samples
-        Action lowerShoulder = telemetryPacket -> {
+        Action lowerAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.SEARCH);
             return false;
         };
@@ -58,7 +54,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         Action grabAction = telemetryPacket -> {
             // TODO - Search
-            hand.grab(1000);
+            hand.grab(GRAB_MS);
             shoulder.setMode(Shoulder.Mode.GROUND);
             return false;
         };
@@ -68,7 +64,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        // Repeat this 3 times for each floorsample
+        // Repeat this 3 times for each floor sample
         for(int i = 0; i < 3; i++)
         {
             // Turn to ground samples, pick one up
@@ -77,11 +73,12 @@ public class AutonomousLeft extends AutonomousOpMode{
                     .build();
             Action pickupAction = new SequentialAction(
                     turnToPickup,
+                    lowerAction,
                     extendArm,
-                    new SleepAction(0.5),
-                    grabAction,
-                    new SleepAction(1.0),
-                    raiseAction
+                    new ConsumerAction(arm, grabAction),
+                    new SleepAction(GRAB_S),
+                    raiseAction,
+                    new ConsumerAction(shoulder)
             );
             Actions.runBlocking(pickupAction);
 
@@ -89,11 +86,9 @@ public class AutonomousLeft extends AutonomousOpMode{
             Action turnToBucket = legs.moveToAction(lowBucketDropPose);
             Action dropAction = new SequentialAction(
                     turnToBucket,
-                    new SleepAction(1.0),
                     extendArmAction,
-                    new SleepAction(2),
-                    releaseSample,
-                    new SleepAction(1),
+                    new ConsumerAction(arm, releaseSample),
+                    new SleepAction(RELEASE_S),
                     retractForPickupAction
             );
             Actions.runBlocking(dropAction);

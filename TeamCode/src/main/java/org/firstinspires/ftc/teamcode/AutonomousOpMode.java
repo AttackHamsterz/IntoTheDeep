@@ -13,7 +13,11 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 // So for instance if you need to raise the shoulder, and then release that
 // would require a pause.  THe action list would have the pause added to it rather
 // than the individual action.  Eventually we should use an event driven architecture!
-public class AutonomousOpMode extends StandardSetupOpMode{
+public class AutonomousOpMode extends StandardSetupOpMode {
+    public static final long GRAB_MS = 1000;
+    public static final double GRAB_S = (double)GRAB_MS / 1000.0;
+    public static final long RELEASE_MS = 1000;
+    public static final double RELEASE_S = (double)RELEASE_MS / 1000.0;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -30,6 +34,7 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         };
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(0.9,900);
+            hand.hangSample();
             return false;
         };
         Action extraGrabAction = telemetryPacket -> {
@@ -43,16 +48,15 @@ public class AutonomousOpMode extends StandardSetupOpMode{
 
         double initialWait = 0.25;
         Action hangSampleToolAction = new SequentialAction(
-                liftShoulderAction,
-                new SleepAction(initialWait),
-                extendArmAction,
-                new SleepAction(0.5),
-                extraGrabAction,
-                new SleepAction(1.0),
-                dropAction,
-                new SleepAction(0.5));
+                liftShoulderAction,                     // Start shoulder lift to avoid dragging
+                new SleepAction(initialWait),           // Sleep a little (avoid dragging)
+                extraGrabAction,                        // Tighten sample in grip
+                extendArmAction,                        // Extend arm for sample hang
+                new ConsumerAction(arm, dropAction),    // Run dropAction when arm has extended
+                new ConsumerAction(shoulder));          // Wait for shoulder drop to complete
+
         Action hangSampleDriveAction = new SequentialAction(
-                new SleepAction(initialWait),
+                new SleepAction(initialWait),           // Sleep a little (avoid dragging)
                 legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
 
         ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
@@ -61,50 +65,40 @@ public class AutonomousOpMode extends StandardSetupOpMode{
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
         Action retractArmAction = telemetryPacket -> {
-            arm.setPosition(0.9, 300);
+            arm.setPosition(0.9, 400);
             return false;
         };
-
         Action searchAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.SEARCH);
             return false;
         };
-
         Action extendAction = telemetryPacket -> {
             arm.setPosition(0.9, 1500);
             return false;
         };
-
         Action pickupAction = telemetryPacket -> {
-            hand.grab(1000);
+            hand.grab(GRAB_MS);
             shoulder.setMode(Shoulder.Mode.GROUND);
             return false;
         };
-
         Action fullRetract = telemetryPacker -> {
             arm.gotoMin(0.9);
             return false;
         };
-
         Action raiseArmAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
             return false;
         };
 
         Action grabFromSubmersible = new SequentialAction(
-                retractArmAction,
-                new SleepAction(1),
-                searchAction,
-                extendAction,
-                new SleepAction(1),
-                pickupAction,
-                new SleepAction(1),
-                searchAction,
-                new SleepAction(0.5),
-                fullRetract,
-                new SleepAction(0.5),
-                raiseArmAction,
-                new SleepAction(0.5)
+                retractArmAction,                           // Pull your arm in
+                new ConsumerAction(arm, searchAction),      // Wait for arm to begin search
+                new ConsumerAction(shoulder, extendAction), // Wait for shoulder, then extend arm
+                new ConsumerAction(arm, pickupAction),      // Wait for arm, then pickup sample
+                new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
+                searchAction,                               // Back to search position
+                new ConsumerAction(shoulder, fullRetract),  // Wait for shoulder then retract
+                new ConsumerAction(arm, raiseArmAction)     // Wait for arm then raise shoulder (avoids walls)
         );
         Actions.runBlocking(grabFromSubmersible);
     }
