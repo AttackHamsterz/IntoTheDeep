@@ -47,10 +47,10 @@ public class Shoulder extends BodyPart {
             143,   // Ground
             543,  // Search
             1421, // Low Bar
-            2609, // High Bar
+            2600, // High Bar
             2889, // Low Bucket
             3102, // High Bucket
-            3296, // Hang
+            3400, // Hang
             10    // None is like ground
     ));
 
@@ -59,7 +59,7 @@ public class Shoulder extends BodyPart {
             500,  // Ground
             685,  // Search
             1136, // Low Bar
-            1752, // High Bar
+            1770, // High Bar
             1839, // Low Bucket
             3102, // High Bucket
             3470, // Hang
@@ -67,14 +67,15 @@ public class Shoulder extends BodyPart {
     ));
 
     // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 500;
+    public static int SAMPLE_HOOK_DROP = 900;
 
     //Variables for shoulder speed
-    private static final double MIN_SHOULDER_POWER = -0.5;
+    private static final double MIN_SHOULDER_POWER = -0.9;
     private static final double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.1;
+    private static final double HOLD_POWER = 0.05;
     private static final double MODE_POWER = 0.6;
+    private static final double DROP_POWER = -0.5;
     private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
@@ -96,7 +97,7 @@ public class Shoulder extends BodyPart {
     private int MIN_POS;
 
     // Mode for the shoulder
-    private Mode mode;
+    private Mode mode = Mode.NONE;
 
     /**
      * Constructor for the shoulder
@@ -112,6 +113,7 @@ public class Shoulder extends BodyPart {
 
         // Setup
         shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        shoulderMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shoulderMotor.setTargetPosition(0);
         shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -125,6 +127,7 @@ public class Shoulder extends BodyPart {
     public void debugTelemetry(Telemetry telemetry)
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
+        telemetry.addData("Shoulder Power", shoulderMotor.getPower());
         telemetry.addData("Shoulder Ratio", getShoulderRatio());
     }
 
@@ -133,7 +136,8 @@ public class Shoulder extends BodyPart {
      */
     public void dropSample()
     {
-        setPosition(MODE_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
+        setMode(Mode.NONE);
+        setPosition(DROP_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
     }
 
     @Override
@@ -199,9 +203,14 @@ public class Shoulder extends BodyPart {
      */
     public void setPosition(double power, int position)
     {
-        // Sets the power to the inputted power, clips the power
-        power = Range.clip(power, MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
+        // Check the current position against the target position (do nothing if close enough)
         position = Range.clip(position, MIN_POS, MAX_POS);
+        int currentPos = shoulderMotor.getCurrentPosition();
+        if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
+            return;
+
+        // Ensure inputs are valid (flip sign of power for lowering)
+        power = Range.clip(Math.abs(power) * Math.signum(position-currentPos), MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
 
         // Sets the position of the shoulder
         shoulderMotor.setTargetPosition(position);
@@ -234,13 +243,13 @@ public class Shoulder extends BodyPart {
                 } else if (power < -TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick down forever
-                    setPosition(Math.abs(power), MIN_POS);
+                    setPosition(Math.abs(power), MAX_POS);
                     hold = false;
                     mode = Mode.NONE;
                 } else if (power > TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick up forever
-                    setPosition(power, MAX_POS);
+                    setPosition(power, MIN_POS);
                     hold = false;
                     mode = Mode.NONE;
                 }

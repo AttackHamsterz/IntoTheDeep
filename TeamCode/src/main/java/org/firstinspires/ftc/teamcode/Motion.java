@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
@@ -24,6 +26,8 @@ public class Motion extends Thread {
     private final DcMotor rearRightDrive;
     private final Gamepad gamepad;
 
+    protected MecanumDrive legs;
+
     public enum Direction {
         FORWARD,
         RIGHT,
@@ -31,12 +35,13 @@ public class Motion extends Thread {
         LEFT
     }
 
-    public Motion(DcMotor frontLeftDrive, DcMotor frontRightDrive, DcMotor rearLeftDrive, DcMotor rearRightDrive, Gamepad gamepad) {
+    public Motion(DcMotor frontLeftDrive, DcMotor frontRightDrive, DcMotor rearLeftDrive, DcMotor rearRightDrive, Gamepad gamepad, MecanumDrive legs) {
         this.frontLeftDrive = frontLeftDrive;
         this.frontRightDrive = frontRightDrive;
         this.rearLeftDrive = rearLeftDrive;
         this.rearRightDrive = rearRightDrive;
         this.gamepad = gamepad;
+        this.legs = legs;
     }
 
     @Override
@@ -69,6 +74,12 @@ public class Motion extends Thread {
                 PF = 1.0;
             }
 
+            if (gamepad.right_bumper) {
+                rotate(90);
+            } else if (gamepad.left_bumper) {
+                rotate(-90);
+            }
+
             // Send calculated power to wheels
             frontLeftDrive.setPower(frontLeftPower);
             rearLeftDrive.setPower(rearLeftPower);
@@ -76,190 +87,12 @@ public class Motion extends Thread {
             rearRightDrive.setPower(rearRightPower);
         }
     }
-    public void translate(Direction direction, double squares, double power) {
-        translate(direction, squares ,power,false);
-    }
-    public void translate(Direction direction, double squares, double power, boolean auto) {
 
-        //ensure good input
-        power = Range.clip(Math.abs(power), 0, 1.0);
-
-        // Get the currentModes
-        DcMotor.RunMode frontLieftMode = frontLeftDrive.getMode();
-        DcMotor.RunMode frontRightMode = frontRightDrive.getMode();
-        DcMotor.RunMode rearRightMode = rearRightDrive.getMode();
-        DcMotor.RunMode rearLeftMode = rearLeftDrive.getMode();
-
-        // Get current positions
-        int frontLeftPosition = frontLeftDrive.getCurrentPosition();
-        int frontRightPosition = frontRightDrive.getCurrentPosition();
-        int rearRightPosition = rearRightDrive.getCurrentPosition();
-        int rearLeftPosition = rearLeftDrive.getCurrentPosition();
-
-        // Determine power
-        switch (direction) {
-            case FORWARD:
-                frontLeftPosition -= TRANSLATE_FB * squares;
-                frontRightPosition -= TRANSLATE_FB * squares;
-                rearLeftPosition -= TRANSLATE_FB * squares;
-                rearRightPosition -= TRANSLATE_FB * squares;
-                break;
-            case RIGHT:
-                frontLeftPosition -= TRANSLATE_LR * squares;
-                frontRightPosition += TRANSLATE_LR * squares;
-                rearLeftPosition += TRANSLATE_LR * squares;
-                rearRightPosition -= TRANSLATE_LR * squares;
-                break;
-            case BACKWARD:
-                frontLeftPosition += TRANSLATE_FB * squares;
-                frontRightPosition += TRANSLATE_FB * squares;
-                rearLeftPosition += TRANSLATE_FB * squares;
-                rearRightPosition += TRANSLATE_FB * squares;
-                break;
-            case LEFT:
-                frontLeftPosition += TRANSLATE_LR * squares;
-                frontRightPosition -= TRANSLATE_LR * squares;
-                rearLeftPosition -= TRANSLATE_LR * squares;
-                rearRightPosition += TRANSLATE_LR * squares;
-                break;
-            default:
-                // We should never get here!
-                return;
-        }
-
-        // Move until new positions
-        frontLeftDrive.setTargetPosition(frontLeftPosition);
-        frontRightDrive.setTargetPosition(frontRightPosition);
-        rearLeftDrive.setTargetPosition(rearLeftPosition);
-        rearRightDrive.setTargetPosition(rearRightPosition);
-        //frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // will wait till in position
-        frontLeftDrive.setPower(power);
-        frontRightDrive.setPower(power);
-        rearLeftDrive.setPower(power);
-        rearRightDrive.setPower(power);
-
-
-        while (true) {
-            boolean frontDone = !frontLeftDrive.isBusy() && !frontRightDrive.isBusy();
-            boolean rearDone = !rearLeftDrive.isBusy() && !rearRightDrive.isBusy();
-            if (auto) {
-                if (frontDone && rearDone) {
-                    break;
-                }
-            } else {
-                if (frontDone || rearDone) {
-                    break;
-                }
-            }
-        }
-
-        // reset mode
-        frontLeftDrive.setPower(0);
-        frontRightDrive.setPower(0);
-        rearLeftDrive.setPower(0);
-        rearRightDrive.setPower(0);
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rearLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rearRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-    public void rotation(Direction direction, double angle, double power) {
-        rotation(direction, angle, power, false);
-    }
-    public void rotation(Direction direction, double angle, double power, boolean auto) {
-
-        //ensure good input
-        power = Range.clip(Math.abs(power), 0, 1.0);
-
-        int rotation = (int) (ROTATE_360 * angle / 360);
-
-        // Get the currentModes
-        DcMotor.RunMode frontLeftMode = frontLeftDrive.getMode();
-        DcMotor.RunMode frontRightMode = frontRightDrive.getMode();
-        DcMotor.RunMode rearRightMode = rearRightDrive.getMode();
-        DcMotor.RunMode rearLeftMode = rearLeftDrive.getMode();
-
-        // Get current positions
-        int frontLeftPosition = frontLeftDrive.getCurrentPosition();
-        int frontRightPosition = frontRightDrive.getCurrentPosition();
-        int rearRightPosition = rearRightDrive.getCurrentPosition();
-        int rearLeftPosition = rearLeftDrive.getCurrentPosition();
-
-        // Determine power
-        switch (direction) {
-            case FORWARD:
-            case RIGHT:
-
-                frontLeftPosition -= rotation;
-                frontRightPosition += rotation;
-                rearLeftPosition -= rotation;
-                rearRightPosition += rotation;
-                break;
-
-            case BACKWARD:
-            case LEFT:
-
-                frontLeftPosition += rotation;
-                frontRightPosition -= rotation;
-                rearLeftPosition += rotation;
-                rearRightPosition -= rotation;
-                break;
-
-            default:
-                // We should never get here!
-                return;
-        }
-
-        // Move until new positions
-        frontLeftDrive.setTargetPosition(frontLeftPosition);
-        frontRightDrive.setTargetPosition(frontRightPosition);
-        rearLeftDrive.setTargetPosition(rearLeftPosition);
-        rearRightDrive.setTargetPosition(rearRightPosition);
-
-       // frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // rearLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // rearRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-        frontLeftDrive.setPower(power);
-        frontRightDrive.setPower(power);
-        rearLeftDrive.setPower(power);
-        rearRightDrive.setPower(power);
-
-        // will wait till in position
-
-        while (true) {
-            boolean frontDone = !frontLeftDrive.isBusy() && !frontRightDrive.isBusy();
-            boolean rearDone = !rearLeftDrive.isBusy() && !rearRightDrive.isBusy();
-            if (auto) {
-                if (frontDone && rearDone) {
-                    break;
-                }
-            } else {
-                if (frontDone || rearDone) {
-                    break;
-                }
-            }
-        }
-
-        frontLeftDrive.setPower(0);
-        frontRightDrive.setPower(0);
-        rearLeftDrive.setPower(0);
-        rearRightDrive.setPower(0);
-
-        // reset mode
-        frontLeftDrive.setMode(frontLeftMode);
-        frontRightDrive.setMode(frontRightMode);
-        rearLeftDrive.setMode(rearLeftMode);
-        rearRightDrive.setMode(rearRightMode);
-
-
+    public void rotate(double degrees) {
+        Action rotate = legs.actionBuilder(legs.getPose())
+                .turn(Math.toRadians(degrees))
+                .build();
+        Actions.runBlocking(rotate);
     }
 }
 
