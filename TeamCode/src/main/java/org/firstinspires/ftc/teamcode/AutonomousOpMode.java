@@ -55,7 +55,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(dropAction, shoulder));  // Run dropAction
 
         Action hangSampleDriveAction = new SequentialAction(
-                new SleepAction(initialWait),           // Sleep a little (avoid dragging)
+                new SleepAction(4),           // Sleep a little (avoid dragging)
                 legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
 
         ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
