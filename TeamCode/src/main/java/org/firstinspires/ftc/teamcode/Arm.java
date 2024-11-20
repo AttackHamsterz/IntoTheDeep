@@ -13,12 +13,12 @@ public class Arm extends BodyPart {
     private static final double MIN_ARM_SPEED = -0.9;
     private static final double MAX_ARM_SPEED = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.2;
+    private static final double HOLD_POWER = 0.1;
     private static final double NO_POWER = 0.0;
 
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
-    public static final int MAX_POS = 2000;
+    public static final int MAX_POS = 2200;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
@@ -61,6 +61,8 @@ public class Arm extends BodyPart {
     {
         telemetry.addData("Arm Counts Left", armMotorLeft.getCurrentPosition());
         telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
+        telemetry.addData("Arm Power Left", armMotorLeft.getPower());
+        telemetry.addData("Arm Power Right", armMotorRight.getPower());
         telemetry.addData("Arm Ratio", getArmRatio());
     }
 
@@ -111,9 +113,14 @@ public class Arm extends BodyPart {
      * @param position arm position
      */
     public void setPosition(double power, int position) {
-        // Ensure inputs are valid
-        power = Range.clip(power, MIN_ARM_SPEED, MAX_ARM_SPEED);
+        // Check the current position against the target position (do nothing if close enough)
         position = Range.clip(position, MIN_POS, MAX_POS);
+        int currentPos = armMotorLeft.getCurrentPosition();
+        if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
+            return;
+
+        // Ensure inputs are valid (flip sign of power for retraction)
+        power = Range.clip(Math.abs(power) * Math.signum(position-currentPos), MIN_ARM_SPEED, MAX_ARM_SPEED);
 
         // Set new position and power the motors
         armMotorLeft.setTargetPosition(position);
@@ -184,12 +191,12 @@ public class Arm extends BodyPart {
                 } else if (power < -TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver
                     // holds the retraction stick down forever
-                    setPosition(Math.abs(power), MIN_POS);
+                    setPosition(Math.abs(power), MAX_POS);
                     hold = false;
                 } else if (power > TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver
                     // holds the extension stick up forever
-                    setPosition(power, MAX_POS);
+                    setPosition(power, MIN_POS);
                     hold = false;
                 }
             }

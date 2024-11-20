@@ -64,6 +64,9 @@ public class BasicOpMode_Linear extends StandardSetupOpMode {
             arm.debugTelemetry(telemetry);
             hand.debugTelemetry(telemetry);
             telemetry.update();
+
+            // Short sleep to keep this loop from saturating
+            sleep(BodyPart.LOOP_PAUSE_MS);
         }
 
         // Interrupt threads and wait for completion

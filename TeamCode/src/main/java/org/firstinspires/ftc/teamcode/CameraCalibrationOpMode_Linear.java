@@ -1,202 +1,128 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.dfrobot.HuskyLens;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "Test: Camera Calibration", group = "Linear Opmode")
 public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
-    HuskyLens huskyLens;
-    ColorCamera colorCamera;
+    // Arm calibration values
+    private static final int NEAR_Y = 186;
+    private static final int FAR_Y = 66;
+    private static final int NEAR_TICKS = 0;
+    private static final int FAR_TICKS = 680;
 
-    // center of the screen
-    public static final int CENTER_X = 160;
-    public static final int CENTER_Y = 180;
-    public static final int CLOSE_ENOUGH = 5;
+    // y=mx+b where y is ticks and x is the relative y pixel location
+    private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
+    private static final double B = (double) FAR_TICKS - (M * (double) FAR_Y);
 
-    // y=mx+b where y is inches and x is the y pixel location
-    private static final double M = -11.429;
-    private static final double B = 2000.0;
+    // Leg calibration values
+    private static final int CENTER_X = 160;
+    private static final int INCHES_FROM_CENTER = 4;
+    private static final int SHIFT_NEAR_X = 283;
+    private static final int SHIFT_NEAR_Y = 139;
+    private static final double SHIFT_NEAR_M = (double)INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_NEAR_X);
 
-    private static final double INCHES_PER_PIXEL_Y = (double) 19 / 240;
-    private static final double ROTATIONS_PER_INCH_Y = (double) Arm.MAX_POS/20.0;
+    private static final int SHIFT_FAR_X = 252;
+    private static final int SHIFT_FAR_Y = 109;
+    private static final double SHIFT_FAR_M = (double) INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_FAR_X) ;
 
-    private HuskyLens.Block closestBlock;
-    private int closestBlockX;
-    private int closestBlockY;
-
+    // how much our slop is changing based on y
+    private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
+    private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // get the camera from the hardware map
-        colorCamera = new ColorCamera(hardwareMap, COLOR.BLUE);
+        // Call your parents!
+        super.runOpMode();
 
         // check to see if the device is working
-        if (!huskyLens.knock()) {
-            telemetry.addData(">>", "Problem communicating with " + huskyLens.getDeviceName());
-        } else {
-            telemetry.addData(">>", "Press start to continue");
+        if (!camera.huskyLens.knock()) {
+            telemetry.addData(">>", "Problem communicating with " + camera.huskyLens.getDeviceName());
+            telemetry.update();
+            return;
         }
 
         // start the color recognition algorithm
-        huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+        camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
 
         // Attempt to get image data
-        // TODO - plug husky into any ic2 port except 0
-        byte[] data = huskyLens.getDeviceClient().read(0x30); // 0x30 is REQUEST_PHOTO, 0x31 is SEND_PHOTO, 0x38 is SEND_SCREENSHOT, 0x39 is SAVE_SCREENSHOT
-        telemetry.addData("Byte from REQUEST_PHOTO", data.length);
-
-        super.runOpMode();
-
-        /*
-        // Create a PID controller for the arm (shooting for 0 error in y)
-        // TODO - Tune this First (disable turnController while tuning)
-        PIDController armController = new PIDController(0.06, 0.06, 0.015);
-        armController.setSetpoint(0);
-
-        // Create a PID controller for turning (shooting for 0 error in x)
-        // TODO - Tune this second (disable armController while tuning)
-        PIDController turnController = new PIDController( 1.0, 0.1, 0.01);
-        turnController.setSetpoint(0);
-
-         */
+        //byte[] data = camera.huskyLens.getDeviceClient().read(0x30); // 0x30 is REQUEST_PHOTO - 40 bytes
+        //byte[] data = camera.huskyLens.getDeviceClient().read(0x31); // 0x31 is SEND_PHOTO - 49 bytes
+        //byte[] data = camera.huskyLens.getDeviceClient().read(0x38); // 0x38 is SEND_SCREENSHOT - 56 bytes
+        //byte[] data = camera.huskyLens.getDeviceClient().read(0x39); // 0x39 is SAVE_SCREENSHOT - 57 bytes
+        //byte[] data = camera.huskyLens.getDeviceClient().read(0x3D); // 0x39 is REQUEST_SENSOR -  bytes
+        //telemetry.addData("Num Bytes", data.length);
+        //telemetry.addData("Bytes:", data);
 
         // Put the shoulder into search height position with very little holding power
         shoulder.setMode(Shoulder.Mode.SEARCH);
-        //shoulder.setPosition(0.3, Shoulder.Mode.SEARCH.armInPos());
 
         // We could also do this by mapping the error we measure directly into
         // a correction.  That may be good enough instead of needing PIDs.
         boolean pressed = false;
-        boolean xDone = false;
-        boolean yDone = false;
         while(opModeIsActive()) {
+/*
+            // This block helps us calibrate (disable once calibrated)
+            HuskyLens.Block block = camera.getClosestBlock();
+            if (block != null) {
+                telemetry.addData("Closest Block", block.toString());
+                int blockCenterY = block.y;
+                arm.debugTelemetry(telemetry);
+                legs.debugTelemetry(telemetry);
+                telemetry.update();
+                legs.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                arm.halt(); // Lets us manually tug the arm for measurements
+            }
 
-            // While a is pressed on the tool gamepad
+ */
+
             if(gamepad2.a) {
-                // the color tracking algorithm returns a block around the location of the colored object
-                // from that block, we can figure out the location of our object
+                HuskyLens.Block block = camera.getClosestBlock();
+                if (block != null) {
+                    // Set new arm position!
+                    int ticks = (int) Math.round((M * (double)block.y + B));
+                    telemetry.addData("M", M);
+                    telemetry.addData("blockCenterY", block.y);
+                    telemetry.addData("B", B);
+                    telemetry.addData("deltaTicks", ticks);
+                    telemetry.addData("Arm Pos", arm.getCurrentPosition());
+                    //arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
 
-                    // If this is the first time we've seen the button pressed
-                    // Reset the PID
-                    /*
-                    if(!pressed) {
+                    // TODO - Set new legs position!
+                    telemetry.addData("blockCenterX", block.x);
+                    double ySlope = block.y * SHIFT_M + SHIFT_B;
+                    double shift = (block.x-CENTER_X) * ySlope;
+
+                    telemetry.addData("shift near m", SHIFT_NEAR_M);
+                    telemetry.addData("shift far m", SHIFT_FAR_M);
+                    telemetry.addData("shift m", SHIFT_M);
+                    telemetry.addData("shift b", SHIFT_B);
+                    telemetry.addData("y slope", ySlope);
+                    telemetry.addData("shift", shift);
+
+                    if (!pressed) {
+                        legs.moveY(shift);
                         pressed = true;
-                        xDone = false;
-                        yDone = false;
-                        armController.reset();
-                        turnController.reset();
+                    } else {
+                        pressed = false;
                     }
 
-                    if(!xDone) {
-                        // Measure the current block error (x dimension)
-                        int blockCenterX = block.x;
-                        double errorX = blockCenterX - CENTER_X;
-                        xDone = Math.abs(errorX) < CLOSE_ENOUGH;
-
-                        // If we're not close enough
-                        if(!xDone) {
-                            xDone = true;
-                            // Convert error to a rotation angle with the PID
-                            double turnAngle = turnController.calculate(errorX);
-
-
-                            // Rotate the robot to align the tool
-                            // TODO - scale this by how extended the arm is
-                            //motion.rotation(
-                            //        (turnAngle<0) ? Motion.Direction.LEFT : Motion.Direction.RIGHT,
-                            //        Math.abs(turnAngle), 0.1);
-                        }
-                    }
-
-                     */
-
-                    if(!yDone) {
-                        HuskyLens.Block[] blocks = huskyLens.blocks();
-                        telemetry.addData("Block count", blocks.length);
-                        HuskyLens.Block block = colorCamera.getClosestBlock();
-                        // we found a block
-                        if (block != null) {
-                            telemetry.addData("Closest Block", block.toString());
-                            int blockCenterY = block.y;
-                            double errorY = CENTER_Y - blockCenterY;
-                            telemetry.addData("errorY", errorY);
-                            //yDone = Math.abs(errorY) < CLOSE_ENOUGH;
-
-                            // If we're not close enough
-                            //if(!yDone) {
-                            // Convert error to an arm extension or retraction
-                            //double armPower = armController.calculate(errorY);
-
-                            // TODO - if the arm is fully extended/retracted
-                            // we actually need to motion forward/backward
-
-                            // Drive the arm while there is still error
-                            //int ticks = (int)Math.round(errorY*INCHES_PER_PIXEL_Y*ROTATIONS_PER_INCH_Y);
-                            int ticks = (int) Math.round((blockCenterY * M + B));
-                            telemetry.addData("blockCenterY", blockCenterY);
-                            telemetry.addData("M", M);
-                            telemetry.addData("Mx", blockCenterY*M);
-                            telemetry.addData("B", B);
-                            telemetry.addData("ticks", ticks);
-                            telemetry.addData("Arm Pos", arm.getCurrentPosition());
-                            telemetry.update();
-                            arm.setPosition(0.3*Math.signum(ticks), arm.getCurrentPosition()+ticks);
-
-
-                        }
-                        yDone = true;
-                        // Measure current block error (y dimension)
-
-
-
-                            /*
-                            if (armPower < 0)
-                                arm.gotoMin(Math.abs(armPower));
-                            else if (armPower > 0)
-                                arm.gotoMax(armPower);
-
-                             */
-
-
-                        //}
-                    }
-
-                    // TODO - add logic to spin the wrist
+                    // TODO - Add logic to spin the wrist
                     // This is either openCV on image data
                     // Or switching to line detection mode
                     // And getting arrows if that's quick enough
                     // If it's too slow we'll need to go back to
                     // USB camera until we get a limelight 3a
-
-                    // Moving one could cause error in the other, check again
-                    //xDone = yDone = xDone && yDone;
-                }  else {
-                yDone = false;
-                // if we don't find the block
+                    telemetry.update();
+                }
             }
 
-                // TODO - If we're all done, plunge and grab
-                    // To avoid saturating the loop and let our PID's work
-                    Thread.sleep(100); // Delay for next iteration
-
-            /*
-            }
-            else if (pressed){
-                pressed = false;
-                //arm.halt();
-            }
-
-             */
 
 
+            // Short sleep to keep this loop from saturating
+            sleep(BodyPart.LOOP_PAUSE_MS);
         }
-
         waitForCompletion();
     }
 }
