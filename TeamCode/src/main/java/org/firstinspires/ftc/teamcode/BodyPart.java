@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -20,7 +21,7 @@ public abstract class BodyPart extends Thread{
     protected static final long LOOP_PAUSE_MS = 50;
 
     // Consumer pattern objects
-    private List<Consumer<Boolean>> listeners;
+    private List<Consumer<Boolean>> listeners = new ArrayList<>();
 
     // Force implementing classes to implement the run class
     // This implements the things this body part can do in parallel with
@@ -82,7 +83,7 @@ public abstract class BodyPart extends Thread{
     {
         listeners.remove(listener);
     }
-    private void notifyListeners()
+    public void notifyListeners()
     {
         // We are done, send running false to all registered consumers
         listeners.forEach(listener -> listener.accept(false));
