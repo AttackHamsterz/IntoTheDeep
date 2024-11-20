@@ -23,6 +23,29 @@ public abstract class BodyPart extends Thread{
     // Consumer pattern objects
     private List<Consumer<Boolean>> listeners = new ArrayList<>();
 
+    private class TimeoutThread extends Thread{
+        private int position;
+
+        public TimeoutThread(int position){
+            this.position = position;
+        }
+
+        @Override
+        public void run(){
+            try{
+                while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
+                    sleep(MOTOR_CHECK_PERIOD_MS);
+                }
+                safeHold(position);
+                // We are done, notify all consumers
+                for(int i = listeners.size() - 1; i >= 0; i--){
+                    listeners.remove(i).accept(Boolean.FALSE);
+                }
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
     // Force implementing classes to implement the run class
     // This implements the things this body part can do in parallel with
     // other body parts
@@ -61,17 +84,7 @@ public abstract class BodyPart extends Thread{
         protectionThread.interrupt();
 
         // Start a thread that performs safe hold when the time is right
-        Integer position = new Integer(targetPosition);
-        protectionThread = new Thread(() -> {
-            try{
-                while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
-                    sleep(MOTOR_CHECK_PERIOD_MS);
-                }
-                safeHold(targetPosition);
-                notifyListeners();
-            } catch (InterruptedException e) {
-            }
-        });
+        protectionThread = new TimeoutThread(targetPosition);
         protectionThread.start();
     }
 
@@ -82,10 +95,5 @@ public abstract class BodyPart extends Thread{
     public void removeListener(Consumer<Boolean> listener)
     {
         listeners.remove(listener);
-    }
-    public void notifyListeners()
-    {
-        // We are done, send running false to all registered consumers
-        listeners.forEach(listener -> listener.accept(false));
     }
 }

@@ -46,16 +46,15 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
-        double initialWait = 0.25;
+        double initialWait = 0.2;
         Action hangSampleToolAction = new SequentialAction(
                 liftShoulderAction,                         // Start shoulder lift to avoid dragging
                 new SleepAction(initialWait),               // Sleep a little (avoid dragging)
                 extraGrabAction,                            // Tighten sample in grip
                 new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
                 new CompleteAction(dropAction, shoulder));  // Run dropAction
-
         Action hangSampleDriveAction = new SequentialAction(
-                new SleepAction(4),           // Sleep a little (avoid dragging)
+                new SleepAction(0.5),           // Sleep a little (avoid dragging)
                 legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
 
         ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
@@ -94,7 +93,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(searchAction, shoulder), // Search
                 new CompleteAction(extendAction, arm),      // Extend arm
                 pickupAction,                               // Pickup sample
-                new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
+                new SleepAction(GRAB_S+0.25),                    // Wait for hand to pickup (might not reach ground)
                 new CompleteAction(searchAction, shoulder), // Back to search position
                 new CompleteAction(fullRetract, arm),       // Retract arm
                 raiseArmAction);                            // Raise shoulder so avoids walls

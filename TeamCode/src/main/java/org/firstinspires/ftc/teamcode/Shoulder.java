@@ -150,8 +150,8 @@ public class Shoulder extends BodyPart {
     {
         // We've noticed the motors consuming lots of power while holding.  This should
         // lower the power when we don't need to move.
-        shoulderMotor.setTargetPosition(shoulderMotor.getCurrentPosition());
         shoulderMotor.setPower(HOLD_POWER);
+        shoulderMotor.setTargetPosition(shoulderMotor.getCurrentPosition());
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();
@@ -267,8 +267,7 @@ public class Shoulder extends BodyPart {
             if(mode != Mode.NONE)
             {
                 int newPos = (int)Math.round(armRatio * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
-                if(Math.abs(newPos - getCurrentPosition()) > CLOSE_ENOUGH_TICKS)
-                    setPosition(MODE_POWER, newPos);
+                setPosition(MODE_POWER, newPos);
             }
 
             // Short sleep to keep this loop from saturating

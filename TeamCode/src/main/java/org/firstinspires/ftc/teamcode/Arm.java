@@ -153,15 +153,17 @@ public class Arm extends BodyPart {
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
-            armMotorRight.setTargetPosition(posLeft);
-            armMotorLeft.setTargetPosition(posLeft);
             armMotorRight.setPower(NO_POWER);
             armMotorLeft.setPower(HOLD_POWER);
+            posLeft = armMotorLeft.getCurrentPosition();
+            armMotorRight.setTargetPosition(posLeft);
+            armMotorLeft.setTargetPosition(posLeft);
         } else {
-            armMotorRight.setTargetPosition(posRight);
-            armMotorLeft.setTargetPosition(posRight);
             armMotorRight.setPower(HOLD_POWER);
             armMotorLeft.setPower(NO_POWER);
+            posRight = armMotorRight.getCurrentPosition();
+            armMotorRight.setTargetPosition(posRight);
+            armMotorLeft.setTargetPosition(posRight);
         }
 
         // This is belt slip protection
