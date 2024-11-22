@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -13,15 +14,15 @@ public abstract class BodyPart extends Thread{
     protected boolean ignoreGamepad = false;
 
     // Motor overload protection
-    protected static final long MOTOR_CHECK_PERIOD_MS = 250;  // Check 4 times a second
-    protected static final int CLOSE_ENOUGH_TICKS = 10; // Turn off the other motor when we are close
+    protected static final long MOTOR_CHECK_PERIOD_MS = 100;  // Check 10 times a second
+    protected static final int CLOSE_ENOUGH_TICKS = 20; // Turn off the other motor when we are close
     protected Thread protectionThread = new Thread();
 
     // Loop saturation protection
     protected static final long LOOP_PAUSE_MS = 50;
 
     // Consumer pattern objects
-    private List<Consumer<Boolean>> listeners = new ArrayList<>();
+    private LinkedList<Consumer<Boolean>> listeners = new LinkedList<>();
 
     private class TimeoutThread extends Thread{
         private int position;
@@ -37,10 +38,11 @@ public abstract class BodyPart extends Thread{
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
                 safeHold(position);
-                // We are done, notify all consumers
-                for(int i = listeners.size() - 1; i >= 0; i--){
-                    listeners.remove(i).accept(Boolean.FALSE);
-                }
+
+                // We are done, notify oldest consumer
+                if(listeners.size()>0)
+                    listeners.removeLast().accept(Boolean.FALSE);
+
             } catch (InterruptedException e) {
             }
         }
@@ -95,5 +97,9 @@ public abstract class BodyPart extends Thread{
     public void removeListener(Consumer<Boolean> listener)
     {
         listeners.remove(listener);
+    }
+    public int getNumListeners()
+    {
+        return listeners.size();
     }
 }
