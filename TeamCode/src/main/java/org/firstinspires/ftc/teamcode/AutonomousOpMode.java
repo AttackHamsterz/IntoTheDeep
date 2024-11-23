@@ -18,22 +18,28 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final double GRAB_S = (double)GRAB_MS / 1000.0;
     public static final long RELEASE_MS = 1000;
     public static final double RELEASE_S = (double)RELEASE_MS / 1000.0;
+    public static final double AUTO_POWER = 1.0;
 
     @Override
     public void runOpMode() throws InterruptedException {
         super.runOpMode();
+
+        // Remove the floor protection (causing some position override issues in autonomous)
+        arm.setShoulder(null);
 
         // Every autonomous will drive forward, lift the shoulder, and
         // extend the arms at the same time.  Once the arms are
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
+        int dropArmPosition = 900;
+        int searchArmPosition = 1500;
         Action liftShoulderAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
+            shoulder.setPositionForMode(Shoulder.Mode.HIGH_BAR, AUTO_POWER, dropArmPosition);
             return false;
         };
         Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(0.9,900);
+            arm.setPosition(AUTO_POWER,dropArmPosition);
             hand.hangSample();
             return false;
         };
@@ -46,71 +52,51 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
-        double initialWait = 0.25;
+        double initialWait = 0.2;
+        Action driveAndExtend = new ParallelAction(
+                new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
+                legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0))
+        );
         Action hangSampleToolAction = new SequentialAction(
                 liftShoulderAction,                         // Start shoulder lift to avoid dragging
-                new SleepAction(2.0),               // Sleep a little (avoid dragging)
+                new SleepAction(initialWait),               // Sleep a little (avoid dragging)
                 extraGrabAction,                            // Tighten sample in grip
-                new SleepAction(2.0),
-                new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
-                new SleepAction(2.0),
-                new CompleteAction(dropAction, shoulder),  // Run dropAction
-                new SleepAction(2.0));
-
-        Action hangSampleDriveAction = new SequentialAction(
-                new SleepAction(4),           // Sleep a little (avoid dragging)
-                legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
-
-        //ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
+                driveAndExtend,                             // Drive and extend
+                new CompleteAction(dropAction, shoulder));  // Run dropAction
         Actions.runBlocking(hangSampleToolAction);
-        telemetry.addLine("finished run blocking");
-        telemetry.update();
-        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            telemetry.addLine("exception thrown");
-            telemetry.update();
-        }
+
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
         Action retractArmAction = telemetryPacket -> {
-            arm.setPosition(0.9, 400);
+            arm.setPosition(AUTO_POWER, 400);
             return false;
         };
         Action searchAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.SEARCH);
+            shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchArmPosition);
             return false;
         };
         Action extendAction = telemetryPacket -> {
-            arm.setPosition(0.9, 1500);
+            arm.setPosition(AUTO_POWER, 1500);
             return false;
         };
         Action pickupAction = telemetryPacket -> {
             hand.grab(GRAB_MS);
-            shoulder.setMode(Shoulder.Mode.GROUND);
+            shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.8, searchArmPosition);
             return false;
         };
-        Action fullRetract = telemetryPacker -> {
-            arm.gotoMin(0.9);
-            return false;
-        };
-        Action raiseArmAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
+        Action retract = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, 250);
+            arm.setPosition(AUTO_POWER, 400);
             return false;
         };
 
-        /*
         Action grabFromSubmersible = new SequentialAction(
-                new CompleteAction(retractArmAction, arm),  // Pull your arm in
+                retractArmAction,                           // Pull your arm in
                 new CompleteAction(searchAction, shoulder), // Search
                 new CompleteAction(extendAction, arm),      // Extend arm
                 pickupAction,                               // Pickup sample
                 new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
-                new CompleteAction(searchAction, shoulder), // Back to search position
-                new CompleteAction(fullRetract, arm),       // Retract arm
-                raiseArmAction);                            // Raise shoulder so avoids walls
+                new CompleteAction(retract, arm));          // Retract arm
         Actions.runBlocking(grabFromSubmersible);
-
-         */
     }
 }

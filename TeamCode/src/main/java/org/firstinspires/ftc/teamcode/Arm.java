@@ -68,7 +68,7 @@ public class Arm extends BodyPart {
 
     @Override
     public int getCurrentPosition() {
-        return armMotorLeft.getCurrentPosition();
+        return (armMotorLeft.getCurrentPosition() + armMotorRight.getCurrentPosition()) / 2;
     }
 
     /**
@@ -86,6 +86,16 @@ public class Arm extends BodyPart {
     public double getArmRatio()
     {
         return Range.clip((double) (armMotorLeft.getCurrentPosition() - MIN_POS) / (double) (MAX_POS - MIN_POS), 0.0, 1.0);
+    }
+
+    /**
+     * Given a position we would like to get to, what is an ideal arm ratio.
+     * @param targetPosition
+     * @return
+     */
+    public double getArmRatio(int targetPosition)
+    {
+        return Range.clip((double) (targetPosition - MIN_POS) / (double) (MAX_POS - MIN_POS), 0.0, 1.0);
     }
 
     public void gotoMin(double power)
@@ -153,15 +163,17 @@ public class Arm extends BodyPart {
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
-            armMotorRight.setTargetPosition(posLeft);
-            armMotorLeft.setTargetPosition(posLeft);
             armMotorRight.setPower(NO_POWER);
             armMotorLeft.setPower(HOLD_POWER);
+            posLeft = armMotorLeft.getCurrentPosition();
+            armMotorRight.setTargetPosition(posLeft);
+            armMotorLeft.setTargetPosition(posLeft);
         } else {
-            armMotorRight.setTargetPosition(posRight);
-            armMotorLeft.setTargetPosition(posRight);
             armMotorRight.setPower(HOLD_POWER);
             armMotorLeft.setPower(NO_POWER);
+            posRight = armMotorRight.getCurrentPosition();
+            armMotorRight.setTargetPosition(posRight);
+            armMotorLeft.setTargetPosition(posRight);
         }
 
         // This is belt slip protection

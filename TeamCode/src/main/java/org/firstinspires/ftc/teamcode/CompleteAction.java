@@ -16,10 +16,22 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     private final BodyPart bodyPart;
     private final Action action;
     private final long maxWait_ms;
+    private Thread timeoutThread;
     private boolean firstRun;
     private boolean runAction;
     private boolean waiting;
-    private Thread timeoutThread;
+
+    private class TimeoutThread extends Thread{
+        @Override
+        public void run(){
+            try{
+                Thread.sleep(maxWait_ms);
+            } catch (InterruptedException ignored) {
+            }
+            if(waiting)
+                accept(false);
+        }
+    }
 
     public CompleteAction(@NonNull Action action, @NonNull BodyPart bodyPart, long maxWait_ms)
     {
@@ -27,6 +39,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         this.action = action;
         this.bodyPart = bodyPart;
         this.maxWait_ms = maxWait_ms;
+        this.timeoutThread = new Thread();
         this.firstRun = false;
         this.runAction = true;
         this.waiting = true;
@@ -44,7 +57,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     public void accept(Boolean waiting) {
         // Always false (notify always means running is complete)
         this.waiting = false;
-        //timeoutThread.interrupt();
+        this.timeoutThread.interrupt();
         bodyPart.removeListener(this);
     }
     @Override
@@ -53,19 +66,9 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         if(!firstRun)
         {
             // Set a timeout thread to avoid stalling out
-            /*
-            timeoutThread = new Thread(() -> {
-                try{
-                    Thread.sleep(maxWait_ms);
-                } catch (InterruptedException ignored) {
-                }
-                if(waiting)
-                    accept(false);
-            });
-            timeoutThread.start();
-
-             */
             firstRun = true;
+            timeoutThread = new TimeoutThread();
+            timeoutThread.start();
         }
 
         // Some actions will run multiple times until false, those that return false are done

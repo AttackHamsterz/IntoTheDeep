@@ -44,30 +44,30 @@ public class Shoulder extends BodyPart {
 
     // Shoulder positions for each mode when the arm is all the way in
     public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
-            143,   // Ground
+            143,  // Ground
             543,  // Search
-            1421, // Low Bar
-            2600, // High Bar
-            2889, // Low Bucket
-            3102, // High Bucket
-            3400, // Hang
-            10    // None is like ground
+            1265, // Low Bar
+            2686, // High Bar
+            3225, // Low Bucket
+            2921, // High Bucket
+            3375, // Hang
+            143   // None is like ground
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
             500,  // Ground
             685,  // Search
-            1136, // Low Bar
-            1770, // High Bar
-            1839, // Low Bucket
-            3102, // High Bucket
-            3470, // Hang
-            680   // None is like ground
+            1047, // Low Bar
+            1636, // High Bar
+            1731, // Low Bucket
+            2921, // High Bucket
+            3375, // Hang
+            500   // None is like ground
     ));
 
     // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 900;
+    public static int SAMPLE_HOOK_DROP = 500;
 
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_POWER = -0.9;
@@ -75,15 +75,13 @@ public class Shoulder extends BodyPart {
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.05;
     private static final double MODE_POWER = 1.0;
-    private static final double DROP_POWER = -0.5;
+    private static final double DROP_POWER = -0.9;
     private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
     // TODO - phase these out for mode values
-    public static int MIN_POS_ARM_IN = ARM_IN_POS.get(Mode.GROUND.value());
-    public static int MIN_POS_ARM_OUT = ARM_OUT_POS.get(Mode.GROUND.value());
-    public static int MAX_POS = ARM_IN_POS.get(Mode.HANG.value());
-    public static double DELTA_MIN_POS_ARM = MIN_POS_ARM_OUT - MIN_POS_ARM_IN;
+    public static int MIN_POS_ARM_IN = Mode.GROUND.armInPos();
+    public static double DELTA_MIN_POS_ARM = Mode.GROUND.armOutPos() - MIN_POS_ARM_IN;
 
     //Setting up vars of threading
     private final DcMotor shoulderMotor;
@@ -94,7 +92,8 @@ public class Shoulder extends BodyPart {
 
     // Values for arm ratio and floor protection
     private double armRatio;
-    private int MIN_POS;
+    private int MIN_POS = Mode.NONE.armInPos();
+    public static int MAX_POS = Mode.HANG.armInPos();
 
     // Mode for the shoulder
     private Mode mode = Mode.NONE;
@@ -150,8 +149,8 @@ public class Shoulder extends BodyPart {
     {
         // We've noticed the motors consuming lots of power while holding.  This should
         // lower the power when we don't need to move.
-        shoulderMotor.setTargetPosition(shoulderMotor.getCurrentPosition());
         shoulderMotor.setPower(HOLD_POWER);
+        shoulderMotor.setTargetPosition(shoulderMotor.getCurrentPosition());
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();
@@ -172,15 +171,19 @@ public class Shoulder extends BodyPart {
      */
     public void targetArmRatio(double targetArmRatio)
     {
+        // Ignore if we have listeners waiting for results
+        if(getNumListeners()>0)
+            return;
+
         // Ensure arm ratio is in a valid range
         armRatio = Range.clip(targetArmRatio, 0, 1.0);
 
         // Convert target arm ratio to the new shoulder position
-        MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
+        int newMinPos = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
 
         // Move the shoulder if necessary
-        if(MIN_POS > shoulderMotor.getCurrentPosition())
-            setPosition(shoulderMotor.getPower(), MIN_POS);
+        if(newMinPos > shoulderMotor.getCurrentPosition())
+            setPosition(shoulderMotor.getPower(), newMinPos);
     }
 
     /**
@@ -225,6 +228,17 @@ public class Shoulder extends BodyPart {
         this.mode = mode;
     }
 
+    /**
+     * Method lets you just set the ideal shoulder position given target arm position
+     * @param mode
+     * @param targetArmPosition
+     */
+    public void setPositionForMode(Mode mode, double power, int targetArmPosition)
+    {
+        int newPos = (int)Math.round(arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
+        setPosition(power, newPos);
+    }
+
     @Override
     public void run() {
         while (!isInterrupted()) {
@@ -267,8 +281,7 @@ public class Shoulder extends BodyPart {
             if(mode != Mode.NONE)
             {
                 int newPos = (int)Math.round(armRatio * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
-                if(Math.abs(newPos - getCurrentPosition()) > CLOSE_ENOUGH_TICKS)
-                    setPosition(MODE_POWER, newPos);
+                setPosition(MODE_POWER, newPos);
             }
 
             // Short sleep to keep this loop from saturating
