@@ -49,18 +49,28 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         double initialWait = 0.25;
         Action hangSampleToolAction = new SequentialAction(
                 liftShoulderAction,                         // Start shoulder lift to avoid dragging
-                new SleepAction(initialWait),               // Sleep a little (avoid dragging)
+                new SleepAction(2.0),               // Sleep a little (avoid dragging)
                 extraGrabAction,                            // Tighten sample in grip
+                new SleepAction(2.0),
                 new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
-                new CompleteAction(dropAction, shoulder));  // Run dropAction
+                new SleepAction(2.0),
+                new CompleteAction(dropAction, shoulder),  // Run dropAction
+                new SleepAction(2.0));
 
         Action hangSampleDriveAction = new SequentialAction(
                 new SleepAction(4),           // Sleep a little (avoid dragging)
                 legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0)));
 
-        ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
-        Actions.runBlocking(dropSample);
-
+        //ParallelAction dropSample = new ParallelAction(hangSampleToolAction, hangSampleDriveAction);
+        Actions.runBlocking(hangSampleToolAction);
+        telemetry.addLine("finished run blocking");
+        telemetry.update();
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            telemetry.addLine("exception thrown");
+            telemetry.update();
+        }
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
         Action retractArmAction = telemetryPacket -> {
@@ -89,6 +99,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
+        /*
         Action grabFromSubmersible = new SequentialAction(
                 new CompleteAction(retractArmAction, arm),  // Pull your arm in
                 new CompleteAction(searchAction, shoulder), // Search
@@ -99,5 +110,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(fullRetract, arm),       // Retract arm
                 raiseArmAction);                            // Raise shoulder so avoids walls
         Actions.runBlocking(grabFromSubmersible);
+
+         */
     }
 }

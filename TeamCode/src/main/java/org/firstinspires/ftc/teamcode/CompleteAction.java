@@ -19,6 +19,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     private boolean firstRun;
     private boolean runAction;
     private boolean waiting;
+    private Thread timeoutThread;
 
     public CompleteAction(@NonNull Action action, @NonNull BodyPart bodyPart, long maxWait_ms)
     {
@@ -43,6 +44,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     public void accept(Boolean waiting) {
         // Always false (notify always means running is complete)
         this.waiting = false;
+        //timeoutThread.interrupt();
         bodyPart.removeListener(this);
     }
     @Override
@@ -51,7 +53,8 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         if(!firstRun)
         {
             // Set a timeout thread to avoid stalling out
-            Thread timeoutThread = new Thread(() -> {
+            /*
+            timeoutThread = new Thread(() -> {
                 try{
                     Thread.sleep(maxWait_ms);
                 } catch (InterruptedException ignored) {
@@ -60,6 +63,8 @@ public class CompleteAction implements Action, Consumer<Boolean> {
                     accept(false);
             });
             timeoutThread.start();
+
+             */
             firstRun = true;
         }
 

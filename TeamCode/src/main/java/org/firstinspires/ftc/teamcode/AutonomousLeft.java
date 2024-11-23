@@ -65,6 +65,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         };
 
         // Repeat this 3 times for each floor sample
+        /*
         for(int i = 0; i < 3; i++)
         {
             // Turn to ground samples, pick one up
@@ -91,6 +92,8 @@ public class AutonomousLeft extends AutonomousOpMode{
             );
             Actions.runBlocking(dropAction);
         }
+
+         */
 
         // TODO - Park in climb 1 area touching the bar
         // We are facing the buckets and we just dropped a sample
