@@ -26,6 +26,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Arm arm;
     protected Shoulder shoulder;
     protected Hand hand;
+    protected Tail tail;
     protected ColorCamera camera;
     protected boolean ignoreGamepad = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
@@ -38,6 +39,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder = new Shoulder(hardwareMap, arm, gamepad2);
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
+        tail = new Tail(hardwareMap, gamepad2);
         camera = new ColorCamera(hardwareMap, color);
         setIgnoreGamepad(ignoreGamepad);
 
@@ -51,6 +53,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.start();
         arm.start();
         hand.start();
+        tail.start();
         camera.start();
     }
 
@@ -80,6 +83,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         if(shoulder != null) shoulder.setIgnoreGamepad(ignoreGamepad);
         if(arm != null) arm.setIgnoreGamepad(ignoreGamepad);
         if(hand != null) hand.setIgnoreGamepad(ignoreGamepad);
+        if (tail != null) tail.setIgnoreGamepad(ignoreGamepad);
     }
 
     /**
@@ -92,12 +96,14 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.interrupt();
         arm.interrupt();
         hand.interrupt();
+        tail.interrupt();
         camera.interrupt();
 
         legs.join();
         shoulder.join();
         arm.join();
         hand.join();
+        tail.join();
         camera.join();
     }
 }
