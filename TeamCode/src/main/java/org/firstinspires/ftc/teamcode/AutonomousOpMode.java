@@ -32,7 +32,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        int dropArmPosition = 900;
+        int dropArmPosition = 1000;
         int searchArmPosition = 1500;
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setPositionForMode(Shoulder.Mode.HIGH_BAR, AUTO_POWER, dropArmPosition);
@@ -68,7 +68,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
         Action retractArmAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 400);
+            arm.setPosition(AUTO_POWER, 200);
             return false;
         };
         Action searchAction = telemetryPacket -> {
@@ -76,7 +76,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action extendAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 1500);
+            arm.setPosition(AUTO_POWER, 1300);
             return false;
         };
         Action pickupAction = telemetryPacket -> {
@@ -86,7 +86,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         };
         Action retract = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, 250);
-            arm.setPosition(AUTO_POWER, 400);
+            arm.setPosition(AUTO_POWER, 100);
             return false;
         };
 
@@ -96,7 +96,8 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(extendAction, arm),      // Extend arm
                 pickupAction,                               // Pickup sample
                 new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
-                new CompleteAction(retract, arm));          // Retract arm
+                new CompleteAction(retract, arm),
+                new SleepAction(1));// Retract arm
         Actions.runBlocking(grabFromSubmersible);
     }
 }
