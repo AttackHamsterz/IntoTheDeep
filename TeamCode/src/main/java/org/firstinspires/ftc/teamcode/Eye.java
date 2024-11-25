@@ -30,6 +30,7 @@ public class Eye extends StandardSetupOpMode {
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     public void moveArmToColor() {
+        camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         HuskyLens.Block block = camera.getClosestBlock();
         if (block != null) {
             // Set new arm position!
@@ -42,11 +43,14 @@ public class Eye extends StandardSetupOpMode {
 
 
             // TODO - Add logic to spin the wrist
-            // This is either openCV on image data
-            // Or switching to line detection mode
-            // And getting arrows if that's quick enough
-            // If it's too slow we'll need to go back to
-            // USB camera until we get a limelight 3a
+            // switch to line detection mode
+            camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
+            telemetry.addLine("changed algorithm");
+
+            // get the closest arrow to our closest block
+            HuskyLens.Arrow arrow = camera.getClosestArrowToBlock(block);
+            // get the angle of our arrow
+            double angle = camera.findAngleOfArrow(arrow);
             telemetry.update();
         }
     }
@@ -65,5 +69,8 @@ public class Eye extends StandardSetupOpMode {
 
         // start the color recognition algorithm
         camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+
+        // check shoulder mode
+        // if in search mode, run the code to move towards the closest sample
     }
 }
