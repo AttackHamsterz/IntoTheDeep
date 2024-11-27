@@ -14,12 +14,8 @@ public class Tail extends Thread{
     private boolean ignoreGamepad;
     private final Gamepad gamepad;
 
-    private static final double MIN_POS = 0.0; // -90 degrees
+    private static final double MIN_POS = 0.0; // 0 degrees
     private static final double MAX_POS = 1.0; // +90 degrees
-    private static final double CTR_POS = 0.5; // 0 degrees
-
-
-    private boolean isRotated = false;
 
     public Tail(HardwareMap hardwareMap, Gamepad gamepad) {
         this.tail = hardwareMap.get(Servo.class, "tailServo");
@@ -58,16 +54,28 @@ public class Tail extends Thread{
         tail.setPosition(Range.clip(wristPosition, MIN_POS, MAX_POS));
     }
 
-    @Override public void run() {
-        // rotate the tail when the corresponding button is pressed
-        // if the tail is already rotated, rotate the tail back to its initial position
-        if (gamepad.back) {
-            if (!isRotated) {
-                setTail(MAX_POS);
-                isRotated = true;
-            } else {
-                setTail(CTR_POS);
-                isRotated = false;
+    @Override public void run()
+    {
+        while (!isInterrupted())
+        {
+            if(!ignoreGamepad)
+            {
+                // rotate the tail when the corresponding button is pressed
+                // if the tail is already rotated, rotate the tail back to its initial position
+                if (gamepad.back)
+                {
+                        setTail(MAX_POS);
+                } else if (gamepad.start)
+                {
+                        setTail(MIN_POS);
+                }
+            }
+
+            // Short sleep to keep this loop from saturating
+            try {
+                sleep(BodyPart.LOOP_PAUSE_MS);
+            } catch (InterruptedException e) {
+                interrupt();
             }
         }
     }
