@@ -102,7 +102,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("shift", shift);
 
                     if (!pressed) {
-                        legs.moveY(shift);
+                        legs.moveLeft(shift);
                         pressed = true;
                     } else {
                         pressed = false;

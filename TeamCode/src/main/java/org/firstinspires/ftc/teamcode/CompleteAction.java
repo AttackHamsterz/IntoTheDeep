@@ -40,7 +40,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         this.bodyPart = bodyPart;
         this.maxWait_ms = maxWait_ms;
         this.timeoutThread = new Thread();
-        this.firstRun = false;
+        this.firstRun = true;
         this.runAction = true;
         this.waiting = true;
 
@@ -63,10 +63,10 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     @Override
     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
         // First run needs to start the wait protection timer
-        if(!firstRun)
+        if(firstRun)
         {
             // Set a timeout thread to avoid stalling out
-            firstRun = true;
+            firstRun = false;
             timeoutThread = new TimeoutThread();
             timeoutThread.start();
         }

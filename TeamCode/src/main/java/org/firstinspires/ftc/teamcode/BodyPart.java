@@ -3,9 +3,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
+
 import java.util.function.Consumer;
 
 public abstract class BodyPart extends Thread{
@@ -38,11 +37,7 @@ public abstract class BodyPart extends Thread{
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
                 safeHold(position);
-
-                // We are done, notify oldest consumer
-                if(listeners.size()>0)
-                    listeners.removeLast().accept(Boolean.FALSE);
-
+                notifyOldestListener();
             } catch (InterruptedException e) {
             }
         }
@@ -90,9 +85,19 @@ public abstract class BodyPart extends Thread{
         protectionThread.start();
     }
 
+    /**
+     * Tell everyone we are done, if they were waiting
+     */
+    protected void notifyOldestListener()
+    {
+        // We are done, notify oldest consumer
+        if(listeners.size()>0)
+            listeners.removeFirst().accept(Boolean.FALSE);
+    }
+
     public void addListener(Consumer<Boolean> listener)
     {
-        listeners.add(listener);
+        listeners.addLast(listener);
     }
     public void removeListener(Consumer<Boolean> listener)
     {

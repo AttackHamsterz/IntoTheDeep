@@ -39,8 +39,7 @@ public class Eye extends StandardSetupOpMode {
             double ySlope = block.y * SHIFT_M + SHIFT_B;
             double shift = (block.x-CENTER_X) * ySlope;
 
-            legs.moveY(shift);
-
+            legs.moveLeft(shift);
 
             // TODO - Add logic to spin the wrist
             // switch to line detection mode

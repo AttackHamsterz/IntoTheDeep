@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-public class Hand extends Thread{
+public class Hand extends BodyPart{
     private static final double MIN_POS = 0.0; // -90 degrees
     private static final double MAX_POS = 1.0; // +90 degrees
     private static final double CTR_POS = 0.5; // 0 degrees
@@ -92,6 +92,7 @@ public class Hand extends Thread{
                 right.setPower(NO_POWER);
             } catch (InterruptedException e) {
             }
+            notifyOldestListener();
         });
         stopThread.start();
     }
@@ -247,5 +248,16 @@ public class Hand extends Thread{
                 interrupt();
             }
         }
+    }
+
+    @Override
+    public void safeHold(int position) {
+        //TODO
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        //TODO
+        return 0;
     }
 }

@@ -15,15 +15,12 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        double bucketDropX = 26;
-        double bucketDropY = 40;
-        double bucketDropAngle = 170.0;
-        int bucketDropArmPosition = 1700;
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(24, 40), Math.toRadians(170.0));
+        int bucketDropArmPosition = 1600;
         int retractArmPosition = 200;
         int searchArmPosition = 800;
 
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(bucketDropX, bucketDropY), Math.toRadians(bucketDropAngle));
-        Action driveToLowBucketDrop = legs.moveToAction(lowBucketDropPose);
+        Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, bucketDropArmPosition);
@@ -35,11 +32,10 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
         Action driveAndExtendAction = new ParallelAction(
-            driveToLowBucketDrop,
+            new CompleteAction(driveToLowBucketDrop, legs),
             new CompleteAction(raiseArmAction, shoulder),
             new CompleteAction(extendArmAction, arm)
         );
-
         Action releaseSample = telemetryPacket -> {
             hand.release(RELEASE_MS);
             return false;
@@ -51,8 +47,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         Action binDrop = new SequentialAction(
                 driveAndExtendAction,
-                releaseSample,
-                new SleepAction(RELEASE_S),
+                new CompleteAction(releaseSample, hand),
                 retractForPickupAction);
         Actions.runBlocking(binDrop);
 
@@ -85,28 +80,27 @@ public class AutonomousLeft extends AutonomousOpMode{
         for(int i = 0; i < 3; i++)
         {
             // Turn to ground samples, pick one up
-            Action turnToPickup = legs.moveToAction(new Pose2d(new Vector2d(26, 40), Math.toRadians(i*10)));
+            Pose2d pickupPose = new Pose2d(new Vector2d(24, 40), Math.toRadians(i*10));
+            Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose);
             Action turnAndLower = new ParallelAction(
-                    turnToPickup,
+                    new CompleteAction(turnToPickup, legs),
                     new CompleteAction(lowerAction, shoulder)
             );
             Action pickupAction = new SequentialAction(
                     turnAndLower,
                     new CompleteAction(extendArm, arm),
-                    grabAction,
-                    new SleepAction(GRAB_S));
+                    new CompleteAction(grabAction, hand));
             Actions.runBlocking(pickupAction);
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
-            Action turnToBucket = legs.moveToAction(lowBucketDropPose);
+            Action turnToBucket = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
             Action turnRaiseAndExtend = new ParallelAction(
-                    turnToBucket,
+                    new CompleteAction(turnToBucket, legs),
                     new CompleteAction(raiseAction, shoulder),
                     new CompleteAction(extendArmAction, arm));
             Action dropAction = new SequentialAction(
                     turnRaiseAndExtend,
-                    releaseSample,
-                    new SleepAction(RELEASE_S),
+                    new CompleteAction(releaseSample, hand),
                     retractForPickupAction
             );
             Actions.runBlocking(dropAction);
