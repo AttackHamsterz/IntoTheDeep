@@ -692,7 +692,10 @@ public final class MecanumDrive extends BodyPart{
 
             // Stop the drive motors and notify listeners that we have arrived
             setDrivePowers(new PoseVelocity2d(new Vector2d(0,0),0));
-            notifyOldestListener();
+
+            // If we are interrupted then they will handle notify
+            if(!isInterrupted())
+              notifyOldestListener();
         }
     }
 
