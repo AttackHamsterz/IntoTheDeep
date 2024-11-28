@@ -52,7 +52,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         for(int i = 0; i < 3; i++)
         {
             Double wristAngle = 0.35 + (double)i * 0.15;
-            Integer searchPosition = (i==2) ? 1100 : (i==1) ? 850 : 900;
+            Integer searchPosition = (i==2) ? 1100 : (i==1) ? 925 : 900;
 
             Action retractForPickupAction = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, searchPosition);
