@@ -46,7 +46,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         setIgnoreGamepad(ignoreGamepad);
 
         // A little bit of init to not drag the tool (auto and teleop)
-        hand.grab(200);
+        hand.grab(300);
         shoulder.setPosition(0.2, 190);
 
         telemetry.addData("Status", "Initialized");

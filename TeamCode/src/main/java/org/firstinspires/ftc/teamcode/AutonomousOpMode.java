@@ -29,11 +29,11 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        int dropShoulderPositionTop = 1830;
+        int dropShoulderPositionTop = 2050;
         int dropShoulderPositionBottom = 1450;
-        int dropArmPosition = 1100;
-        int dropArmPullin = 360;
-        int searchArmPosition = 1500;
+        int dropArmPosition = 960;
+        int dropArmPullin = 320;
+        int searchArmPosition = 1070;
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
             return false;
@@ -43,7 +43,15 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             hand.hangSample();
             return false;
         };
+        Pose2d dropPose = new Pose2d(new Vector2d(22.5, 0), 0);
+        Action liftExtendDrive = new ParallelAction(
+                new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
+                new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
+                new CompleteAction(legs.moveToAction(0.4, dropPose), legs));
+
+
         Action dropAction = telemetryPacket -> {
+            hand.grab(400);
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
             return false;
         };
@@ -52,11 +60,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
-        Pose2d dropPose = new Pose2d(new Vector2d(20.9, 0), 0);
-        Action liftExtendDrive = new ParallelAction(
-                new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
-                new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, dropPose), legs));
         Action hangSampleToolAction = new SequentialAction(
                 liftExtendDrive,                             // Drive and extend
                 new CompleteAction(dropAction, shoulder),    // Run dropAction
@@ -71,20 +74,20 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action extendAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 1500);
+            arm.setPosition(AUTO_POWER, searchArmPosition);
             return false;
         };
         Action pickupAction = telemetryPacket -> {
             hand.grab(GRAB_MS);
-            shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.8, searchArmPosition);
+            shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
             return false;
         };
-        Action retractShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 250);
+        Action liftShoulder = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, 550);
             return false;
         };
         Action retractFromPickup = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 400);
+            arm.setPosition(AUTO_POWER, 100);
             legs.moveToPose(AUTO_MOVE_POWER, dropPose);
             return false;
         };
@@ -94,7 +97,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 legs.moveToAction(AUTO_MOVE_POWER, searchPose),
                 new CompleteAction(extendAction, arm),      // Extend arm
                 new CompleteAction(pickupAction, hand),     // Pickup sample
-                new CompleteAction(retractShoulder, shoulder),
+                new CompleteAction(liftShoulder, shoulder),
                 new CompleteAction(retractFromPickup, arm));          // Retract arm
         Actions.runBlocking(grabFromSubmersible);
     }

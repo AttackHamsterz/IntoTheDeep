@@ -520,12 +520,20 @@ public final class MecanumDrive extends BodyPart{
      * @param expectedPose The pose you would like to end with
      * @return The action you can run in your action list
      */
-    public Action moveToAction(double power, Pose2d expectedPose)
+    public Action moveToAction(double power, Pose2d expectedPose, int direction, long timeout_ms)
     {
         return telemetryPacket -> {
-            moveToPose(power, expectedPose);
+            moveToPose(power, expectedPose, direction, timeout_ms);
             return false;
         };
+    }
+    public Action moveToAction(double power, Pose2d expectedPose, int direction)
+    {
+        return moveToAction(power, expectedPose, direction, DEFAULT_TIMEOUT_MS);
+    }
+    public Action moveToAction(double power, Pose2d expectedPose)
+    {
+        return moveToAction(power, expectedPose, DEFAULT_SPIN_DIRECTION, DEFAULT_TIMEOUT_MS);
     }
 
     // Tweak these variables if you have wheel slip
