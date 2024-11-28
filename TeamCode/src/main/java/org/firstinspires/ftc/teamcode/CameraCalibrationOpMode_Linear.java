@@ -102,13 +102,16 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("shift", shift);
 
                     if (!pressed) {
-                        legs.moveY(shift);
+                        legs.moveLeft(shift);
                         pressed = true;
                     } else {
                         pressed = false;
                     }
 
                     // TODO - Add logic to spin the wrist
+                    HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
+                    telemetry.addData("Closest line", closestArrow);
+                    telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
                     // This is either openCV on image data
                     // Or switching to line detection mode
                     // And getting arrows if that's quick enough

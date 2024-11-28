@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous(name = "Robot Setup Super Class", group = "Robot")
 @Disabled
 public class StandardSetupOpMode extends LinearOpMode {
+    protected static final double AUTO_MOVE_POWER = 1.0;
+
     public enum COLOR {
         RED,
         BLUE
@@ -34,7 +36,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
-        legs = new MecanumDrive(hardwareMap, startPose, gamepad1);
+        legs = new MecanumDrive(hardwareMap, startPose, gamepad1, telemetry);
         arm = new Arm(hardwareMap, gamepad2, null);
         shoulder = new Shoulder(hardwareMap, arm, gamepad2);
         arm.setShoulder(shoulder);
@@ -42,6 +44,10 @@ public class StandardSetupOpMode extends LinearOpMode {
         tail = new Tail(hardwareMap, gamepad2);
         camera = new ColorCamera(hardwareMap, color);
         setIgnoreGamepad(ignoreGamepad);
+
+        // A little bit of init to not drag the tool (auto and teleop)
+        hand.grab(200);
+        shoulder.setPosition(0.2, 190);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();

@@ -73,7 +73,7 @@ public class ColorCamera extends Thread {
                 int yDiff = Math.abs(TARGET_Y - blocksOnScreen.get(i).y);
 
                 double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-                if (dist < smallestDist) {
+                if (dist < smallestDist ) {
                     smallestDist = dist;
                     smallestDistIndex = i;
                 }
@@ -82,6 +82,56 @@ public class ColorCamera extends Thread {
             return blocksOnScreen.get(smallestDistIndex);
         }
         return null;
+    }
+
+    public HuskyLens.Arrow getClosestArrowToBlock(HuskyLens.Block block) {
+
+        // get the center of the block
+        int centerX = block.x;
+        int centerY = block.y;
+
+        int leftEdgeX = block.x - (block.width/2);
+        int bottomEdgeY = block.y - (block.width/2);
+        int rightEdgeX = block.x + (block.width/2);
+        int topEdgeY = block.y + (block.height/2);
+
+        // get a list of all arrows on the screen
+        ArrayList<HuskyLens.Arrow> arrows = new ArrayList<>();
+        arrows.addAll(Arrays.asList(huskyLens.arrows()));
+        // make sure there are arrows on screen
+        if (!arrows.isEmpty()) {
+            // go through our list and figure out which arrow is closest to the block's location
+            double smallestDist = 1000;
+            int smallestDistIndex = -1;
+            for (int i = 0; i < arrows.size(); i++) {
+                // get the center of the arrow
+                int arrowCenterX = (arrows.get(i).x_origin + arrows.get(i).x_target) / 2;
+                int arrowCenterY = (arrows.get(i).y_origin + arrows.get(i).y_target) / 2;
+                // find the distance from the block's center
+                int xDiff = Math.abs(centerX - arrowCenterX);
+                int yDiff = Math.abs(centerY - arrowCenterY);
+                double dist = Math.sqrt(xDiff*xDiff + yDiff*yDiff);
+                // check if we are closer to the center of the block
+                if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
+                    smallestDist = dist;
+                    smallestDistIndex = i;
+                }
+            }
+            if (smallestDistIndex != -1) {
+                return arrows.get(smallestDistIndex);
+            } else {
+                return null;
+            }
+
+        }
+        return null;
+    }
+
+    public double findAngleOfArrow(HuskyLens.Arrow arrow) {
+        // find the slope of line
+        double slope = ((double) (arrow.y_origin - arrow.y_target)) / ((double) arrow.x_origin - arrow.x_target);
+        // return the arctan of the slope
+        return Math.atan(slope);
     }
 
     @Override
