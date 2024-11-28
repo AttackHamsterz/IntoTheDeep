@@ -16,7 +16,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         double bucketDropX = 26;
-        double bucketDropY = 50;
+        double bucketDropY = 60;
         double bucketDropAngle = 170.0;
         int bucketDropArmPosition = 1700;
         int retractArmPosition = 200;
@@ -34,12 +34,13 @@ public class AutonomousLeft extends AutonomousOpMode{
             shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
             return false;
         };
-        Action drive = new ParallelAction(
-            driveToLowBucketDrop
-        );
-        Action extendAction = new ParallelAction(
-            new CompleteAction(raiseArmAction, shoulder),
+        Action extendAction = new SequentialAction(
+                new SleepAction (0.5),
                 new CompleteAction(extendArmAction, arm)
+        );
+        Action driveAndExtend = new ParallelAction(
+            driveToLowBucketDrop,
+                extendAction
         );
 
         Action releaseSample = telemetryPacket -> {
@@ -47,14 +48,14 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
         Action retractForPickupAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
             arm.setPosition(AUTO_POWER, retractArmPosition);
             return false;
         };
 
         Action binDrop = new SequentialAction(
-                drive,
-                new SleepAction(.5),
-                extendAction,
+                new CompleteAction (raiseArmAction, shoulder),
+                driveAndExtend,
                 releaseSample,
                 new SleepAction(RELEASE_S),
                 retractForPickupAction);

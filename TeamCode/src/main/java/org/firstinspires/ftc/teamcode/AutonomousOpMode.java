@@ -55,7 +55,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         double initialWait = 0.2;
         Action driveAndExtend = new ParallelAction(
                 new CompleteAction(extendArmAction, arm),   // Extend arm for sample hang
-                legs.moveToAction(new Pose2d(new Vector2d(26, 0), 0))
+                legs.moveToAction(new Pose2d(new Vector2d(20.9, 0), 0))
         );
         Action hangSampleToolAction = new SequentialAction(
                 liftShoulderAction,                         // Start shoulder lift to avoid dragging
@@ -76,7 +76,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action extendAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 1300);
+            arm.setPosition(AUTO_POWER, 1500);
             return false;
         };
         Action pickupAction = telemetryPacket -> {
@@ -85,19 +85,22 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action retract = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 250);
-            arm.setPosition(AUTO_POWER, 100);
+            arm.setPosition(AUTO_POWER, 0);
             return false;
+        };
+        Action lift = telemetryPacket -> {
+          shoulder.setPosition(AUTO_POWER,500);
+          return false;
         };
 
         Action grabFromSubmersible = new SequentialAction(
-                retractArmAction,                           // Pull your arm in
+                new CompleteAction (retractArmAction, arm),                          // Pull your arm in
                 new CompleteAction(searchAction, shoulder), // Search
                 new CompleteAction(extendAction, arm),      // Extend arm
                 pickupAction,                               // Pickup sample
                 new SleepAction(GRAB_S),                    // Wait for hand to pickup (might not reach ground)
-                new CompleteAction(retract, arm),
-                new SleepAction(1));// Retract arm
+                new CompleteAction(lift,shoulder),
+                new CompleteAction(retract, arm));// Retract arm
         Actions.runBlocking(grabFromSubmersible);
     }
 }

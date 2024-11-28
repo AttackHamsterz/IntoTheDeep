@@ -67,7 +67,7 @@ public class Shoulder extends BodyPart {
     ));
 
     // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 600;
+    public static int SAMPLE_HOOK_DROP = 700;
 
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_POWER = -0.9;
