@@ -8,10 +8,10 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
     Eye cameraRunner = new Eye();
     // Arm calibration values
-    private static final int NEAR_Y = 186;
-    private static final int FAR_Y = 66;
+    private static final int NEAR_Y = 170;
+    private static final int FAR_Y = 44;
     private static final int NEAR_TICKS = 0;
-    private static final int FAR_TICKS = 680;
+    private static final int FAR_TICKS = 957;
 
     // y=mx+b where y is ticks and x is the relative y pixel location
     private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
@@ -63,8 +63,9 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         // a correction.  That may be good enough instead of needing PIDs.
         boolean pressed = false;
         while(opModeIsActive()) {
-/*
+
             // This block helps us calibrate (disable once calibrated)
+            /*
             HuskyLens.Block block = camera.getClosestBlock();
             if (block != null) {
                 telemetry.addData("Closest Block", block.toString());
@@ -72,18 +73,19 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                 arm.debugTelemetry(telemetry);
                 legs.debugTelemetry(telemetry);
                 telemetry.update();
-                legs.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                 arm.halt(); // Lets us manually tug the arm for measurements
             }
 
- */
+             */
+
+
 
             if(gamepad2.a) {
-                /*
+
                 HuskyLens.Block block = camera.getClosestBlock();
                 if (block != null) {
                     // Set new arm position!
-                    int ticks = (int) Math.round((M * (double)block.y + B));
+                    int ticks = (int) Math.round((M * (double) block.y + B));
                     telemetry.addData("M", M);
                     telemetry.addData("blockCenterY", block.y);
                     telemetry.addData("B", B);
@@ -91,13 +93,13 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("Arm Pos", arm.getCurrentPosition());
                     arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
 
-                 */
-                cameraRunner.moveArmToColor();
+
+                    //cameraRunner.moveArmToColor();
                     // TODO - Set new legs position!
-                /*
+
                     telemetry.addData("blockCenterX", block.x);
                     double ySlope = block.y * SHIFT_M + SHIFT_B;
-                    double shift = (block.x-CENTER_X) * ySlope;
+                    double shift = (block.x - CENTER_X) * ySlope;
 
                     telemetry.addData("shift near m", SHIFT_NEAR_M);
                     telemetry.addData("shift far m", SHIFT_FAR_M);
@@ -113,22 +115,24 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                         pressed = false;
                     }
 
-                 */
 
                     // TODO - Add logic to spin the wrist
-                    /*
+
                     HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
+                    while (closestArrow == null) {
+                        closestArrow = camera.getClosestArrowToBlock(block);
+                    }
                     telemetry.addData("Closest line", closestArrow);
                     telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
 
-                     */
+
                     // This is either openCV on image data
                     // Or switching to line detection mode
                     // And getting arrows if that's quick enough
                     // If it's too slow we'll need to go back to
                     // USB camera until we get a limelight 3a
                     telemetry.update();
-
+                }
             }
 
 

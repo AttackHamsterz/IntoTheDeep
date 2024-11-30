@@ -47,6 +47,7 @@ public class ColorCamera extends Thread {
      * @return The closest block or null if there are no blocks
      */
     public HuskyLens.Block getClosestBlock() {
+        huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         // Find yellow blocks first
         HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
         HuskyLens.Block[] redBlocks = huskyLens.blocks(RED_ID);
@@ -85,7 +86,7 @@ public class ColorCamera extends Thread {
     }
 
     public HuskyLens.Arrow getClosestArrowToBlock(HuskyLens.Block block) {
-
+        huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
         // get the center of the block
         int centerX = block.x;
         int centerY = block.y;
@@ -112,7 +113,8 @@ public class ColorCamera extends Thread {
                 int yDiff = Math.abs(centerY - arrowCenterY);
                 double dist = Math.sqrt(xDiff*xDiff + yDiff*yDiff);
                 // check if we are closer to the center of the block
-                if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
+                //if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
+                if (dist < smallestDist) {
                     smallestDist = dist;
                     smallestDistIndex = i;
                 }
@@ -129,9 +131,11 @@ public class ColorCamera extends Thread {
 
     public double findAngleOfArrow(HuskyLens.Arrow arrow) {
         // find the slope of line
-        double slope = ((double) (arrow.y_origin - arrow.y_target)) / ((double) arrow.x_origin - arrow.x_target);
+        double deltaX = (double) (arrow.y_origin - arrow.y_target);
+        double deltaY = (double) (arrow.x_origin - arrow.x_target);
+        double angle = Math.atan2(deltaY, deltaX);
         // return the arctan of the slope
-        return Math.atan(slope);
+        return Math.toDegrees(angle);
     }
 
     @Override
