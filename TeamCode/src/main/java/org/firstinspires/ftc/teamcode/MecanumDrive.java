@@ -475,8 +475,8 @@ public final class MecanumDrive extends BodyPart{
      */
     public void rotate(double degrees) {
         Pose2d currentPose = getPose();
-        currentPose.heading.plus(Math.toRadians(degrees));
-        moveToPose(AUTO_MOVE_POWER, currentPose);
+        Pose2d newPose = new Pose2d(currentPose.position, currentPose.heading.plus(Math.toRadians(degrees)));
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
     /**
@@ -488,8 +488,8 @@ public final class MecanumDrive extends BodyPart{
         double currentHeading = currentPose.heading.toDouble();
         Vector2d forwardUnit = new Vector2d(Math.cos(currentHeading), Math.sin(currentHeading));
         Vector2d forward = forwardUnit.times(dist);
-        currentPose.position.plus(forward);
-        moveToPose(AUTO_MOVE_POWER, currentPose);
+        Pose2d newPose = new Pose2d(currentPose.position.plus(forward), currentPose.heading);
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
     /**
@@ -501,8 +501,8 @@ public final class MecanumDrive extends BodyPart{
         double currentHeading = currentPose.heading.toDouble();
         Vector2d leftUnit = new Vector2d(-Math.sin(currentHeading), Math.cos(currentHeading));
         Vector2d left = leftUnit.times(dist);
-        currentPose.position.plus(left);
-        moveToPose(AUTO_MOVE_POWER, currentPose);
+        Pose2d newPose = new Pose2d(currentPose.position.plus(left), currentPose.heading);
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
     /**
