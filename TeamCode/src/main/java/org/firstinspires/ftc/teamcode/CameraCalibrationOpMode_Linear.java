@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @TeleOp(name = "Test: Camera Calibration", group = "Linear Opmode")
 public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
+    Eye cameraRunner = new Eye();
     // Arm calibration values
     private static final int NEAR_Y = 186;
     private static final int FAR_Y = 66;
@@ -78,6 +79,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
  */
 
             if(gamepad2.a) {
+                /*
                 HuskyLens.Block block = camera.getClosestBlock();
                 if (block != null) {
                     // Set new arm position!
@@ -87,9 +89,12 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("B", B);
                     telemetry.addData("deltaTicks", ticks);
                     telemetry.addData("Arm Pos", arm.getCurrentPosition());
-                    //arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
+                    arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
 
+                 */
+                cameraRunner.moveArmToColor();
                     // TODO - Set new legs position!
+                /*
                     telemetry.addData("blockCenterX", block.x);
                     double ySlope = block.y * SHIFT_M + SHIFT_B;
                     double shift = (block.x-CENTER_X) * ySlope;
@@ -108,17 +113,22 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                         pressed = false;
                     }
 
+                 */
+
                     // TODO - Add logic to spin the wrist
+                    /*
                     HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
                     telemetry.addData("Closest line", closestArrow);
                     telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
+
+                     */
                     // This is either openCV on image data
                     // Or switching to line detection mode
                     // And getting arrows if that's quick enough
                     // If it's too slow we'll need to go back to
                     // USB camera until we get a limelight 3a
                     telemetry.update();
-                }
+
             }
 
 

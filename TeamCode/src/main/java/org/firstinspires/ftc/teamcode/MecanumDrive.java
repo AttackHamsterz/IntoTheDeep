@@ -422,7 +422,7 @@ public final class MecanumDrive extends BodyPart{
         boolean oneCancel = false;
         while (!isInterrupted()  && gamepad != null && !ignoreGamepad) {
             if (gamepad.dpad_left) {
-                if (!moveThread.isAlive()) moveLeft(10.0);
+                if (!moveThread.isAlive()) telemetry.addLine("move left"); telemetry.update(); moveLeft(10.0);
             } else if (gamepad.dpad_right) {
                 if (!moveThread.isAlive()) moveLeft(-10.0);
             } else if (gamepad.dpad_up) {

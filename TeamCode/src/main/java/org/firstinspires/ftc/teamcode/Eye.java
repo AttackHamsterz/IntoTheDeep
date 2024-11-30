@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-public class Eye extends StandardSetupOpMode {
+public class Eye extends StandardSetupOpMode{
     // Arm calibration values
     protected static final int NEAR_Y = 186;
     protected static final int FAR_Y = 66;
@@ -29,29 +29,25 @@ public class Eye extends StandardSetupOpMode {
     protected static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
+
+
     public void moveArmToColor() {
         camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         HuskyLens.Block block = camera.getClosestBlock();
         if (block != null) {
             // Set new arm position!
-            int ticks = (int) Math.round((M * (double)block.y + B));
-
-            double ySlope = block.y * SHIFT_M + SHIFT_B;
-            double shift = (block.x-CENTER_X) * ySlope;
-
-            legs.moveLeft(shift);
-
-            // TODO - Add logic to spin the wrist
-            // switch to line detection mode
-            camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
-            telemetry.addLine("changed algorithm");
-
-            // get the closest arrow to our closest block
-            HuskyLens.Arrow arrow = camera.getClosestArrowToBlock(block);
-            // get the angle of our arrow
-            double angle = camera.findAngleOfArrow(arrow);
-            telemetry.update();
+            int ticks = (int) Math.round((M * (double) block.y + B));
+            telemetry.addData("M", M);
+            telemetry.addData("blockCenterY", block.y);
+            telemetry.addData("B", B);
+            telemetry.addData("deltaTicks", ticks);
+            telemetry.addData("Arm Pos", arm.getCurrentPosition());
+            arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
         }
+    }
+
+    public void moveLegsToColor() {
+
     }
 
     @Override
