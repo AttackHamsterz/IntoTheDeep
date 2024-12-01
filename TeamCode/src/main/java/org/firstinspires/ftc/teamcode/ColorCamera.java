@@ -9,37 +9,33 @@ import java.util.Arrays;
 
 public class ColorCamera extends Thread {
 
-    public HuskyLens huskyLens;
-    private RevBlinkinLedDriver blinkin;
+    public final HuskyLens huskyLens;
+    private final RevBlinkinLedDriver blinkin;
 
     // variable to store the color of alliance
-    private static int YELLOW_ID = 1;
-    private static int RED_ID = 2;
-    private static int BLUE_ID = 3;
-    private StandardSetupOpMode.COLOR allianceColor;
-    private int colorId;
+    private static final int NONE_ID = 0;
+    private static final int YELLOW_ID = 1;
+    private static final int RED_ID = 2;
+    private static final int BLUE_ID = 3;
+    private final int colorId;
 
-    // the largest height we'd expect from a valid game piece
-    private int maxHeight;
-    // the largest width we'd expect from a valid game piece
-    private int maxWidth;
     // Point for good pick-up
     public static final int TARGET_X = 160;
     public static final int TARGET_Y = 186;
 
-    // Search variables
-    public static final int CLOSE_ENOUGH = 5;
-
-
     public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color) {
         // Camera setup
         this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
-        this.allianceColor = color;
         colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
 
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
         blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_OCEAN_PALETTE);
+    }
+
+    public int getCapturedBlock()
+    {
+        return NONE_ID;
     }
 
     /**
@@ -57,7 +53,6 @@ public class ColorCamera extends Thread {
 
         // No yellow blocks, find alliance blocks
         if (blocksOnScreen.isEmpty()) {
-            HuskyLens.Block[] allianceBlocks = huskyLens.blocks(colorId);
             blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
         }
 
@@ -131,8 +126,8 @@ public class ColorCamera extends Thread {
 
     public double findAngleOfArrow(HuskyLens.Arrow arrow) {
         // find the slope of line
-        double deltaX = (double) (arrow.y_origin - arrow.y_target);
-        double deltaY = (double) (arrow.x_origin - arrow.x_target);
+        double deltaX = arrow.y_origin - arrow.y_target;
+        double deltaY = arrow.x_origin - arrow.x_target;
         double angle = Math.atan2(deltaY, deltaX);
         // return the arctan of the slope
         return Math.toDegrees(angle);
