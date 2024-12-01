@@ -552,6 +552,7 @@ public final class MecanumDrive extends BodyPart{
     private static final double CLOSE_ENOUGH_POSITION = 0.5;    // Stop when this close
     private static final double CLOSE_ENOUGH_ANGLE = 1.0;       // Stop within this angle
     private static final double CLOSE_ENOUGH_SPIN = 45.0;       // Flip spin direction if further
+    private static final double OVERSHOOT_POWER = 0.3;          // More power than this will likely cause over shoot
 
     static
     {
@@ -653,17 +654,17 @@ public final class MecanumDrive extends BodyPart{
                 double nextForward = nextDeltaPos.dot(forwardUnit);
                 double nextLeft = nextDeltaPos.dot(leftUnit);
 
-                // If we're close enough we are done
-                boolean closeEnoughForward = Math.abs(nextForward) < CLOSE_ENOUGH_POSITION;
-                boolean closeEnoughLeft = Math.abs(nextLeft) < CLOSE_ENOUGH_POSITION;
-                boolean closeEnoughAngle = Math.abs(nextDeltaAng) < CLOSE_ENOUGH_ANGLE;
-                if(closeEnoughForward && closeEnoughLeft && closeEnoughAngle)
-                    break;
-
                 // What powers do we need to get to our final destination
                 double forwardPower = nextForward / RAMP_DOWN_FORWARD;
                 double leftPower = nextLeft / RAMP_DOWN_LEFT;
                 double rotationPower = nextDeltaAng / RAMP_DOWN_ANGLE;
+
+                // If we're close enough we are done
+                boolean closeEnoughForward = Math.abs(nextForward) < CLOSE_ENOUGH_POSITION && forwardPower < OVERSHOOT_POWER;
+                boolean closeEnoughLeft = Math.abs(nextLeft) < CLOSE_ENOUGH_POSITION && leftPower < OVERSHOOT_POWER;
+                boolean closeEnoughAngle = Math.abs(nextDeltaAng) < CLOSE_ENOUGH_ANGLE && rotationPower < OVERSHOOT_POWER;
+                if(closeEnoughForward && closeEnoughLeft && closeEnoughAngle)
+                    break;
 
                 // Ensure we still have wiggle power if we're really close
                 if(!closeEnoughForward){
