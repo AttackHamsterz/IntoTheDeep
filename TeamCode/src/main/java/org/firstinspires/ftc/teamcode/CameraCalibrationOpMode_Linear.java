@@ -9,9 +9,9 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
     Eye cameraRunner = new Eye();
     // Arm calibration values
     private static final int NEAR_Y = 170;
-    private static final int FAR_Y = 44;
+    private static final int FAR_Y = 30;
     private static final int NEAR_TICKS = 0;
-    private static final int FAR_TICKS = 957;
+    private static final int FAR_TICKS = 1090;
 
     // y=mx+b where y is ticks and x is the relative y pixel location
     private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
@@ -65,7 +65,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         while(opModeIsActive()) {
 
             // This block helps us calibrate (disable once calibrated)
-            /*
+
             HuskyLens.Block block = camera.getClosestBlock();
             if (block != null) {
                 telemetry.addData("Closest Block", block.toString());
@@ -76,13 +76,13 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                 arm.halt(); // Lets us manually tug the arm for measurements
             }
 
-             */
+
 
 
 
             if(gamepad2.a) {
 
-                HuskyLens.Block block = camera.getClosestBlock();
+                //HuskyLens.Block block = camera.getClosestBlock();
                 if (block != null) {
                     // Set new arm position!
                     int ticks = (int) Math.round((M * (double) block.y + B));
@@ -119,11 +119,22 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     // TODO - Add logic to spin the wrist
 
                     HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
-                    while (closestArrow == null) {
+                    long startTime = System.currentTimeMillis();
+                    telemetry.addData("Start Time", startTime);
+                    while (closestArrow == null && System.currentTimeMillis() < startTime + 10000) {
                         closestArrow = camera.getClosestArrowToBlock(block);
                     }
-                    telemetry.addData("Closest line", closestArrow);
-                    telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
+                    telemetry.addData("Time taken", System.currentTimeMillis() - startTime);
+
+                    if (closestArrow != null) {
+                        telemetry.addData("Closest line", closestArrow);
+                        telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
+                        telemetry.addData("Wrist Pos", 0.5 - (camera.findAngleOfArrow(closestArrow)) * (0.5 / 90));
+
+                        hand.setWrist(0.5 - (camera.findAngleOfArrow(closestArrow) * (0.5 / 90)));
+                    } else {
+                        telemetry.addLine("Line is null");
+                    }
 
 
                     // This is either openCV on image data

@@ -108,8 +108,8 @@ public class ColorCamera extends Thread {
                 int yDiff = Math.abs(centerY - arrowCenterY);
                 double dist = Math.sqrt(xDiff*xDiff + yDiff*yDiff);
                 // check if we are closer to the center of the block
-                //if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
-                if (dist < smallestDist) {
+                if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
+                //if (dist < smallestDist) {
                     smallestDist = dist;
                     smallestDistIndex = i;
                 }
