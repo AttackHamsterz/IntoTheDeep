@@ -48,7 +48,7 @@ public class Shoulder extends BodyPart {
             543,  // Search
             1265, // Low Bar
             2686, // High Bar
-            3225, // Low Bucket
+            3100, // Low Bucket
             2921, // High Bucket
             3375, // Hang
             143   // None is like ground
