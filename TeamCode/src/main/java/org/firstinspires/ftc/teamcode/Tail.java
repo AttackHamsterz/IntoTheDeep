@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-/**
+/**-
  * This tail will wag the dog!
  */
 public class Tail extends Thread{
@@ -72,10 +72,10 @@ public class Tail extends Thread{
                 // The following implements the lifting finite state machine.  The procedure
                 // starts after listening for back and start pressed at the same time.
                 // The lift runs in four parts:
-                // Ready for lift
-                // The first lift
-                // The second lift
-                // Finally the bend.
+                // Ready for lift (arms up)
+                // The first lift (click into first bar)
+                // The second lift (reach and pull to second bar)
+                // Finally the bend (bend to tuck into upper pocket)
                 // The user needs to press start to continue on with each state.
                 // They may also press back to repeat the last action.
 
@@ -133,7 +133,7 @@ public class Tail extends Thread{
                     lifting++;
                 }
 
-                // State failure, repeat last one
+                // Progress or repeat state
                 if(lifting > 1 && (lifting % 2 == 0)) {
                     // Repeat last state
                     if (gamepad.back)

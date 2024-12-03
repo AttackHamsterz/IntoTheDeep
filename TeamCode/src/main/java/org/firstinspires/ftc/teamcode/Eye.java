@@ -2,8 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class Eye extends StandardSetupOpMode{
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
+public class Eye extends BodyPart{
     // Arm calibration values
     protected static final int NEAR_Y = 186;
     protected static final int FAR_Y = 66;
@@ -29,7 +33,22 @@ public class Eye extends StandardSetupOpMode{
     protected static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
+    ColorCamera camera;
+    Shoulder shoulder;
+    Arm arm;
+    Gamepad gamepad;
+    StandardSetupOpMode.COLOR color;
+    Telemetry telemetry;
 
+    public Eye(HardwareMap hardwareMap, Shoulder shoulder, Arm arm, StandardSetupOpMode.COLOR color, Gamepad gamepad, Telemetry telemetry)
+    {
+        this.camera = new ColorCamera(hardwareMap, color);
+        this.shoulder = shoulder;
+        this.arm = arm;
+        this.color = color;
+        this.gamepad = gamepad;
+        this.telemetry = telemetry;
+    }
 
     public void moveArmToColor() {
         camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
@@ -51,10 +70,7 @@ public class Eye extends StandardSetupOpMode{
     }
 
     @Override
-    public void runOpMode() throws InterruptedException {
-        // Call your parents!
-        super.runOpMode();
-
+    public void run() {
         // check to see if the device is working
         if (!camera.huskyLens.knock()) {
             telemetry.addData(">>", "Problem communicating with " + camera.huskyLens.getDeviceName());
@@ -63,9 +79,16 @@ public class Eye extends StandardSetupOpMode{
         }
 
         // start the color recognition algorithm
-        camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+        //camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+    }
 
-        // check shoulder mode
-        // if in search mode, run the code to move towards the closest sample
+    @Override
+    public void safeHold(int position) {
+
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return 0;
     }
 }
