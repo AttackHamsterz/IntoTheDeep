@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
@@ -43,8 +44,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@TeleOp(name="Basic: Linear OpMode", group="Linear Opmode")
-public class BasicOpMode_Linear extends StandardSetupOpMode {
+@TeleOp(name="TeleOp: Into The Deep", group="Linear Opmode")
+@Disabled
+public class IntoTheDeepOpMode extends StandardSetupOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Call the parent runOpMode
