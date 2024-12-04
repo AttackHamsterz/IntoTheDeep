@@ -23,6 +23,9 @@ public class ColorCamera extends Thread {
     public static final int TARGET_X = 160;
     public static final int TARGET_Y = 186;
 
+    // Other variables
+    private static final int MIN_DETECTION_EDGE_SIZE = 5;
+
     public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color) {
         // Camera setup
         this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
@@ -30,7 +33,10 @@ public class ColorCamera extends Thread {
 
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
-        blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_OCEAN_PALETTE);
+        if(colorId == BLUE_ID)
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+        else
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_RED);
     }
 
     public int getCapturedBlock()
@@ -43,17 +49,24 @@ public class ColorCamera extends Thread {
      * @return The closest block or null if there are no blocks
      */
     public HuskyLens.Block getClosestBlock() {
-        huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
-        // Find yellow blocks first
+
+        // Find color blocks
+        //huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
         HuskyLens.Block[] redBlocks = huskyLens.blocks(RED_ID);
         HuskyLens.Block[] blueBlocks = huskyLens.blocks(BLUE_ID);
+
+        // Keep track of the blocks on screen
         ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
         blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
 
-        // No yellow blocks, find alliance blocks
+        // Remove tiny blocks that are false alarms (detections must be MIN_DETECTION_EDGE_SIZE)
+        blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
+
+        // No yellow blocks, find alliance blocks that are large enough
         if (blocksOnScreen.isEmpty()) {
             blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
+            blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
         }
 
         // make sure there are blocks on the screen with the color we are looking for
@@ -108,8 +121,7 @@ public class ColorCamera extends Thread {
                 int yDiff = Math.abs(centerY - arrowCenterY);
                 double dist = Math.sqrt(xDiff*xDiff + yDiff*yDiff);
                 // check if we are closer to the center of the block
-                //if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
-                if (dist < smallestDist) {
+                if (dist < smallestDist && arrowCenterX > leftEdgeX && arrowCenterX < rightEdgeX && arrowCenterY < topEdgeY && arrowCenterY > bottomEdgeY) {
                     smallestDist = dist;
                     smallestDistIndex = i;
                 }
@@ -124,12 +136,29 @@ public class ColorCamera extends Thread {
         return null;
     }
 
+    /**
+     * Method assumes that positive angles are counter clockwise (left)
+     * Assumes 0 angle is straight up (no rotation necessary)
+     * Assumes 90 angle is straight left
+     * Assumes -90 angle is straight right
+     * @param arrow arrow to measure angle of
+     * @return angle of line in degrees [-90, 90]
+     */
     public double findAngleOfArrow(HuskyLens.Arrow arrow) {
-        // find the slope of line
+        // Find the angle of the line (atan2 is -pi to pi where
+        // 0 is the positive x axis, pi/2 is the positive y axis
+        // -pi/2 is the negative y axis
         double deltaX = arrow.y_origin - arrow.y_target;
         double deltaY = arrow.x_origin - arrow.x_target;
         double angle = Math.atan2(deltaY, deltaX);
-        // return the arctan of the slope
+
+        // If the angle was negative we can just make it positive (same line)
+        if(angle < 0) angle += Math.PI;
+
+        // Rotate the atan2 reference frame to the tool reference frame
+        angle -= Math.PI / 2.0;
+
+        // Return line angle in degrees
         return Math.toDegrees(angle);
     }
 

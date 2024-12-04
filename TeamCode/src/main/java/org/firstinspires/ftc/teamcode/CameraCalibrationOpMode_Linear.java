@@ -2,16 +2,16 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name = "Test: Camera Calibration", group = "Linear Opmode")
 public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
 
-    Eye cameraRunner = new Eye();
     // Arm calibration values
     private static final int NEAR_Y = 170;
-    private static final int FAR_Y = 44;
+    private static final int FAR_Y = 30;
     private static final int NEAR_TICKS = 0;
-    private static final int FAR_TICKS = 957;
+    private static final int FAR_TICKS = 1090;
 
     // y=mx+b where y is ticks and x is the relative y pixel location
     private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
@@ -65,25 +65,71 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         while(opModeIsActive()) {
 
             // This block helps us calibrate (disable once calibrated)
-            /*
-            HuskyLens.Block block = camera.getClosestBlock();
-            if (block != null) {
-                telemetry.addData("Closest Block", block.toString());
-                int blockCenterY = block.y;
-                arm.debugTelemetry(telemetry);
-                legs.debugTelemetry(telemetry);
-                telemetry.update();
-                arm.halt(); // Lets us manually tug the arm for measurements
-            }
+            //HuskyLens.Block block = camera.getClosestBlock();
+            //if (block != null) {
+            //    telemetry.addData("Closest Block", block.toString());
+            //    int blockCenterY = block.y;
+            //    arm.debugTelemetry(telemetry);
+            //    legs.debugTelemetry(telemetry);
+            //    telemetry.update();
+            //    arm.halt(); // Lets us manually tug the arm for measurements
+            //}
 
-             */
+            if(gamepad2.a && !pressed) {
+                // Just update once for now
+                pressed = true;
 
-
-
-            if(gamepad2.a) {
-
+                // Grab the nearest block
                 HuskyLens.Block block = camera.getClosestBlock();
                 if (block != null) {
+                    // Average a few arrows that fall inside our block
+                    double averageAngle = 0;
+                    int numAverage = 0;
+                    long average_ms = 500;
+                    long startTime_ms = System.currentTimeMillis();
+                    camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
+                    do {
+                        HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
+                        if(closestArrow != null)
+                        {
+                            // Get current angle from this arrow
+                            double arrowAngle = camera.findAngleOfArrow(closestArrow);
+
+                            // If this angle has wrapped then we put it near the average
+                            // This avoids adding 89.9 + -89.9 to get an average of 0
+                            // instead of either 90 or -90
+                            if(numAverage>0)
+                            {
+                                double currentAverage = averageAngle / (double)numAverage;
+                                double deltaAngle = arrowAngle - currentAverage;
+                                if(deltaAngle > 160.0)
+                                    arrowAngle -= 180.0;
+                                else if( deltaAngle < -160.0)
+                                    arrowAngle += 180.0;
+                            }
+
+                            // Increment average
+                            averageAngle += arrowAngle;
+                            numAverage++;
+                        }
+                        if(numAverage > 6)
+                            break;
+                    } while(System.currentTimeMillis() - startTime_ms < average_ms);
+                    camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+
+                    // Move wrist with a good average
+                    if (numAverage > 0) {
+                        averageAngle /= (double)numAverage;
+                        averageAngle = Range.clip(averageAngle, -90.0, 90.0);
+                        double wristPos = 0.5 + (averageAngle / 180.0);
+                        telemetry.addData("Average Angle", averageAngle);
+                        telemetry.addData("Num in average", numAverage);
+                        telemetry.addData("Wrist Pos", wristPos);
+                        hand.setWrist(wristPos);
+                    } else {
+                        telemetry.addLine("No line average");
+                    }
+
                     // Set new arm position!
                     int ticks = (int) Math.round((M * (double) block.y + B));
                     telemetry.addData("M", M);
@@ -93,38 +139,17 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.addData("Arm Pos", arm.getCurrentPosition());
                     arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
 
-
-                    //cameraRunner.moveArmToColor();
-                    // TODO - Set new legs position!
-
-                    telemetry.addData("blockCenterX", block.x);
+                    // Set new legs position
                     double ySlope = block.y * SHIFT_M + SHIFT_B;
                     double shift = (block.x - CENTER_X) * ySlope;
-
+                    telemetry.addData("blockCenterX", block.x);
                     telemetry.addData("shift near m", SHIFT_NEAR_M);
                     telemetry.addData("shift far m", SHIFT_FAR_M);
                     telemetry.addData("shift m", SHIFT_M);
                     telemetry.addData("shift b", SHIFT_B);
                     telemetry.addData("y slope", ySlope);
                     telemetry.addData("shift", shift);
-
-                    if (!pressed) {
-                        legs.moveLeft(shift);
-                        pressed = true;
-                    } else {
-                        pressed = false;
-                    }
-
-
-                    // TODO - Add logic to spin the wrist
-
-                    HuskyLens.Arrow closestArrow = camera.getClosestArrowToBlock(block);
-                    while (closestArrow == null) {
-                        closestArrow = camera.getClosestArrowToBlock(block);
-                    }
-                    telemetry.addData("Closest line", closestArrow);
-                    telemetry.addData("Angle of Line", camera.findAngleOfArrow(closestArrow));
-
+                    legs.moveLeft(shift);
 
                     // This is either openCV on image data
                     // Or switching to line detection mode
@@ -134,6 +159,8 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     telemetry.update();
                 }
             }
+            else
+                pressed = false;
 
 
 
