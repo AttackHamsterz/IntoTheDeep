@@ -43,12 +43,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@TeleOp(name="TeleOp: Blue Into The Deep", group="TeleOp")
-public class BlueIntoTheDeepOpMode extends StandardSetupOpMode {
+@TeleOp(name="TeleOp: Red Into The Deep", group="TeleOp")
+public class IntoTheDeepRedOpMode extends IntoTheDeepOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Call the parent runOpMode
-        setup(COLOR.BLUE, SIDE.LEFT, false);
+        setup(COLOR.RED, SIDE.LEFT, false);
         super.runOpMode();
     }
 }

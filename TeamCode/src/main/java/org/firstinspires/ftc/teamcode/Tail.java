@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -87,7 +88,7 @@ public class Tail extends Thread{
                 if(lifting == 1)
                 {
                     shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
-                    arm.setPosition(1.0, 1000);
+                    arm.setPosition(1.0,650);
                     lifting++;
                 }
 
@@ -97,7 +98,20 @@ public class Tail extends Thread{
                 // Shoulder all the way up
                 if(lifting == 3) {
                     setTail(MIN_POS);
-                    arm.gotoMin(1.0);
+                    Action armDownAction = telemetryPacket -> {
+                        arm.gotoMin(1.0);
+                        return false;
+                    };
+                    Action armHangPosition = telemetryPacket -> {
+                        arm.setPosition(1.0, 650);
+                        return false;
+                    };
+                    Action firstPull = new SequentialAction(
+                            new CompleteAction(armDownAction, arm),
+                            new SleepAction(0.2),
+                            armHangPosition
+                    );
+                    Actions.runBlocking(firstPull);
                     lifting++;
                 }
 
@@ -110,7 +124,7 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action armDownAction = telemetryPacket -> {
-                        arm.setPosition(1.0, 0);
+                        arm.gotoMin(1.0);
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
