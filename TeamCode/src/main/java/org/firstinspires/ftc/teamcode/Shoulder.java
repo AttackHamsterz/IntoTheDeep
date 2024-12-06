@@ -57,7 +57,7 @@ public class Shoulder extends BodyPart {
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
             500,  // Ground
-            685,  // Search
+            757,  // Search
             1047, // Low Bar
             1636, // High Bar
             1731, // Low Bucket
@@ -73,7 +73,7 @@ public class Shoulder extends BodyPart {
     private static final double MIN_SHOULDER_POWER = -0.9;
     private static final double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.05;
+    private static final double HOLD_POWER = 0.075;
     private static final double MODE_POWER = 1.0;
     private static final double DROP_POWER = -0.9;
     private static final double NO_POWER = 0.0;
@@ -137,6 +137,11 @@ public class Shoulder extends BodyPart {
     {
         setMode(Mode.NONE);
         setPosition(DROP_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
+    }
+
+    public Mode getMode()
+    {
+        return mode;
     }
 
     @Override
@@ -210,7 +215,10 @@ public class Shoulder extends BodyPart {
         position = Range.clip(position, MIN_POS, MAX_POS);
         int currentPos = shoulderMotor.getCurrentPosition();
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
+        {
+            protectMotors(position);
             return;
+        }
 
         // Ensure inputs are valid (flip sign of power for lowering)
         power = Range.clip(Math.abs(power) * Math.signum(position-currentPos), MIN_SHOULDER_POWER, MAX_SHOULDER_POWER);
@@ -252,6 +260,11 @@ public class Shoulder extends BodyPart {
             if(!ignoreGamepad) {
                 float power = gamepad.right_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
+                    shoulderMotor.setPower(0);
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignore) {
+                    }
                     safeHold(shoulderMotor.getCurrentPosition());
                     hold = true;
                 } else if (power < -TRIM_POWER) {

@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ColorCamera extends Thread {
 
@@ -34,9 +35,9 @@ public class ColorCamera extends Thread {
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
         if(colorId == BLUE_ID)
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_BLUE);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_BLUE);
         else
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_RED);
+            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_RED);
     }
 
     public int getCapturedBlock()
@@ -93,6 +94,22 @@ public class ColorCamera extends Thread {
         return null;
     }
 
+    public List<HuskyLens.Arrow> getArrowsInBlock(HuskyLens.Block block){
+        int leftEdgeX = block.x - (block.width/2);
+        int bottomEdgeY = block.y - (block.width/2);
+        int rightEdgeX = block.x + (block.width/2);
+        int topEdgeY = block.y + (block.height/2);
+
+        ArrayList<HuskyLens.Arrow> arrows = new ArrayList();
+        for(HuskyLens.Arrow arrow : huskyLens.arrows(block.id)) {
+            int arrowCenterX = (arrow.x_origin + arrow.x_target) / 2;
+            int arrowCenterY = (arrow.y_origin + arrow.y_target) / 2;
+            if(arrowCenterX >= leftEdgeX && arrowCenterX <= rightEdgeX && arrowCenterY <= topEdgeY && arrowCenterY >= bottomEdgeY)
+                arrows.add(arrow);
+        }
+        return arrows;
+    }
+
     public HuskyLens.Arrow getClosestArrowToBlock(HuskyLens.Block block) {
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
         // get the center of the block
@@ -106,7 +123,7 @@ public class ColorCamera extends Thread {
 
         // get a list of all arrows on the screen
         ArrayList<HuskyLens.Arrow> arrows = new ArrayList<>();
-        arrows.addAll(Arrays.asList(huskyLens.arrows()));
+        arrows.addAll(Arrays.asList(huskyLens.arrows(block.id)));
         // make sure there are arrows on screen
         if (!arrows.isEmpty()) {
             // go through our list and figure out which arrow is closest to the block's location
@@ -153,10 +170,10 @@ public class ColorCamera extends Thread {
         double angle = Math.atan2(deltaY, deltaX);
 
         // If the angle was negative we can just make it positive (same line)
-        if(angle < 0) angle += Math.PI;
+        //if(angle < 0) angle += Math.PI;
 
         // Rotate the atan2 reference frame to the tool reference frame
-        angle -= Math.PI / 2.0;
+        //angle -= Math.PI / 2.0;
 
         // Return line angle in degrees
         return Math.toDegrees(angle);

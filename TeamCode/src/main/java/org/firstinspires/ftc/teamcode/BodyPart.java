@@ -36,7 +36,7 @@ public abstract class BodyPart extends Thread{
                 while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
-                safeHold(position);
+                safeHold(getCurrentPosition());
                 notifyOldestListener();
             } catch (InterruptedException e) {
             }
