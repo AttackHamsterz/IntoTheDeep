@@ -267,14 +267,22 @@ public class Shoulder extends BodyPart {
                     hold = false;
                     mode = Mode.NONE;
                 }
-                if(gamepad.a)
+                if(gamepad.x)
                     mode = Mode.SEARCH;
-                else if(gamepad.b)
+                else if(gamepad.a)
                     mode = Mode.GROUND;
-                else if(gamepad.x)
-                    mode = Mode.HIGH_BAR;
-                else if(gamepad.y)
-                    mode = Mode.LOW_BUCKET;
+                else if(gamepad.x) {
+                    if(mode == Mode.HIGH_BAR)
+                        mode = Mode.LOW_BAR;
+                    else
+                        mode = Mode.HIGH_BAR;
+                }
+                else if(gamepad.y){
+                    if(mode == Mode.HIGH_BUCKET)
+                        mode = Mode.LOW_BUCKET;
+                    else
+                        mode = Mode.LOW_BUCKET;
+                }
             }
 
             // Always satisfy the mode if no buttons were pressed
