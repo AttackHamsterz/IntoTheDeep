@@ -22,12 +22,13 @@ public class AutonomousRight extends AutonomousOpMode{
         //Drops off the submersible sample
         Pose2d driveToLowBucketDrop = new Pose2d(new Vector2d(5.4,54.6), Math.toRadians(93));
         Action driveToLowBucketDropAction = legs.moveToAction(AUTO_POWER, driveToLowBucketDrop);
+        int lowBucketArmPos = 465;
         Action setArmToLowBucketDrop = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 465);
+            arm.setPosition(AUTO_POWER, lowBucketArmPos);
             return false;
         };
         Action setShoulderToLowBucketDrop = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, 0.8, 465);
+            shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, lowBucketArmPos);
             return false;
         };
 
@@ -105,7 +106,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
 
         //Move to observation (corner trapezoid)
-        Pose2d goToObservation = new Pose2d(new Vector2d (19, -46), Math.toRadians(160));
+        Pose2d goToObservation = new Pose2d(new Vector2d (19, -46), Math.toRadians(180));
         Action driveToObservation = legs.moveToAction(AUTO_POWER, goToObservation, 1);
         Actions.runBlocking(new CompleteAction(driveToObservation, legs));
 
