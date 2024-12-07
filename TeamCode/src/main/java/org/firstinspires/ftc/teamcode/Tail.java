@@ -184,6 +184,7 @@ public class Tail extends Thread{
                             bendAction,
                             relaxAction
                     );
+                    Actions.runBlocking(finalAction);
                     lifting++;
                 }
 
