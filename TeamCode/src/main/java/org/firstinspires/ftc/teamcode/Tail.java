@@ -142,6 +142,14 @@ public class Tail extends Thread{
                         arm.setPosition(1.0, 2100);
                         return false;
                     };
+                    Action tiltShoulderBackward = telemetryPacket -> {
+                        shoulder.setPosition(0.8, Shoulder.MAX_POS - 200);
+                        return false;
+                    };
+                    Action tiltShoulderForward = telemetryPacket -> {
+                        shoulder.setPosition(0.8, Shoulder.MAX_POS);
+                        return false;
+                    };
                     Action armDownAction = telemetryPacket -> {
                         arm.gotoMin(0.8);
                         return false;
@@ -152,6 +160,8 @@ public class Tail extends Thread{
                     };
                     Action secondPull = new SequentialAction(
                             new CompleteAction(armUpAction, arm),
+                            new CompleteAction(tiltShoulderBackward, shoulder),
+                            new CompleteAction(tiltShoulderForward, shoulder),
                             new CompleteAction(armDownAction, arm),
                             new CompleteAction(armHangPosition, arm)
                     );
@@ -162,7 +172,18 @@ public class Tail extends Thread{
                 // Final bend
                 if(lifting == 7) {
                     setTail(MIN_POS);
-                    shoulder.setPosition(0.5, 325);
+                    Action bendAction = telemetryPacket -> {
+                        shoulder.setPosition(0.5, 325);
+                        return false;
+                    };
+                    Action relaxAction = telemetryPacket -> {
+                        shoulder.setPosition(0.5, 500);
+                        return false;
+                    };
+                    Action finalAction = new SequentialAction(
+                            bendAction,
+                            relaxAction
+                    );
                     lifting++;
                 }
 
