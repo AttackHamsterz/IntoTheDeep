@@ -57,11 +57,11 @@ public class Shoulder extends BodyPart {
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
             500,  // Ground
-            757,  // Search
+            743,  // Search
             1047, // Low Bar
             1636, // High Bar
             1731, // Low Bucket
-            2921, // High Bucket
+            3047, // High Bucket
             3375, // Hang
             500   // None is like ground
     ));
@@ -284,7 +284,7 @@ public class Shoulder extends BodyPart {
                     mode = Mode.SEARCH;
                 else if(gamepad.a)
                     mode = Mode.GROUND;
-                else if(gamepad.x) {
+                else if(gamepad.b) {
                     if(mode == Mode.HIGH_BAR)
                         mode = Mode.LOW_BAR;
                     else
@@ -294,7 +294,7 @@ public class Shoulder extends BodyPart {
                     if(mode == Mode.HIGH_BUCKET)
                         mode = Mode.LOW_BUCKET;
                     else
-                        mode = Mode.LOW_BUCKET;
+                        mode = Mode.HIGH_BUCKET;
                 }
             }
 

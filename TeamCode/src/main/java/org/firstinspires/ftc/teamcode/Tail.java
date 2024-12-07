@@ -81,14 +81,33 @@ public class Tail extends Thread{
                 // They may also press back to repeat the last action.
 
                 // If start and back are pressed lets run the lift procedure
-                if(lifting == 0 && gamepad.start && gamepad.back)
-                    lifting = 1;
+                if (lifting == 0) {
+                    if (gamepad.back && gamepad.start) {
+                        shoulder.setMode(Shoulder.Mode.NONE);
+                        lifting = 1;
+                    } else if (gamepad.start && !gamepad.back) {
+                        setTail(MIN_POS);
+                    } else if (gamepad.back && !gamepad.start) {
+                        setTail(MAX_POS);
+                    }
+                }
 
                 // Get ready for the lift
                 if(lifting == 1)
                 {
-                    shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
-                    arm.setPosition(1.0,650);
+                    Action shoulderUpAction = telemetryPacket -> {
+                        shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
+                        return false;
+                    };
+                    Action armUpAction = telemetryPacket -> {
+                        arm.setPosition(1.0,650);
+                        return false;
+                    };
+                    Action readyLiftAction = new SequentialAction(
+                            new CompleteAction(shoulderUpAction, shoulder),
+                            new CompleteAction(armUpAction, arm)
+                    );
+                    Actions.runBlocking(readyLiftAction);
                     lifting++;
                 }
 
@@ -103,7 +122,7 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
-                        arm.setPosition(1.0, 650);
+                        arm.setPosition(0.6, 650);
                         return false;
                     };
                     Action firstPull = new SequentialAction(
@@ -124,7 +143,7 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action armDownAction = telemetryPacket -> {
-                        arm.gotoMin(1.0);
+                        arm.gotoMin(0.8);
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
@@ -143,7 +162,7 @@ public class Tail extends Thread{
                 // Final bend
                 if(lifting == 7) {
                     setTail(MIN_POS);
-                    shoulder.setPosition(0.5, 400);
+                    shoulder.setPosition(0.5, 325);
                     lifting++;
                 }
 
