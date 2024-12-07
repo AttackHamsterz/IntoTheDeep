@@ -153,10 +153,10 @@ public class ColorCamera extends Thread {
         double angle = Math.atan2(deltaY, deltaX);
 
         // If the angle was negative we can just make it positive (same line)
-        if(angle < 0) angle += Math.PI;
+        //if(angle < 0) angle += Math.PI;
 
         // Rotate the atan2 reference frame to the tool reference frame
-        angle -= Math.PI / 2.0;
+        //angle -= Math.PI / 2.0;
 
         // Return line angle in degrees
         return Math.toDegrees(angle);

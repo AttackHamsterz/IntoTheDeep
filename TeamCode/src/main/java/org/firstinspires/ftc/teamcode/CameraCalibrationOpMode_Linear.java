@@ -121,7 +121,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                     if (numAverage > 0) {
                         averageAngle /= (double)numAverage;
                         averageAngle = Range.clip(averageAngle, -90.0, 90.0);
-                        double wristPos = 0.5 + (averageAngle / 180.0);
+                        double wristPos = 0.5 - (0.5*averageAngle / 90.0);
                         telemetry.addData("Average Angle", averageAngle);
                         telemetry.addData("Num in average", numAverage);
                         telemetry.addData("Wrist Pos", wristPos);
