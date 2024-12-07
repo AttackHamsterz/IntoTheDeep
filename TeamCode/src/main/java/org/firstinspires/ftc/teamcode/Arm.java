@@ -10,15 +10,15 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Arm extends BodyPart {
     // Arm speeds
-    private static final double MIN_ARM_SPEED = -0.9;
-    private static final double MAX_ARM_SPEED = 0.9;
+    private static final double MIN_ARM_SPEED = -1.0;
+    private static final double MAX_ARM_SPEED = 1.0;
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.1;
     private static final double NO_POWER = 0.0;
 
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
-    public static final int MAX_POS = 2200;
+    public static final int MAX_POS = 2180;
 
     // Vars for the arm motors
     private final DcMotor armMotorLeft;
@@ -125,9 +125,11 @@ public class Arm extends BodyPart {
     public void setPosition(double power, int position) {
         // Check the current position against the target position (do nothing if close enough)
         position = Range.clip(position, MIN_POS, MAX_POS);
-        int currentPos = armMotorLeft.getCurrentPosition();
-        if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
+        int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
+        if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS) {
+            protectMotors(position);
             return;
+        }
 
         // Ensure inputs are valid (flip sign of power for retraction)
         power = Range.clip(Math.abs(power) * Math.signum(position-currentPos), MIN_ARM_SPEED, MAX_ARM_SPEED);
@@ -160,6 +162,7 @@ public class Arm extends BodyPart {
         // Two ways to fix this I think:
         //   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
         //   2) Power one motor for hold and test
+        /* STILL RUN THIS IF THE COUNTS GET REALLY FAR APART
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
@@ -175,6 +178,11 @@ public class Arm extends BodyPart {
             armMotorRight.setTargetPosition(posRight);
             armMotorLeft.setTargetPosition(posRight);
         }
+        */
+        armMotorRight.setTargetPosition(position);
+        armMotorLeft.setTargetPosition(position);
+        armMotorRight.setPower(HOLD_POWER);
+        armMotorLeft.setPower(HOLD_POWER);
 
         // This is belt slip protection
         if(position <= MIN_POS)
@@ -198,7 +206,13 @@ public class Arm extends BodyPart {
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 double power = gamepad.left_stick_y;
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    safeHold(armMotorLeft.getCurrentPosition());
+                    // Stop the motors, sleep a tiny bit to arrest momentum and safe hold
+                    halt();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignore) {
+                    }
+                    safeHold((armMotorLeft.getCurrentPosition()+armMotorRight.getCurrentPosition())/2);
                     hold = true;
                 } else if (power < -TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver

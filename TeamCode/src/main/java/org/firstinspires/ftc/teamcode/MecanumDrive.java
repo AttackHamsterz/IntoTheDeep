@@ -429,19 +429,20 @@ public final class MecanumDrive extends BodyPart{
                 if (!moveThread.isAlive()) moveForward(10.0);
             } else if (gamepad.dpad_down) {
                 if (!moveThread.isAlive()) moveForward(-10.0);
-            } else if (gamepad.x) {
-                if (!moveThread.isAlive()) rotate(90.0);
-            } else if (gamepad.b) {
-                if (!moveThread.isAlive()) rotate(-90.0);
             } else if (gamepad.left_bumper) {
-                leftPose = getPose();
+                if (!moveThread.isAlive()) rotate(90.0);
             } else if (gamepad.right_bumper) {
+                if (!moveThread.isAlive()) rotate(-90.0);
+            } else if (gamepad.x) {
+                leftPose = getPose();
+            } else if (gamepad.a) {
                 rightPose = getPose();
-            } else if (gamepad.left_trigger > 0.8) {
+            } else if (gamepad.y) {
                 if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, leftPose);
-            } else if (gamepad.right_trigger > 0.8) {
+            } else if (gamepad.b) {
                 if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, rightPose);
-            } else if(Math.abs(gamepad.left_stick_x) > 0.01 ||
+            }
+            else if(Math.abs(gamepad.left_stick_x) > 0.01 ||
                     Math.abs(gamepad.left_stick_y) > 0.01 ||
                     Math.abs(gamepad.right_stick_x) > 0.01)
             {
@@ -450,7 +451,11 @@ public final class MecanumDrive extends BodyPart{
                     moveThread.interrupt();
 
                 // See if the user would like to slow down
-                double speedFactor = gamepad.y ? 0.25 : gamepad.a ? 0.5 : 1.0;
+                double speedFactor = 1.0;
+                if(gamepad.left_trigger > 0)
+                    speedFactor -= (gamepad.left_trigger * 0.75);
+                else if(gamepad.right_trigger > 0)
+                    speedFactor -= (gamepad.right_trigger * 0.5);
 
                 // Map joystick values to drive powers
                 setDrivePowers(new PoseVelocity2d(

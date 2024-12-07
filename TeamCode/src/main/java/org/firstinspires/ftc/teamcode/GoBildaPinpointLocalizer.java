@@ -33,6 +33,7 @@ public class GoBildaPinpointLocalizer implements Localizer
     public GoBildaPinpointLocalizer(HardwareMap hardwareMap){
         // Get the driver from the hardware map and setup
         odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        if(odo == null) return;
         odo.setOffsets(X_OFFSET_MM, Y_OFFSET_MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
@@ -41,6 +42,10 @@ public class GoBildaPinpointLocalizer implements Localizer
 
     @Override
     public Twist2dDual<Time> update() {
+        if(odo == null) return new Twist2dDual<>(
+                Vector2dDual.constant(new Vector2d(0.0, 0.0), 2),
+                DualNum.constant(0.0, 2)
+        );;
 
         // Get odometry values
         odo.update();
@@ -85,11 +90,14 @@ public class GoBildaPinpointLocalizer implements Localizer
      * Resets the position and inertial motion unit
      */
     public void reset(){
-        odo.resetPosAndIMU();
+        if(odo != null)
+            odo.resetPosAndIMU();
     }
 
     public Pose2d get_pose_estimate()
     {
+        if(odo == null) return new Pose2d( 0, 0, 0);
+
         odo.update();
         Pose2D pos_mm = odo.getPosition();
         return new Pose2d(
@@ -100,6 +108,8 @@ public class GoBildaPinpointLocalizer implements Localizer
 
     public PoseVelocity2d get_velocity_estimate()
     {
+        if(odo == null) return new PoseVelocity2d(new Vector2d(0, 0), 0);
+
         odo.update();
         Pose2D vel_mm_s = odo.getVelocity();
         return new PoseVelocity2d(
@@ -111,12 +121,14 @@ public class GoBildaPinpointLocalizer implements Localizer
 
     public Pose2D get_ftc_pose()
     {
+        if(odo == null) return new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.RADIANS, 0);
         odo.update();
         return odo.getPosition();
     }
 
     public Pose2D get_ftc_velocity()
     {
+        if(odo == null) return new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.RADIANS, 0);
         odo.update();
         return odo.getVelocity();
     }
