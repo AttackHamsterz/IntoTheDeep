@@ -230,6 +230,129 @@ public class ColorCamera extends Thread {
         return Math.toDegrees(angle);
     }
 
+    public void autoGrab()
+    {
+        // Grab the nearest block
+        final HuskyLens.Block firstBlock = this.getClosestBlock();
+        if (firstBlock != null) {
+            //telemetry.addData("block1 id", firstBlock.id);
+            // Move the arm and robot to get that block closer
+            Action moveArmToBlock = telemetryPacket -> {
+                shoulder.setMode(Shoulder.Mode.SEARCH);
+                int ticks = (int) Math.round((M * (double) firstBlock.y + B));
+                arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
+                //telemetry.addData("block1 ticks", ticks);
+                return false;
+            };
+            Action strafeToBlock = telemetryPacket -> {
+                double ySlope = firstBlock.y * SHIFT_M + SHIFT_B;
+                double shift = (firstBlock.x - CENTER_X) * ySlope;
+                //telemetry.addData("block1 shift", shift);
+                legs.moveLeft(shift);
+                return false;
+            };
+            ParallelAction centerBlockAction = new ParallelAction(
+                    new CompleteAction(moveArmToBlock, arm),
+                    new CompleteAction(strafeToBlock, legs));
+            Actions.runBlocking(centerBlockAction);
+
+            // Get the block again now that it's closer
+            final HuskyLens.Block secondBlock = this.getClosestBlock();
+            if(secondBlock != null) {
+                double averageAngle = 0;
+
+                // Get a rough angle from the block itself
+                //averageAngle = Math.toDegrees(Math.atan2(secondBlock.height, secondBlock.width));
+                //telemetry.addData("Block Angle", averageAngle);
+
+                // Average a few arrows that fall inside our block
+                int numAverage = 0;
+                long average_ms = 500;
+                long startTime_ms = System.currentTimeMillis();
+                this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
+                do {
+                    List<HuskyLens.Arrow> arrows = this.getArrowsInBlock(secondBlock);
+                    for(HuskyLens.Arrow arrow : arrows){
+                        // Get current angle from this arrow
+                        double arrowAngle = this.findAngleOfArrow(arrow);
+
+                        // If this angle has wrapped then we put it near the average
+                        // This avoids adding 89.9 + -89.9 to get an average of 0
+                        // instead of either 90 or -90
+                        if (numAverage > 0) {
+                            double currentAverage = averageAngle / (double) numAverage;
+                            double deltaAngle = arrowAngle - currentAverage;
+                            if (deltaAngle > 160.0)
+                                arrowAngle -= 180.0;
+                            else if (deltaAngle < -160.0)
+                                arrowAngle += 180.0;
+                        }
+
+                        // Increment average
+                        averageAngle += arrowAngle;
+                        numAverage++;
+                    }
+                    if (numAverage > 6)
+                        break;
+                } while (System.currentTimeMillis() - startTime_ms < average_ms);
+                this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+
+                // Set new arm position!
+                int ticks = (int) Math.round((M * (double) secondBlock.y + B));
+                //telemetry.addData("block2 ticks", ticks);
+                arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
+
+                // Set new legs position
+                double ySlope = secondBlock.y * SHIFT_M + SHIFT_B;
+                double shift = (secondBlock.x - CENTER_X) * ySlope;
+                //telemetry.addData("block2 shift", ticks);
+                legs.moveLeft(shift);
+
+                // Move wrist with a good average
+                if (numAverage > 0) {
+                    averageAngle /= (double) numAverage;
+                    averageAngle = Range.clip(averageAngle, -90.0, 90.0);
+                    double wristPos = 0.5 - (0.5*averageAngle / 90.0);
+                    //telemetry.addData("Average Angle", averageAngle);
+                    //telemetry.addData("Num in average", numAverage);
+                    //telemetry.addData("Wrist Pos", wristPos);
+                    hand.setWrist(wristPos);
+
+                    // Plunge to pickup
+                    Action grab = telemetryPacket -> {
+                        shoulder.setMode(Shoulder.Mode.GROUND);
+                        hand.grab(1000);
+                        return false;
+                    };
+                    Action raiseShoulder = telemetryPacket -> {
+                        shoulder.setMode(Shoulder.Mode.SEARCH);
+                        hand.hangSample();
+                        return false;
+                    };
+                    Action snag = new SequentialAction(
+                            new CompleteAction(grab, hand),
+                            new CompleteAction(raiseShoulder, shoulder));
+                    Actions.runBlocking(snag);
+
+                } //else {
+                //telemetry.addLine("No line average");
+                //}
+            }
+            //else
+            //  telemetry.addLine("block2 null");
+
+            // This is either openCV on image data
+            // Or switching to line detection mode
+            // And getting arrows if that's quick enough
+            // If it's too slow we'll need to go back to
+            // USB camera until we get a limelight 3a
+        }
+        //else
+        //telemetry.addLine("block1 null");
+        //telemetry.update();
+
+    }
+
     @Override
     public void run() {
         // check to see if the device is working
@@ -260,131 +383,9 @@ public class ColorCamera extends Thread {
 
             // If the gamepad is pressed search and pickup
             if(gamepad.x && shoulder.getMode() == Shoulder.Mode.SEARCH && !running) {
-                // Grab the nearest block
-                final HuskyLens.Block firstBlock = this.getClosestBlock();
-                if (firstBlock != null) {
-                    running = true;
-                    //telemetry.addData("block1 id", firstBlock.id);
-                    // Move the arm and robot to get that block closer
-                    Action moveArmToBlock = telemetryPacket -> {
-                        shoulder.setMode(Shoulder.Mode.SEARCH);
-                        int ticks = (int) Math.round((M * (double) firstBlock.y + B));
-                        arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
-                        //telemetry.addData("block1 ticks", ticks);
-                        return false;
-                    };
-                    Action strafeToBlock = telemetryPacket -> {
-                        double ySlope = firstBlock.y * SHIFT_M + SHIFT_B;
-                        double shift = (firstBlock.x - CENTER_X) * ySlope;
-                        //telemetry.addData("block1 shift", shift);
-                        legs.moveLeft(shift);
-                        return false;
-                    };
-                    ParallelAction centerBlockAction = new ParallelAction(
-                            new CompleteAction(moveArmToBlock, arm),
-                            new CompleteAction(strafeToBlock, legs));
-                    Actions.runBlocking(centerBlockAction);
-
-                    // Get the block again now that it's closer
-                    final HuskyLens.Block secondBlock = this.getClosestBlock();
-                    if(secondBlock != null) {
-                        double averageAngle = 0;
-
-                        // Get a rough angle from the block itself
-                        //averageAngle = Math.toDegrees(Math.atan2(secondBlock.height, secondBlock.width));
-                        //telemetry.addData("Block Angle", averageAngle);
-
-                        // Average a few arrows that fall inside our block
-                        int numAverage = 0;
-                        long average_ms = 500;
-                        long startTime_ms = System.currentTimeMillis();
-                        this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
-                        do {
-                            List<HuskyLens.Arrow> arrows = this.getArrowsInBlock(secondBlock);
-                            for(HuskyLens.Arrow arrow : arrows){
-                                // Get current angle from this arrow
-                                double arrowAngle = this.findAngleOfArrow(arrow);
-
-                                // If this angle has wrapped then we put it near the average
-                                // This avoids adding 89.9 + -89.9 to get an average of 0
-                                // instead of either 90 or -90
-                                if (numAverage > 0) {
-                                    double currentAverage = averageAngle / (double) numAverage;
-                                    double deltaAngle = arrowAngle - currentAverage;
-                                    if (deltaAngle > 160.0)
-                                        arrowAngle -= 180.0;
-                                    else if (deltaAngle < -160.0)
-                                        arrowAngle += 180.0;
-                                }
-
-                                // Increment average
-                                averageAngle += arrowAngle;
-                                numAverage++;
-                            }
-                            if (numAverage > 6)
-                                break;
-                        } while (System.currentTimeMillis() - startTime_ms < average_ms);
-                        this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
-
-
-                        // Set new arm position!
-                        int ticks = (int) Math.round((M * (double) secondBlock.y + B));
-                        //telemetry.addData("block2 ticks", ticks);
-                        arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
-
-                        // Set new legs position
-                        double ySlope = secondBlock.y * SHIFT_M + SHIFT_B;
-                        double shift = (secondBlock.x - CENTER_X) * ySlope;
-                        //telemetry.addData("block2 shift", ticks);
-                        legs.moveLeft(shift);
-
-                        // Move wrist with a good average
-                        if (numAverage > 0) {
-                            averageAngle /= (double) numAverage;
-                            averageAngle = Range.clip(averageAngle, -90.0, 90.0);
-                            double wristPos = 0.5 - (0.5*averageAngle / 90.0);
-                            //telemetry.addData("Average Angle", averageAngle);
-                            //telemetry.addData("Num in average", numAverage);
-                            //telemetry.addData("Wrist Pos", wristPos);
-                            hand.setWrist(wristPos);
-
-                            // Plunge to pickup
-                            Action grab = telemetryPacket -> {
-                                hand.grab(1000);
-                                return false;
-                            };
-                            Action dropShoulder = telemetryPacket -> {
-                                shoulder.setMode(Shoulder.Mode.GROUND);
-                                return false;
-                            };
-                            Action raiseShoulder = telemetryPacket -> {
-                                shoulder.setMode(Shoulder.Mode.SEARCH);
-                                hand.hangSample();
-                                return false;
-                            };
-                            Action snag = new SequentialAction(
-                                    dropShoulder,
-                                    new CompleteAction(grab, hand),
-                                    raiseShoulder);
-                            Actions.runBlocking(snag);
-
-                        } //else {
-                            //telemetry.addLine("No line average");
-                        //}
-                    }
-                    //else
-                      //  telemetry.addLine("block2 null");
-
-                    // This is either openCV on image data
-                    // Or switching to line detection mode
-                    // And getting arrows if that's quick enough
-                    // If it's too slow we'll need to go back to
-                    // USB camera until we get a limelight 3a
-                    running = false;
-                }
-                //else
-                    //telemetry.addLine("block1 null");
-                //telemetry.update();
+                //running = true;
+                autoGrab();
+                //running = false;
             }
 
 

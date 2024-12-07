@@ -249,6 +249,7 @@ public class Shoulder extends BodyPart {
 
     @Override
     public void run() {
+        boolean pressing = false;
         while (!isInterrupted()) {
             // Always get the current arm ratio (use this to maintain heights given arm reach)
             armRatio = arm.getArmRatio();
@@ -280,22 +281,32 @@ public class Shoulder extends BodyPart {
                     hold = false;
                     mode = Mode.NONE;
                 }
-                if(gamepad.x)
+
+
+                if(gamepad.x && !pressing) {
+                    pressing = true;
                     mode = Mode.SEARCH;
-                else if(gamepad.a)
+                }
+                else if(gamepad.a && !pressing) {
+                    pressing = true;
                     mode = Mode.GROUND;
-                else if(gamepad.b) {
+                }
+                else if(gamepad.b && !pressing) {
+                    pressing = true;
                     if(mode == Mode.HIGH_BAR)
                         mode = Mode.LOW_BAR;
                     else
                         mode = Mode.HIGH_BAR;
                 }
-                else if(gamepad.y){
+                else if(gamepad.y && !pressing){
+                    pressing = true;
                     if(mode == Mode.HIGH_BUCKET)
                         mode = Mode.LOW_BUCKET;
                     else
                         mode = Mode.HIGH_BUCKET;
                 }
+                else
+                    pressing = false;
             }
 
             // Always satisfy the mode if no buttons were pressed
