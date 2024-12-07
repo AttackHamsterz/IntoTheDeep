@@ -3,7 +3,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import java.util.List;
+import java.util.LinkedList;
+
 import java.util.function.Consumer;
 
 public abstract class BodyPart extends Thread{
@@ -12,15 +13,35 @@ public abstract class BodyPart extends Thread{
     protected boolean ignoreGamepad = false;
 
     // Motor overload protection
-    protected static final long MOTOR_CHECK_PERIOD_MS = 250;  // Check 4 times a second
-    protected static final int CLOSE_ENOUGH_TICKS = 10; // Turn off the other motor when we are close
+    protected static final long MOTOR_CHECK_PERIOD_MS = 100;  // Check 10 times a second
+    protected static final int CLOSE_ENOUGH_TICKS = 20; // Turn off the other motor when we are close
     protected Thread protectionThread = new Thread();
 
     // Loop saturation protection
     protected static final long LOOP_PAUSE_MS = 50;
 
     // Consumer pattern objects
-    private List<Consumer<Boolean>> listeners;
+    private LinkedList<Consumer<Boolean>> listeners = new LinkedList<>();
+
+    private class TimeoutThread extends Thread{
+        private int position;
+
+        public TimeoutThread(int position){
+            this.position = position;
+        }
+
+        @Override
+        public void run(){
+            try{
+                while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
+                    sleep(MOTOR_CHECK_PERIOD_MS);
+                }
+                safeHold(getCurrentPosition());
+                notifyOldestListener();
+            } catch (InterruptedException e) {
+            }
+        }
+    }
 
     // Force implementing classes to implement the run class
     // This implements the things this body part can do in parallel with
@@ -60,31 +81,30 @@ public abstract class BodyPart extends Thread{
         protectionThread.interrupt();
 
         // Start a thread that performs safe hold when the time is right
-        Integer position = new Integer(targetPosition);
-        protectionThread = new Thread(() -> {
-            try{
-                while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
-                    sleep(MOTOR_CHECK_PERIOD_MS);
-                }
-                safeHold(targetPosition);
-                notifyListeners();
-            } catch (InterruptedException e) {
-            }
-        });
+        protectionThread = new TimeoutThread(targetPosition);
         protectionThread.start();
+    }
+
+    /**
+     * Tell everyone we are done, if they were waiting
+     */
+    protected void notifyOldestListener()
+    {
+        // We are done, notify oldest consumer
+        if(listeners.size()>0)
+            listeners.removeFirst().accept(Boolean.FALSE);
     }
 
     public void addListener(Consumer<Boolean> listener)
     {
-        listeners.add(listener);
+        listeners.addLast(listener);
     }
     public void removeListener(Consumer<Boolean> listener)
     {
         listeners.remove(listener);
     }
-    private void notifyListeners()
+    public int getNumListeners()
     {
-        // We are done, send running false to all registered consumers
-        listeners.forEach(listener -> listener.accept(false));
+        return listeners.size();
     }
 }

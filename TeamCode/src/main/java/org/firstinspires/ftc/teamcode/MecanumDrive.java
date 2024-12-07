@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.acmerobotics.roadrunner.Actions.now;
 
+import static org.firstinspires.ftc.teamcode.StandardSetupOpMode.AUTO_MOVE_POWER;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -9,7 +11,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
@@ -42,9 +43,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
@@ -55,7 +53,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive extends Thread{
+public final class MecanumDrive extends BodyPart{
     public static class Params {
         // Mecanum kinematics parameters
         public double trackWidthInches = 16.55;
@@ -78,7 +76,7 @@ public final class MecanumDrive extends Thread{
         // path controller gains
         public double axialGain = 0.0;
         public double lateralGain = 0.0;
-        public double headingGain = 0.0; // shared with turn
+        public double headingGain = 1.0; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -109,6 +107,8 @@ public final class MecanumDrive extends Thread{
     private final Gamepad gamepad;
     private boolean ignoreGamepad;
 
+    private Telemetry telemetry;
+
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
@@ -116,10 +116,11 @@ public final class MecanumDrive extends Thread{
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
     private final DownsampledWriter mecanumCommandWriter = new DownsampledWriter("MECANUM_COMMAND", 50_000_000);
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, Gamepad gamepad) {
+    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, Gamepad gamepad, Telemetry telemetry) {
         this.pose = pose;
         this.gamepad = gamepad;
         this.ignoreGamepad = false;
+        this.telemetry = telemetry;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
@@ -156,16 +157,21 @@ public final class MecanumDrive extends Thread{
      */
     public void debugTelemetry(Telemetry telemetry)
     {
-        GoBildaPinpointLocalizer plocalizer = (GoBildaPinpointLocalizer)localizer;
-        Pose2D ftc_pose = plocalizer.get_ftc_pose();
-        telemetry.addData("Localizer x (in)", "%f", ftc_pose.getX(DistanceUnit.INCH));
-        telemetry.addData("Localizer y (in)", "%f", ftc_pose.getY(DistanceUnit.INCH));
-        telemetry.addData("Localizer heading (deg)", "%f", ftc_pose.getHeading(AngleUnit.DEGREES));
+        if(telemetry == null) return;
+
+        //GoBildaPinpointLocalizer plocalizer = (GoBildaPinpointLocalizer)localizer;
+        //Pose2D ftc_pose = plocalizer.get_ftc_pose();
+        //telemetry.addData("Localizer x (in)", "%f", ftc_pose.getX(DistanceUnit.INCH));
+        //telemetry.addData("Localizer y (in)", "%f", ftc_pose.getY(DistanceUnit.INCH));
+        //telemetry.addData("Localizer heading (deg)", "%f", ftc_pose.getHeading(AngleUnit.DEGREES));
+
+        telemetry.addData("Pose x (in)", "%f", pose.position.x);
+        telemetry.addData("Pose y (in)", "%f", pose.position.y);
+        telemetry.addData("Pose heading (deg)", "%f", Math.toDegrees(pose.heading.toDouble()));
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
-        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
-                PoseVelocity2dDual.constant(powers, 1));
+        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(PoseVelocity2dDual.constant(powers, 1));
 
         double maxPowerMag = 1;
         for (DualNum<Time> power : wheelVels.all()) {
@@ -408,53 +414,105 @@ public final class MecanumDrive extends Thread{
         );
     }
 
+    private Pose2d leftPose = null;
+    private Pose2d rightPose = null;
+
     @Override
     public void run() {
+        boolean oneCancel = false;
         while (!isInterrupted()  && gamepad != null && !ignoreGamepad) {
-            if (gamepad.right_bumper) {
-                rotate(Math.PI/2);
+            if (gamepad.dpad_left) {
+                if (!moveThread.isAlive()) telemetry.addLine("move left"); telemetry.update(); moveLeft(10.0);
+            } else if (gamepad.dpad_right) {
+                if (!moveThread.isAlive()) moveLeft(-10.0);
+            } else if (gamepad.dpad_up) {
+                if (!moveThread.isAlive()) moveForward(10.0);
+            } else if (gamepad.dpad_down) {
+                if (!moveThread.isAlive()) moveForward(-10.0);
             } else if (gamepad.left_bumper) {
-                rotate(-Math.PI/2);
-            } else {
+                if (!moveThread.isAlive()) rotate(90.0);
+            } else if (gamepad.right_bumper) {
+                if (!moveThread.isAlive()) rotate(-90.0);
+            } else if (gamepad.x) {
+                leftPose = getPose();
+            } else if (gamepad.a) {
+                rightPose = getPose();
+            } else if (gamepad.y) {
+                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, leftPose);
+            } else if (gamepad.b) {
+                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, rightPose);
+            }
+            else if(Math.abs(gamepad.left_stick_x) > 0.01 ||
+                    Math.abs(gamepad.left_stick_y) > 0.01 ||
+                    Math.abs(gamepad.right_stick_x) > 0.01)
+            {
+                // Interrupt old move thread
+                if(moveThread.isAlive())
+                    moveThread.interrupt();
+
+                // See if the user would like to slow down
+                double speedFactor = 1.0;
+                if(gamepad.left_trigger > 0)
+                    speedFactor -= (gamepad.left_trigger * 0.75);
+                else if(gamepad.right_trigger > 0)
+                    speedFactor -= (gamepad.right_trigger * 0.5);
+
+                // Map joystick values to drive powers
                 setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
-                                -gamepad.left_stick_y,
-                                -gamepad.left_stick_x
+                                -gamepad.left_stick_y * speedFactor,
+                                -gamepad.left_stick_x * speedFactor
                         ),
-                        -gamepad.right_stick_x
+                        -gamepad.right_stick_x * speedFactor
                 ));
+                oneCancel = true;
+            } else if(oneCancel){
+                setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                oneCancel = false;
+                updatePoseEstimate();
             }
-            updatePoseEstimate();
         }
     }
 
+    /**
+     * Quick rotate
+     * @param degrees amount to turn in degrees
+     */
     public void rotate(double degrees) {
         Pose2d currentPose = getPose();
-        Action rotate = actionBuilder(currentPose)
-                .turn(currentPose.heading.toDouble() + Math.toRadians(degrees))
-                .build();
-        Actions.runBlocking(rotate);
+        Pose2d newPose = new Pose2d(currentPose.position, currentPose.heading.plus(Math.toRadians(degrees)));
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
-    public void moveX(double dist) {
+    /**
+     * Amount to move forward
+     * @param dist inches
+     */
+    public void moveForward(double dist) {
         Pose2d currentPose = getPose();
-        Action move = actionBuilder(currentPose)
-                .lineToXConstantHeading(currentPose.position.x + dist)
-                .build();
-        Actions.runBlocking(move);
+        double currentHeading = currentPose.heading.toDouble();
+        Vector2d forwardUnit = new Vector2d(Math.cos(currentHeading), Math.sin(currentHeading));
+        Vector2d forward = forwardUnit.times(dist);
+        Pose2d newPose = new Pose2d(currentPose.position.plus(forward), currentPose.heading);
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
-    public void moveY(double dist) {
+    /**
+     * Amount to move left
+     * @param dist inches
+     */
+    public void moveLeft(double dist) {
         Pose2d currentPose = getPose();
-        Action move = actionBuilder(currentPose)
-                .lineToYConstantHeading(currentPose.position.y + dist)
-                .build();
-        Actions.runBlocking(move);
+        double currentHeading = currentPose.heading.toDouble();
+        Vector2d leftUnit = new Vector2d(-Math.sin(currentHeading), Math.cos(currentHeading));
+        Vector2d left = leftUnit.times(dist);
+        Pose2d newPose = new Pose2d(currentPose.position.plus(left), currentPose.heading);
+        moveToPose(AUTO_MOVE_POWER, newPose);
     }
 
     /**
      * Gives the actual current pose estimate of the robot
-     * @return
+     * @return the current pose from the pinpoint computer
      */
     public Pose2d getPose(){
         return ((GoBildaPinpointLocalizer) localizer).get_pose_estimate();
@@ -463,25 +521,241 @@ public final class MecanumDrive extends Thread{
     /**
      * This method generates a move action that considers the current position.
      *
-     * @param expected_pose The pose you would like to end with
+     * @param power maximum power to apply to motors
+     * @param expectedPose The pose you would like to end with
      * @return The action you can run in your action list
      */
-    public Action moveToAction(Pose2d expected_pose)
+    public Action moveToAction(double power, Pose2d expectedPose, int direction, long timeout_ms)
     {
-        Pose2d current_pose = ((GoBildaPinpointLocalizer) localizer).get_pose_estimate();
-        return actionBuilder(current_pose)
-                .strafeToLinearHeading(expected_pose.position, expected_pose.heading)
-                .build();
+        return telemetryPacket -> {
+            moveToPose(power, expectedPose, direction, timeout_ms);
+            return false;
+        };
+    }
+    public Action moveToAction(double power, Pose2d expectedPose, int direction)
+    {
+        return moveToAction(power, expectedPose, direction, DEFAULT_TIMEOUT_MS);
+    }
+    public Action moveToAction(double power, Pose2d expectedPose)
+    {
+        return moveToAction(power, expectedPose, DEFAULT_SPIN_DIRECTION, DEFAULT_TIMEOUT_MS);
+    }
+
+    // Tweak these variables if you have wheel slip
+    // Ramp down wheel slip will cause overshoot that may need to be corrected
+    // but increasing these values will slow the movement down and increase the
+    // time it takes to locate our position.  Tweaking close enough will also change
+    // run time and accuracy.
+    private static final int DEFAULT_SPIN_DIRECTION = 0;        // Default, we don't care
+    private static final long DEFAULT_TIMEOUT_MS = 5000;        // Give yourself 5 seconds
+    private static final double RAMP_DOWN_FORWARD = 15.0;       // 15 inches from target, ramp down
+    private static final double RAMP_DOWN_LEFT = 10.0;          // 10 inches left target, ramp down
+    private static final double RAMP_DOWN_ANGLE = 60.0;         // 60 degrees from target, ramp down
+    private static final double MIN_FORWARD_POWER = 0.15;       // Minimum power when not close enough
+    private static final double MIN_LEFT_POWER = 0.2;           // Minimum power when not close enough
+    private static final double MIN_ROTATION_POWER = 0.15;      // Minimum power when not close enough
+    private static final double CLOSE_ENOUGH_POSITION = 0.5;    // Stop when this close
+    private static final double CLOSE_ENOUGH_ANGLE = 1.0;       // Stop within this angle
+    private static final double CLOSE_ENOUGH_SPIN = 45.0;       // Flip spin direction if further
+    private static final double OVERSHOOT_POWER = 0.3;          // More power than this will likely cause over shoot
+
+    static
+    {
+        assert RAMP_DOWN_FORWARD != 0 : "RAMP_DOWN_FORWARD cannot be 0";
+        assert RAMP_DOWN_LEFT != 0 : "RAMP_DOWN_LEFT cannot be 0";
+        assert RAMP_DOWN_ANGLE != 0 : "RAMP_DOWN_ANGLE cannot be 0";
+    }
+
+    private static double minTowardZero(double a, double b)
+    {
+        return (Math.abs(a) < Math.abs(b)) ? a : b;
+    }
+    private static double maxFromZero(double a, double b)
+    {
+        return (Math.abs(a) > Math.abs(b)) ? a : b;
     }
 
     /**
-     * Runs an action that should help correct any current position error (subject to calibration)
-     * @param expected_pose
+     * Ths class removes the need for Roadrunner kinematics which are notoriously
+     * hard to dial in.  This uses the fact that we have a very accurate pinpoint
+     * computer constantly feeding us robot positions.  That allows us to drive
+     * the robot like a human watching the positions and angles very closely.
+     * We are sacrificing splines for straight paths but the advantage should be
+     * accuracy and repeatability.
      */
-    public void removeError(Pose2d expected_pose)
+    private class MoveThread extends Thread
     {
-        Action move = moveToAction(expected_pose);
-        Actions.runBlocking(move);
+        private final double power;         // maximum power to apply + and - (capped to [-1.0,1.0]
+        private final Pose2d endPose;       // final target pose (used for ramp down)
+        private final int spinDirection;    // positive left, 0 don't care, negative right
+        private final long maxTime_ms;      // Maximum time allowed to drive in milliseconds
+
+        /**
+         * A thread to move the robot, be careful when you call this
+         * @param power maximum power allowed
+         * @param endPose final pose of the robot
+         * @param spinDirection direction you would prefer the robot to spin
+         * @param maxTime_ms maximum number of milliseconds before we stop moving
+         */
+        public MoveThread(double power, Pose2d endPose, int spinDirection, long maxTime_ms){
+            // Ensure the power doesn't exceed +/- 1.0
+            this.power = minTowardZero(power, Math.signum(power));
+
+            // Save the final target position and preferred spin direction
+            this.endPose = endPose;
+            this.spinDirection = spinDirection;
+            this.maxTime_ms = Math.abs(maxTime_ms);
+        }
+
+        @Override
+        public void run()
+        {
+            // Setup for the run getting the starting pose and the current time
+            long start_ms = System.currentTimeMillis();
+            long current_ms;
+            long cnt = 0;
+
+            // Loop until we are close enough or run out of time
+            do
+            {
+                // Have we been interrupted
+                if(isInterrupted()) break;
+
+                // Get current position
+                Pose2d currentPose = getPose();
+
+                // Vector of travel
+                Vector2d nextDeltaPos = endPose.position.minus(currentPose.position);
+                double nextDeltaAng = Math.toDegrees(endPose.heading.toDouble() - currentPose.heading.toDouble());
+
+                // Ensure the delta angle is less than 360
+                nextDeltaAng = nextDeltaAng % 360.0;
+
+                // If we don't care about spin direction (use shortest spin)
+                if(spinDirection == 0) {
+                    if (nextDeltaAng > 180.0)
+                        nextDeltaAng -= 360.0;
+                    if (nextDeltaAng < -180.0)
+                        nextDeltaAng += 360.0;
+                }
+                // Make sure we spin left
+                else if (spinDirection > 0)
+                {
+                    if(nextDeltaAng < -CLOSE_ENOUGH_SPIN)
+                        nextDeltaAng += 360.0;
+                }
+                // Make sure we spin right
+                else {
+                    if(nextDeltaAng > CLOSE_ENOUGH_SPIN)
+                        nextDeltaAng -= 360.0;
+                }
+
+                // Direction unit vector (along body of robot)
+                double currentHeading = currentPose.heading.toDouble();
+                Vector2d forwardUnit = new Vector2d(Math.cos(currentHeading), Math.sin(currentHeading));
+                Vector2d leftUnit = new Vector2d(-Math.sin(currentHeading), Math.cos(currentHeading));
+
+                // How far do we need to go along our heading
+                double nextForward = nextDeltaPos.dot(forwardUnit);
+                double nextLeft = nextDeltaPos.dot(leftUnit);
+
+                // What powers do we need to get to our final destination
+                double forwardPower = nextForward / RAMP_DOWN_FORWARD;
+                double leftPower = nextLeft / RAMP_DOWN_LEFT;
+                double rotationPower = nextDeltaAng / RAMP_DOWN_ANGLE;
+
+                // If we're close enough we are done
+                boolean closeEnoughForward = Math.abs(nextForward) < CLOSE_ENOUGH_POSITION && forwardPower < OVERSHOOT_POWER;
+                boolean closeEnoughLeft = Math.abs(nextLeft) < CLOSE_ENOUGH_POSITION && leftPower < OVERSHOOT_POWER;
+                boolean closeEnoughAngle = Math.abs(nextDeltaAng) < CLOSE_ENOUGH_ANGLE && rotationPower < OVERSHOOT_POWER;
+                if(closeEnoughForward && closeEnoughLeft && closeEnoughAngle)
+                    break;
+
+                // Ensure we still have wiggle power if we're really close
+                if(!closeEnoughForward){
+                    forwardPower = maxFromZero(forwardPower, Math.signum(forwardPower) * MIN_FORWARD_POWER);
+                }
+                if(!closeEnoughLeft){
+                    leftPower = maxFromZero(leftPower, Math.signum(leftPower) * MIN_LEFT_POWER);
+                }
+                if(!closeEnoughAngle) {
+                    rotationPower = maxFromZero(rotationPower, Math.signum(rotationPower) * MIN_ROTATION_POWER);
+                }
+
+                // Cap the powers
+                forwardPower = minTowardZero(forwardPower, power * Math.signum(forwardPower));
+                leftPower = minTowardZero(leftPower, power * Math.signum(leftPower));
+                rotationPower = minTowardZero(rotationPower, power * Math.signum(rotationPower));
+
+                // Debug
+                telemetry.addData("How Close Position", "%f", nextDeltaPos.norm());
+                telemetry.addData("How Cose Angle", "%f", nextDeltaAng);
+                telemetry.addData("Foward Power", "%f", forwardPower);
+                telemetry.addData("Left Power", "%f", leftPower);
+                telemetry.addData("Rotation Power", "%f", rotationPower);
+                telemetry.addData("Count", ++cnt);
+                telemetry.addData("getNumListeners", getNumListeners());
+                telemetry.update();
+
+                // Tell the motors
+                setDrivePowers(new PoseVelocity2d(new Vector2d(forwardPower,leftPower),rotationPower));
+
+                // Latest time (while loop checks if we timed out)
+                current_ms = System.currentTimeMillis();
+            }while(maxTime_ms > current_ms - start_ms);
+
+            // Stop the drive motors and notify listeners that we have arrived
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0,0),0));
+
+            // If we are interrupted then they will handle notify
+            if(!isInterrupted())
+              notifyOldestListener();
+        }
+    }
+
+    private Thread moveThread = new Thread();
+
+    @Override
+    public int getCurrentPosition()
+    {
+        return 0;
+    }
+
+    @Override
+    public void safeHold(int position)
+    {
+    }
+
+    /**
+     * A threaded method that moves the robot to the tasked pose.  This method takes a direct
+     * line of sight path to the final pose and acts like a human driving the robot.  This is
+     * meant to be very accurate and replace the road runner trajectory methods.
+     * @param power maximum power to apply to the motors [-1.0,1.0]
+     * @param expectedPose final pose of the robot
+     * @param spinDirection direction you would like to spin (positive is left, 0 is don't care, negative is right)
+     * @param timeout_ms number of milliseconds before we cancel our motion
+     */
+    public void moveToPose(double power, Pose2d expectedPose, int spinDirection, long timeout_ms)
+    {
+        // Start a new thread that keeps setting drive powers until we hit our spot
+        if(expectedPose != null) {
+            // Cancel previous threads
+            moveThread.interrupt();
+
+            // Start the new thread
+            moveThread = new MoveThread(power, expectedPose, spinDirection, timeout_ms);
+            moveThread.start();
+        }
+    }
+
+    /**
+     * Overloaded method that doesn't care about turn direction and uses the standard timeout
+     * @param power max power for motors
+     * @param expectedPose final pose
+     */
+    public void moveToPose(double power, Pose2d expectedPose)
+    {
+        moveToPose(power, expectedPose, DEFAULT_SPIN_DIRECTION, DEFAULT_TIMEOUT_MS);
     }
 
     /**

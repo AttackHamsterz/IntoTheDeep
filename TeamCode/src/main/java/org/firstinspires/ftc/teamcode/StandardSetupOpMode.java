@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous(name = "Robot Setup Super Class", group = "Robot")
 @Disabled
 public class StandardSetupOpMode extends LinearOpMode {
+    protected static final double AUTO_MOVE_POWER = 1.0;
+
     public enum COLOR {
         RED,
         BLUE
@@ -26,6 +28,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Arm arm;
     protected Shoulder shoulder;
     protected Hand hand;
+    protected Tail tail;
     protected ColorCamera camera;
     protected boolean ignoreGamepad = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
@@ -33,13 +36,18 @@ public class StandardSetupOpMode extends LinearOpMode {
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
-        legs = new MecanumDrive(hardwareMap, startPose, gamepad1);
+        legs = new MecanumDrive(hardwareMap, startPose, gamepad1, telemetry);
         arm = new Arm(hardwareMap, gamepad2, null);
         shoulder = new Shoulder(hardwareMap, arm, gamepad2);
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
+        tail = new Tail(hardwareMap, gamepad2, shoulder, arm);
         camera = new ColorCamera(hardwareMap, color);
         setIgnoreGamepad(ignoreGamepad);
+
+        // A little bit of init to not drag the tool (auto and teleop)
+        hand.grab(300);
+        shoulder.setPosition(0.2, 190);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -51,6 +59,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.start();
         arm.start();
         hand.start();
+        tail.start();
         camera.start();
     }
 
@@ -80,6 +89,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         if(shoulder != null) shoulder.setIgnoreGamepad(ignoreGamepad);
         if(arm != null) arm.setIgnoreGamepad(ignoreGamepad);
         if(hand != null) hand.setIgnoreGamepad(ignoreGamepad);
+        if (tail != null) tail.setIgnoreGamepad(ignoreGamepad);
     }
 
     /**
@@ -92,12 +102,14 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder.interrupt();
         arm.interrupt();
         hand.interrupt();
+        tail.interrupt();
         camera.interrupt();
 
         legs.join();
         shoulder.join();
         arm.join();
         hand.join();
+        tail.join();
         camera.join();
     }
 }

@@ -16,9 +16,22 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     private final BodyPart bodyPart;
     private final Action action;
     private final long maxWait_ms;
+    private Thread timeoutThread;
     private boolean firstRun;
     private boolean runAction;
     private boolean waiting;
+
+    private class TimeoutThread extends Thread{
+        @Override
+        public void run(){
+            try{
+                Thread.sleep(maxWait_ms);
+            } catch (InterruptedException ignored) {
+            }
+            if(waiting)
+                accept(false);
+        }
+    }
 
     public CompleteAction(@NonNull Action action, @NonNull BodyPart bodyPart, long maxWait_ms)
     {
@@ -26,7 +39,8 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         this.action = action;
         this.bodyPart = bodyPart;
         this.maxWait_ms = maxWait_ms;
-        this.firstRun = false;
+        this.timeoutThread = new Thread();
+        this.firstRun = true;
         this.runAction = true;
         this.waiting = true;
 
@@ -43,24 +57,18 @@ public class CompleteAction implements Action, Consumer<Boolean> {
     public void accept(Boolean waiting) {
         // Always false (notify always means running is complete)
         this.waiting = false;
+        this.timeoutThread.interrupt();
         bodyPart.removeListener(this);
     }
     @Override
     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
         // First run needs to start the wait protection timer
-        if(!firstRun)
+        if(firstRun)
         {
             // Set a timeout thread to avoid stalling out
-            Thread timeoutThread = new Thread(() -> {
-                try{
-                    Thread.sleep(maxWait_ms);
-                } catch (InterruptedException ignored) {
-                }
-                if(waiting)
-                    accept(false);
-            });
+            firstRun = false;
+            timeoutThread = new TimeoutThread();
             timeoutThread.start();
-            firstRun = true;
         }
 
         // Some actions will run multiple times until false, those that return false are done
