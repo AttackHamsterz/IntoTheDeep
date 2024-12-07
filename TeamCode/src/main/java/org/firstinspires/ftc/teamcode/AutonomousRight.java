@@ -21,15 +21,16 @@ public class AutonomousRight extends AutonomousOpMode{
         Actions.runBlocking(new CompleteAction(driveToBackUpChannelAction, legs));
 
         //Drops off the submersible sample
-        Pose2d driveToLowBucketDrop = new Pose2d(new Vector2d(5.4,65), Math.toRadians(135));
+        Pose2d driveToLowBucketDrop = new Pose2d(new Vector2d(3.5,60), Math.toRadians(95));
         Action driveToLowBucketDropAction = legs.moveToAction(AUTO_POWER, driveToLowBucketDrop);
-        int lowBucketArmPos = 465;
+        int lowBucketArmPos = 800;
         Action setArmToLowBucketDrop = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, lowBucketArmPos);
             return false;
         };
+
         Action setShoulderToLowBucketDrop = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, lowBucketArmPos);
+            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
             return false;
         };
 
@@ -49,10 +50,18 @@ public class AutonomousRight extends AutonomousOpMode{
         //Go back to original point to get out of the way of our alliance
         Pose2d goBackToOriginalPoint = new Pose2d(new Vector2d(3.5,0), Math.toRadians(-90));
         Action goBackToOriginalPointAction = legs.moveToAction(AUTO_POWER, goBackToOriginalPoint, -1);
-        Actions.runBlocking(new CompleteAction(goBackToOriginalPointAction, legs));
+        Action retractArm = telemetryPacket -> {
+            arm.setPosition(AUTO_POWER,465);
+            return false;
+        };
+        Action goBackToOriginalPointAndArm = new ParallelAction(
+                new CompleteAction(goBackToOriginalPointAction, legs),
+                new CompleteAction(retractArm, arm)
+        );
+        Actions.runBlocking(new CompleteAction(goBackToOriginalPointAndArm, legs));
 
         //Go to pick up closest red sample
-        Pose2d goToPickupColoredSamples = new Pose2d(new Vector2d (19, -39), Math.toRadians(0));
+        Pose2d goToPickupColoredSamples = new Pose2d(new Vector2d (19, -40), Math.toRadians(0));
         Action driveToPickupColoredSamplesAction = legs.moveToAction(AUTO_POWER, goToPickupColoredSamples);
         Actions.runBlocking(new CompleteAction(driveToPickupColoredSamplesAction, legs));
 
