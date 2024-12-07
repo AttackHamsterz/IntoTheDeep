@@ -120,7 +120,7 @@ public class Tail extends Thread{
                 // Arm extended such that fingers will grab
                 // Shoulder all the way up
                 if(lifting == 3) {
-                    setTail(MIN_POS);
+                    setTail(MAX_POS);
                     Action armDownAction = telemetryPacket -> {
                         arm.gotoMin(1.0);
                         return false;
@@ -144,14 +144,8 @@ public class Tail extends Thread{
                 {
                     Action armUpAction = telemetryPacket -> {
                         arm.setPosition(1.0, Arm.MAX_POS);
-                        return false;
-                    };
-                    Action tiltShoulderBackward = telemetryPacket -> {
-                        shoulder.setPosition(0.8, Shoulder.Mode.HANG.armOutPos()-375);
-                        return false;
-                    };
-                    Action tiltShoulderForward = telemetryPacket -> {
-                        shoulder.setPosition(0.8, Shoulder.Mode.HANG.armOutPos());
+                        shoulder.setMode(Shoulder.Mode.NONE);
+                        shoulder.setPosition(1.0, 3000);
                         return false;
                     };
                     Action armDownAction = telemetryPacket -> {
@@ -159,13 +153,16 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
-                        arm.setPosition(1.0, 100);
+                        arm.setPosition(1.0, 150);
                         return false;
                     };
+                    Action prePull = new SequentialAction(
+                            new CompleteAction(armUpAction, arm)
+                    );
+                    Actions.runBlocking(prePull);
+                    shoulder.setMode(Shoulder.Mode.HANG);
                     Action secondPull = new SequentialAction(
-                            new CompleteAction(armUpAction, arm),
-                            new CompleteAction(tiltShoulderBackward, shoulder),
-                            new CompleteAction(tiltShoulderForward, shoulder),
+                            new SleepAction(0.5),
                             new CompleteAction(armDownAction, arm),
                             new CompleteAction(armHangPosition, arm)
                     );
@@ -175,18 +172,19 @@ public class Tail extends Thread{
 
                 // Final bend
                 if(lifting == 7) {
+                    shoulder.setMode(Shoulder.Mode.NONE);
                     setTail(MIN_POS);
                     Action bendAction = telemetryPacket -> {
                         shoulder.setPosition(0.5, 325);
                         return false;
                     };
                     Action relaxAction = telemetryPacket -> {
-                        shoulder.setPosition(0.5, 800);
+                        shoulder.setPosition(0.5, 900);
                         return false;
                     };
                     Action finalAction = new SequentialAction(
-                            bendAction,
-                            relaxAction
+                            new CompleteAction(bendAction, shoulder),
+                            new CompleteAction(relaxAction, shoulder)
                     );
                     Actions.runBlocking(finalAction);
                     lifting++;
