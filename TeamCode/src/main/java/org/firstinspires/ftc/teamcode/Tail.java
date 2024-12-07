@@ -143,15 +143,15 @@ public class Tail extends Thread{
                 if(lifting == 5)
                 {
                     Action armUpAction = telemetryPacket -> {
-                        arm.setPosition(1.0, 2100);
+                        arm.setPosition(1.0, Arm.MAX_POS);
                         return false;
                     };
                     Action tiltShoulderBackward = telemetryPacket -> {
-                        shoulder.setPosition(0.8, Shoulder.MAX_POS - 200);
+                        shoulder.setPosition(0.8, Shoulder.Mode.HANG.armOutPos()-375);
                         return false;
                     };
                     Action tiltShoulderForward = telemetryPacket -> {
-                        shoulder.setPosition(0.8, Shoulder.MAX_POS);
+                        shoulder.setPosition(0.8, Shoulder.Mode.HANG.armOutPos());
                         return false;
                     };
                     Action armDownAction = telemetryPacket -> {
@@ -181,7 +181,7 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action relaxAction = telemetryPacket -> {
-                        shoulder.setPosition(0.5, 500);
+                        shoulder.setPosition(0.5, 800);
                         return false;
                     };
                     Action finalAction = new SequentialAction(
