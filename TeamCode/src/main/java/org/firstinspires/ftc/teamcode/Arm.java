@@ -162,7 +162,7 @@ public class Arm extends BodyPart {
         // Two ways to fix this I think:
         //   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
         //   2) Power one motor for hold and test
-        /* STILL RUN THIS IF THE COUNTS GET REALLY FAR APART
+        
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
@@ -178,11 +178,14 @@ public class Arm extends BodyPart {
             armMotorRight.setTargetPosition(posRight);
             armMotorLeft.setTargetPosition(posRight);
         }
-        */
+
+        /*
         armMotorRight.setTargetPosition(position);
         armMotorLeft.setTargetPosition(position);
         armMotorRight.setPower(HOLD_POWER);
         armMotorLeft.setPower(HOLD_POWER);
+
+         */
 
         // This is belt slip protection
         if(position <= MIN_POS)

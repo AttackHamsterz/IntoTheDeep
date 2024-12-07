@@ -1,8 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad2;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,10 +38,50 @@ public class ColorCamera extends Thread {
     // Other variables
     private static final int MIN_DETECTION_EDGE_SIZE = 5;
 
-    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color) {
+    // Arm calibration values (ensure shoulder is in
+    private static final int NEAR_Y = 160;
+    private static final int FAR_Y = 50;
+    private static final int NEAR_TICKS = 0;
+    private static final int FAR_TICKS = 550;
+
+    // y=mx+b where y is ticks and x is the relative y pixel location
+    private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
+    private static final double B = (double) FAR_TICKS - (M * (double) FAR_Y);
+
+    // Leg calibration values
+    private static final int CENTER_X = 160;
+    private static final int INCHES_FROM_CENTER = 4;
+    private static final int SHIFT_NEAR_X = 283;
+    private static final int SHIFT_NEAR_Y = 139;
+    private static final double SHIFT_NEAR_M = (double)INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_NEAR_X);
+
+    private static final int SHIFT_FAR_X = 252;
+    private static final int SHIFT_FAR_Y = 109;
+    private static final double SHIFT_FAR_M = (double) INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_FAR_X) ;
+
+    // how much our slop is changing based on y
+    private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
+    private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
+
+    protected MecanumDrive legs;
+    protected Arm arm;
+    protected Shoulder shoulder;
+    protected Hand hand;
+    protected Gamepad gamepad;
+
+    protected boolean ignoreGamepad = false;
+    protected final Pose2d startPose = new Pose2d(0,0,0);
+
+    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad) {
         // Camera setup
         this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
         colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+
+        this.legs = legs;
+        this.arm = arm;
+        this.shoulder = shoulder;
+        this.hand = hand;
+        this.gamepad = gamepad;
 
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
@@ -187,7 +238,7 @@ public class ColorCamera extends Thread {
 
         // start the color recognition algorithm
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
-
+        boolean running = false;
         while (!isInterrupted()) {
 
             // Find the closest block
@@ -208,6 +259,134 @@ public class ColorCamera extends Thread {
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
             // If the gamepad is pressed search and pickup
+            if(gamepad.x && shoulder.getMode() == Shoulder.Mode.SEARCH && !running) {
+                // Grab the nearest block
+                final HuskyLens.Block firstBlock = this.getClosestBlock();
+                if (firstBlock != null) {
+                    running = true;
+                    //telemetry.addData("block1 id", firstBlock.id);
+                    // Move the arm and robot to get that block closer
+                    Action moveArmToBlock = telemetryPacket -> {
+                        shoulder.setMode(Shoulder.Mode.SEARCH);
+                        int ticks = (int) Math.round((M * (double) firstBlock.y + B));
+                        arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
+                        //telemetry.addData("block1 ticks", ticks);
+                        return false;
+                    };
+                    Action strafeToBlock = telemetryPacket -> {
+                        double ySlope = firstBlock.y * SHIFT_M + SHIFT_B;
+                        double shift = (firstBlock.x - CENTER_X) * ySlope;
+                        //telemetry.addData("block1 shift", shift);
+                        legs.moveLeft(shift);
+                        return false;
+                    };
+                    ParallelAction centerBlockAction = new ParallelAction(
+                            new CompleteAction(moveArmToBlock, arm),
+                            new CompleteAction(strafeToBlock, legs));
+                    Actions.runBlocking(centerBlockAction);
+
+                    // Get the block again now that it's closer
+                    final HuskyLens.Block secondBlock = this.getClosestBlock();
+                    if(secondBlock != null) {
+                        double averageAngle = 0;
+
+                        // Get a rough angle from the block itself
+                        //averageAngle = Math.toDegrees(Math.atan2(secondBlock.height, secondBlock.width));
+                        //telemetry.addData("Block Angle", averageAngle);
+
+                        // Average a few arrows that fall inside our block
+                        int numAverage = 0;
+                        long average_ms = 500;
+                        long startTime_ms = System.currentTimeMillis();
+                        this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
+                        do {
+                            List<HuskyLens.Arrow> arrows = this.getArrowsInBlock(secondBlock);
+                            for(HuskyLens.Arrow arrow : arrows){
+                                // Get current angle from this arrow
+                                double arrowAngle = this.findAngleOfArrow(arrow);
+
+                                // If this angle has wrapped then we put it near the average
+                                // This avoids adding 89.9 + -89.9 to get an average of 0
+                                // instead of either 90 or -90
+                                if (numAverage > 0) {
+                                    double currentAverage = averageAngle / (double) numAverage;
+                                    double deltaAngle = arrowAngle - currentAverage;
+                                    if (deltaAngle > 160.0)
+                                        arrowAngle -= 180.0;
+                                    else if (deltaAngle < -160.0)
+                                        arrowAngle += 180.0;
+                                }
+
+                                // Increment average
+                                averageAngle += arrowAngle;
+                                numAverage++;
+                            }
+                            if (numAverage > 6)
+                                break;
+                        } while (System.currentTimeMillis() - startTime_ms < average_ms);
+                        this.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+
+
+                        // Set new arm position!
+                        int ticks = (int) Math.round((M * (double) secondBlock.y + B));
+                        //telemetry.addData("block2 ticks", ticks);
+                        arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
+
+                        // Set new legs position
+                        double ySlope = secondBlock.y * SHIFT_M + SHIFT_B;
+                        double shift = (secondBlock.x - CENTER_X) * ySlope;
+                        //telemetry.addData("block2 shift", ticks);
+                        legs.moveLeft(shift);
+
+                        // Move wrist with a good average
+                        if (numAverage > 0) {
+                            averageAngle /= (double) numAverage;
+                            averageAngle = Range.clip(averageAngle, -90.0, 90.0);
+                            double wristPos = 0.5 - (0.5*averageAngle / 90.0);
+                            //telemetry.addData("Average Angle", averageAngle);
+                            //telemetry.addData("Num in average", numAverage);
+                            //telemetry.addData("Wrist Pos", wristPos);
+                            hand.setWrist(wristPos);
+
+                            // Plunge to pickup
+                            Action grab = telemetryPacket -> {
+                                hand.grab(1000);
+                                return false;
+                            };
+                            Action dropShoulder = telemetryPacket -> {
+                                shoulder.setMode(Shoulder.Mode.GROUND);
+                                return false;
+                            };
+                            Action raiseShoulder = telemetryPacket -> {
+                                shoulder.setMode(Shoulder.Mode.SEARCH);
+                                hand.hangSample();
+                                return false;
+                            };
+                            Action snag = new SequentialAction(
+                                    dropShoulder,
+                                    new CompleteAction(grab, hand),
+                                    raiseShoulder);
+                            Actions.runBlocking(snag);
+
+                        } //else {
+                            //telemetry.addLine("No line average");
+                        //}
+                    }
+                    //else
+                      //  telemetry.addLine("block2 null");
+
+                    // This is either openCV on image data
+                    // Or switching to line detection mode
+                    // And getting arrows if that's quick enough
+                    // If it's too slow we'll need to go back to
+                    // USB camera until we get a limelight 3a
+                    running = false;
+                }
+                //else
+                    //telemetry.addLine("block1 null");
+                //telemetry.update();
+            }
+
 
             // Short sleep to keep this loop from saturating
             try {
@@ -215,6 +394,7 @@ public class ColorCamera extends Thread {
             } catch (InterruptedException e) {
                 interrupt();
             }
+
         }
     }
 }
