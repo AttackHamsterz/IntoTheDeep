@@ -14,7 +14,7 @@ public abstract class BodyPart extends Thread{
 
     // Motor overload protection
     protected static final long MOTOR_CHECK_PERIOD_MS = 100;  // Check 10 times a second
-    protected static final int CLOSE_ENOUGH_TICKS = 20; // Turn off the other motor when we are close
+    protected static final int CLOSE_ENOUGH_TICKS = 25; // Turn off the other motor when we are close
     protected Thread protectionThread = new Thread();
 
     // Loop saturation protection

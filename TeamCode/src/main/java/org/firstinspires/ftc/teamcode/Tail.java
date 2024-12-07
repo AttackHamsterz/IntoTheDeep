@@ -80,6 +80,10 @@ public class Tail extends Thread{
                 // The user needs to press start to continue on with each state.
                 // They may also press back to repeat the last action.
 
+                // If we were lifting and start and back are pressed, reset the FSM
+                if(lifting > 0 && gamepad.back && gamepad.start)
+                    lifting = 0;
+
                 // If start and back are pressed lets run the lift procedure
                 if (lifting == 0) {
                     if (gamepad.back && gamepad.start) {
