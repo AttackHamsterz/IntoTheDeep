@@ -37,8 +37,8 @@ public class StandardSetupOpMode extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         // Setup body parts
         legs = new MecanumDrive(hardwareMap, startPose, gamepad1, telemetry);
-        arm = new Arm(hardwareMap, gamepad2, null);
-        shoulder = new Shoulder(hardwareMap, arm, gamepad2);
+        arm = new Arm(hardwareMap, gamepad2, gamepad1, null);
+        shoulder = new Shoulder(hardwareMap, arm, gamepad2, gamepad1);
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
         tail = new Tail(hardwareMap, gamepad2, shoulder, arm);

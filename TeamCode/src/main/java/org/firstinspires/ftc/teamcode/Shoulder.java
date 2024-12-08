@@ -46,7 +46,7 @@ public class Shoulder extends BodyPart {
     public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
             143,  // Ground
             543,  // Search
-            1265, // Low Bar
+            1367, // Low Bar
             2686, // High Bar
             3100, // Low Bucket
             2921, // High Bucket
@@ -104,11 +104,12 @@ public class Shoulder extends BodyPart {
      * @param hardwareMap map with shoulder parts
      * @param gamepad       the gamepad used for controlling the shoulder
      */
-    public Shoulder(HardwareMap hardwareMap, Arm arm, Gamepad gamepad) {
+    public Shoulder(HardwareMap hardwareMap, Arm arm, Gamepad gamepad, Gamepad extraGamepad) {
         // Assignments
         shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor;
         this.arm = arm;
         this.gamepad = gamepad;
+        this.extraGamepad = extraGamepad;
 
         // Setup
         shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -188,7 +189,7 @@ public class Shoulder extends BodyPart {
 
         // Move the shoulder if necessary
         if(newMinPos > shoulderMotor.getCurrentPosition())
-            setPosition(shoulderMotor.getPower(), newMinPos);
+            setPosition(0.5, newMinPos);
     }
 
     /**
@@ -209,10 +210,11 @@ public class Shoulder extends BodyPart {
      * @param power    power of the shoulder motor
      * @param position position to set the shoulder to
      */
-    public void setPosition(double power, int position)
+    public void setPosition(double power, int position, boolean clipPosition)
     {
         // Check the current position against the target position (do nothing if close enough)
-        position = Range.clip(position, MIN_POS, MAX_POS);
+        if(clipPosition)
+            position = Range.clip(position, MIN_POS, MAX_POS);
         int currentPos = shoulderMotor.getCurrentPosition();
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
         {
@@ -231,9 +233,18 @@ public class Shoulder extends BodyPart {
         protectMotors(position);
     }
 
+    public void setPosition(double power, int position){
+        setPosition(power, position, true);
+    }
+
     public void setMode(Mode mode)
     {
         this.mode = mode;
+    }
+
+    public int getPositionForMode(Mode mode, int targetArmPosition)
+    {
+        return (int)Math.round(arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
     }
 
     /**
@@ -243,8 +254,11 @@ public class Shoulder extends BodyPart {
      */
     public void setPositionForMode(Mode mode, double power, int targetArmPosition)
     {
-        int newPos = (int)Math.round(arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
-        setPosition(power, newPos);
+        setPosition(power, getPositionForMode(mode, targetArmPosition));
+    }
+
+    public boolean modeReady(Mode mode){
+        return (this.mode == mode) && Math.abs(getCurrentPosition() - getPositionForMode(mode, arm.getCurrentPosition())) < (BodyPart.CLOSE_ENOUGH_TICKS * 2);
     }
 
     @Override
@@ -259,7 +273,26 @@ public class Shoulder extends BodyPart {
 
             // Check gamepad for user input (any input cancels the mode)
             if(!ignoreGamepad) {
+                // Get current power (slower near top)
                 float power = gamepad.right_stick_y;
+                if(shoulderMotor.getCurrentPosition() > Mode.HIGH_BUCKET.armInPos())
+                    power *= 0.5f;
+
+                // Reset the encoder on the shoulder
+                if(extraGamepad.start){
+                    shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shoulderMotor.setTargetPosition(0);
+                    shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    protectMotors(0);
+                    continue;
+                }
+                // Allow the shoulder to be reset
+                if(extraGamepad.back){
+                    setPosition(power, shoulderMotor.getCurrentPosition() + (int)Math.round(power * 10), false);
+                    continue;
+                }
+
+                // Move the shoulder
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
                     shoulderMotor.setPower(0);
                     try {
@@ -297,7 +330,7 @@ public class Shoulder extends BodyPart {
                         mode = Mode.LOW_BAR;
                     else {
                         mode = Mode.HIGH_BAR;
-                        arm.setPosition(1.0, 200);
+                        arm.setPosition(1.0, 250);
                     }
                 }
                 else if(gamepad.y && !pressing){

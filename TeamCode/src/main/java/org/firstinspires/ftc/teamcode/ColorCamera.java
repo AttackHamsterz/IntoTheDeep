@@ -152,7 +152,7 @@ public class ColorCamera extends Thread {
         int topEdgeY = block.y + (block.height/2);
 
         ArrayList<HuskyLens.Arrow> arrows = new ArrayList();
-        for(HuskyLens.Arrow arrow : huskyLens.arrows(block.id)) {
+        for(HuskyLens.Arrow arrow : huskyLens.arrows()) {
             int arrowCenterX = (arrow.x_origin + arrow.x_target) / 2;
             int arrowCenterY = (arrow.y_origin + arrow.y_target) / 2;
             if(arrowCenterX >= leftEdgeX && arrowCenterX <= rightEdgeX && arrowCenterY <= topEdgeY && arrowCenterY >= bottomEdgeY)
@@ -361,7 +361,6 @@ public class ColorCamera extends Thread {
 
         // start the color recognition algorithm
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
-        boolean running = false;
         while (!isInterrupted()) {
 
             // Find the closest block
@@ -381,13 +380,10 @@ public class ColorCamera extends Thread {
             else
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
-            // If the gamepad is pressed search and pickup
-            if(gamepad.x && shoulder.getMode() == Shoulder.Mode.SEARCH && !running) {
-                //running = true;
+            // If search is pressed and the shoulder is close enough to search height
+            if(gamepad.x && shoulder.modeReady(Shoulder.Mode.SEARCH)) {
                 autoGrab();
-                //running = false;
             }
-
 
             // Short sleep to keep this loop from saturating
             try {
