@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class AutonomousRedLeft extends AutonomousLeft {
     @Override
     public void runOpMode() throws InterruptedException {
-        setup(AutonomousOpMode.COLOR.RED, AutonomousOpMode.SIDE.LEFT, true);
+        setup(COLOR.RED, SIDE.LEFT, true, true);
         super.runOpMode();
     }
 }

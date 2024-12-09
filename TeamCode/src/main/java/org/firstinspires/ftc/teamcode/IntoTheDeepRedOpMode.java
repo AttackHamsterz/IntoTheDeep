@@ -48,7 +48,7 @@ public class IntoTheDeepRedOpMode extends IntoTheDeepOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Call the parent runOpMode
-        setup(COLOR.RED, SIDE.LEFT, false);
+        setup(COLOR.RED, SIDE.LEFT, false, false);
         super.runOpMode();
     }
 }

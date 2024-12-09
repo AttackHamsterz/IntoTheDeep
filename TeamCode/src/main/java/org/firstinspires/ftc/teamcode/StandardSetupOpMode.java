@@ -31,6 +31,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Tail tail;
     protected ColorCamera camera;
     protected boolean ignoreGamepad = false;
+    protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
 
     // @Override
@@ -42,7 +43,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
         tail = new Tail(hardwareMap, gamepad2, shoulder, arm);
-        camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2);
+        camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
         setIgnoreGamepad(ignoreGamepad);
 
         // A little bit of init to not drag the tool (auto and teleop)
@@ -69,13 +70,16 @@ public class StandardSetupOpMode extends LinearOpMode {
      * @param side side robot is starting on
      * @param ignoreGamepad true to ignore gamepad input
      */
-    protected void setup(COLOR color, SIDE side, boolean ignoreGamepad) {
+    protected void setup(COLOR color, SIDE side, boolean ignoreGamepad, boolean favorYellow) {
         // Setup side and color for this opmode
         this.color = color;
         this.side = side;
 
         // Should we ignore the gamepad or not?
         setIgnoreGamepad(ignoreGamepad);
+
+        // Favor yellow (for bucket work)
+        this.favorYellow = favorYellow;
     }
 
     /**
@@ -90,6 +94,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         if(arm != null) arm.setIgnoreGamepad(ignoreGamepad);
         if(hand != null) hand.setIgnoreGamepad(ignoreGamepad);
         if (tail != null) tail.setIgnoreGamepad(ignoreGamepad);
+        if (camera != null) camera.setIgnoreGamepad(ignoreGamepad);
     }
 
     /**

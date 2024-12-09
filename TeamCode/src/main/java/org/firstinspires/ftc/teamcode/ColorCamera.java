@@ -70,9 +70,10 @@ public class ColorCamera extends Thread {
     protected Gamepad gamepad;
 
     protected boolean ignoreGamepad = false;
+    protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
 
-    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad) {
+    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, boolean favorYellow) {
         // Camera setup
         this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
         colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
@@ -82,6 +83,7 @@ public class ColorCamera extends Thread {
         this.shoulder = shoulder;
         this.hand = hand;
         this.gamepad = gamepad;
+        this.favorYellow = favorYellow;
 
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
@@ -94,6 +96,15 @@ public class ColorCamera extends Thread {
     public int getCapturedBlock()
     {
         return NONE_ID;
+    }
+
+    /**
+     * Method that toggles if we are ignoring gamepad input (true for autonomous)
+     * @param ignoreGamepad
+     */
+    public void setIgnoreGamepad(boolean ignoreGamepad)
+    {
+        this.ignoreGamepad = ignoreGamepad;
     }
 
     /**
@@ -110,26 +121,26 @@ public class ColorCamera extends Thread {
 
         // Keep track of the blocks on screen
         ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
+
         // add all blocks of our alliance
-        blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
-        //blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+        if(favorYellow)
+            blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+        else
+            blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
 
         // Remove tiny blocks that are false alarms (detections must be MIN_DETECTION_EDGE_SIZE)
         blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
 
         // No alliance blocks, find yellow blocks that are large enough
         if (blocksOnScreen.isEmpty()) {
-            blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
-            blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
-        }
-        /*
-        // No yellow blocks, find alliance blocks that are large enough
-        if (blocksOnScreen.isEmpty()) {
-            blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
-            blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
-        }
+            if(favorYellow)
+                blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
+            else
+                blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
 
-         */
+            // Filter small
+            blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
+        }
 
         // make sure there are blocks on the screen with the color we are looking for
         if (!blocksOnScreen.isEmpty()) {
@@ -178,7 +189,6 @@ public class ColorCamera extends Thread {
             if (doesIntersect(polygon, line)) {
                 arrows.add(arrow);
             }
-
              */
 
             int arrowCenterX = (arrow.x_origin + arrow.x_target) / 2;
@@ -490,7 +500,7 @@ public class ColorCamera extends Thread {
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
 
             // If search is pressed and the shoulder is close enough to search height
-            if(gamepad.x && shoulder.modeReady(Shoulder.Mode.SEARCH)) {
+            if(!ignoreGamepad && gamepad.x && shoulder.modeReady(Shoulder.Mode.SEARCH)) {
                 autoGrab();
             }
 
