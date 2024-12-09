@@ -110,16 +110,26 @@ public class ColorCamera extends Thread {
 
         // Keep track of the blocks on screen
         ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
-        blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+        // add all blocks of our alliance
+        blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
+        //blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
 
         // Remove tiny blocks that are false alarms (detections must be MIN_DETECTION_EDGE_SIZE)
         blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
 
+        // No alliance blocks, find yellow blocks that are large enough
+        if (blocksOnScreen.isEmpty()) {
+            blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+            blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
+        }
+        /*
         // No yellow blocks, find alliance blocks that are large enough
         if (blocksOnScreen.isEmpty()) {
             blocksOnScreen.addAll(Arrays.asList(colorId == RED_ID ? redBlocks : blueBlocks));
             blocksOnScreen.removeIf(b -> b.width < MIN_DETECTION_EDGE_SIZE || b.height < MIN_DETECTION_EDGE_SIZE);
         }
+
+         */
 
         // make sure there are blocks on the screen with the color we are looking for
         if (!blocksOnScreen.isEmpty()) {
@@ -151,15 +161,114 @@ public class ColorCamera extends Thread {
         int rightEdgeX = block.x + (block.width/2);
         int topEdgeY = block.y + (block.height/2);
 
-        ArrayList<HuskyLens.Arrow> arrows = new ArrayList();
+        /*
+        Point[] polygon = new Point[] {
+                new Point(leftEdgeX, bottomEdgeY),
+                new Point(leftEdgeX, topEdgeY),
+                new Point(rightEdgeX, bottomEdgeY),
+                new Point(rightEdgeX, topEdgeY)
+        };
+
+         */
+
+        ArrayList<HuskyLens.Arrow> arrows = new ArrayList<>();
         for(HuskyLens.Arrow arrow : huskyLens.arrows()) {
+            /*
+            LineSegment line = new LineSegment(new Point(arrow.x_origin, arrow.y_origin), new Point(arrow.x_target, arrow.y_target));
+            if (doesIntersect(polygon, line)) {
+                arrows.add(arrow);
+            }
+
+             */
+
             int arrowCenterX = (arrow.x_origin + arrow.x_target) / 2;
             int arrowCenterY = (arrow.y_origin + arrow.y_target) / 2;
             if(arrowCenterX >= leftEdgeX && arrowCenterX <= rightEdgeX && arrowCenterY <= topEdgeY && arrowCenterY >= bottomEdgeY)
                 arrows.add(arrow);
+
+
         }
         return arrows;
     }
+
+    /*
+    // A helper class to represent a point with x and y coordinates
+     class Point {
+        double x, y;
+        Point(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    // A helper class to represent a line segment between two points
+     class LineSegment {
+        Point start, end;
+        LineSegment(Point start, Point end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
+
+    // Utility method to calculate the orientation of the triplet (p, q, r)
+    // Returns 0 if collinear, 1 if clockwise, -1 if counterclockwise
+    public int orientation(Point p, Point q, Point r) {
+        double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+        if (val == 0) return 0;  // collinear
+        return (val > 0) ? 1 : -1; // clockwise or counterclockwise
+    }
+
+    // Check if point q lies on the line segment pr
+    public boolean onSegment(Point p, Point q, Point r) {
+        if (q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
+                q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y)) {
+            return true;
+        }
+        return false;
+    }
+
+    // Check if two line segments p1q1 and p2q2 intersect
+    public boolean doIntersect(LineSegment l1, LineSegment l2) {
+        Point p1 = l1.start, q1 = l1.end;
+        Point p2 = l2.start, q2 = l2.end;
+
+        // Find the four orientations needed for the general and special cases
+        int o1 = orientation(p1, q1, p2);
+        int o2 = orientation(p1, q1, q2);
+        int o3 = orientation(p2, q2, p1);
+        int o4 = orientation(p2, q2, q1);
+
+        // General case
+        if (o1 != o2 && o3 != o4) {
+            return true;
+        }
+
+        // Special cases
+        if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+        if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+        if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+        if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+
+        return false; // Doesn't intersect
+    }
+
+    // Check if a line intersects the polygon (represented by a list of points)
+    public boolean doesIntersect(Point[] polygon, LineSegment line) {
+        int n = polygon.length;
+        for (int i = 0; i < n; i++) {
+            // Create edges of the polygon
+            Point p1 = polygon[i];
+            Point p2 = polygon[(i + 1) % n];
+            LineSegment edge = new LineSegment(p1, p2);
+            if (doIntersect(edge, line)) {
+                return true; // Found an intersection
+            }
+        }
+        return false; // No intersection with any edge
+    }
+
+     */
+
 
     public HuskyLens.Arrow getClosestArrowToBlock(HuskyLens.Block block) {
         huskyLens.selectAlgorithm(HuskyLens.Algorithm.LINE_TRACKING);
@@ -319,25 +428,25 @@ public class ColorCamera extends Thread {
                     hand.setWrist(wristPos);
 
                     // Plunge to pickup
-                    Action grab = telemetryPacket -> {
-                        shoulder.setMode(Shoulder.Mode.GROUND);
-                        hand.grab(1000);
-                        return false;
-                    };
-                    Action raiseShoulder = telemetryPacket -> {
-                        shoulder.setMode(Shoulder.Mode.SEARCH);
-                        hand.hangSample();
-                        return false;
-                    };
-                    Action snag = new SequentialAction(
-                            new CompleteAction(grab, hand),
-                            new CompleteAction(raiseShoulder, shoulder));
-                    Actions.runBlocking(snag);
 
                 } //else {
                 //telemetry.addLine("No line average");
                 //}
             }
+            Action grab = telemetryPacket -> {
+                shoulder.setMode(Shoulder.Mode.GROUND);
+                hand.grab(1000);
+                return false;
+            };
+            Action raiseShoulder = telemetryPacket -> {
+                shoulder.setMode(Shoulder.Mode.SEARCH);
+                hand.hangSample();
+                return false;
+            };
+            Action snag = new SequentialAction(
+                    new CompleteAction(grab, hand),
+                    new CompleteAction(raiseShoulder, shoulder));
+            Actions.runBlocking(snag);
             //else
             //  telemetry.addLine("block2 null");
 

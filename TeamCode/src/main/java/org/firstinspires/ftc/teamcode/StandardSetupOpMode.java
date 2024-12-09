@@ -47,7 +47,7 @@ public class StandardSetupOpMode extends LinearOpMode {
 
         // A little bit of init to not drag the tool (auto and teleop)
         hand.grab(300);
-        shoulder.setPosition(0.2, 190);
+        shoulder.setPosition(0.2, 150);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();

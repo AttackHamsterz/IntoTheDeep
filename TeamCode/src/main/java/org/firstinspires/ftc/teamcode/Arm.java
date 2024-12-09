@@ -125,8 +125,9 @@ public class Arm extends BodyPart {
      */
     public void setPosition(double power, int position, boolean clipPosition) {
         // Check the current position against the target position (do nothing if close enough)
-        if(clipPosition)
+        if(clipPosition) {
             position = Range.clip(position, MIN_POS, MAX_POS);
+        }
         int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS) {
             protectMotors(position);

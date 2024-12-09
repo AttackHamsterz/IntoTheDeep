@@ -44,12 +44,12 @@ public class Shoulder extends BodyPart {
 
     // Shoulder positions for each mode when the arm is all the way in
     public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
-            143,  // Ground
-            543,  // Search
-            1367, // Low Bar
-            2686, // High Bar
-            3100, // Low Bucket
-            2921, // High Bucket
+            3,  // Ground
+            495,  // Search
+            1454, // Low Bar
+            2719, // High Bar
+            2907, // Low Bucket
+            3018, // High Bucket
             3375, // Hang
             143   // None is like ground
     ));
@@ -58,10 +58,10 @@ public class Shoulder extends BodyPart {
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
             500,  // Ground
             743,  // Search
-            1047, // Low Bar
-            1636, // High Bar
-            1731, // Low Bucket
-            3047, // High Bucket
+            1192, // Low Bar
+            1781, // High Bar
+            1901, // Low Bucket
+            3018, // High Bucket
             3375, // Hang
             500   // None is like ground
     ));
@@ -288,6 +288,7 @@ public class Shoulder extends BodyPart {
                 }
                 // Allow the shoulder to be reset
                 if(extraGamepad.back){
+                    setMode(Mode.NONE);
                     setPosition(power, shoulderMotor.getCurrentPosition() + (int)Math.round(power * 10), false);
                     continue;
                 }
