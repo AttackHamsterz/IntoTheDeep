@@ -63,8 +63,18 @@ public class Tail extends Thread{
         tail.setPosition(Range.clip(tailPosition, MIN_POS, MAX_POS));
     }
 
+    public void tailUp(){
+        setTail(MIN_POS);
+    }
+
+    public void tailDown(){
+        setTail(MAX_POS);
+    }
+
     @Override public void run()
     {
+        tailUp();
+
         if(!ignoreGamepad)
         {
             int lifting = 0;
@@ -120,7 +130,7 @@ public class Tail extends Thread{
                 // Arm extended such that fingers will grab
                 // Shoulder all the way up
                 if(lifting == 3) {
-                    setTail(MAX_POS);
+                    tailDown();
                     Action armDownAction = telemetryPacket -> {
                         arm.gotoMin(1.0);
                         return false;
@@ -173,7 +183,7 @@ public class Tail extends Thread{
                 // Final bend
                 if(lifting == 7) {
                     shoulder.setMode(Shoulder.Mode.NONE);
-                    setTail(MIN_POS);
+                    tailUp();
                     Action bendAction = telemetryPacket -> {
                         shoulder.setPosition(0.5, 325);
                         return false;
