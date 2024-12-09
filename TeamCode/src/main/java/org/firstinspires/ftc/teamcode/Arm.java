@@ -214,8 +214,8 @@ public class Arm extends BodyPart {
 
                 // Allow the motors to go past safety stops
                 if(extraGamepad.back){
-                    setPosition(power, getCurrentPosition() + (int)Math.round(power * 10), false);
-                    continue;
+                    //setPosition(power, getCurrentPosition() + (int)Math.round(power * 10), false);
+                    //continue;
                 }
 
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position
