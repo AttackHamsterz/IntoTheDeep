@@ -13,6 +13,39 @@ public class AutonomousRight extends AutonomousOpMode{
     public void runOpMode() throws InterruptedException{
         super.runOpMode();
 
+        Pose2d dropAndPickup = new Pose2d(new Vector2d(12, -40), Math.toRadians(-135));
+        Pose2d secondHang = new Pose2d(new Vector2d(23, 2), Math.toRadians(0));
+        Pose2d missSub = new Pose2d(new Vector2d(23, -40), Math.toRadians(0));
+        Pose2d behind1 = new Pose2d(new Vector2d(40, -50), Math.toRadians(180));
+        Pose2d push1 = new Pose2d(new Vector2d(8, -50), Math.toRadians(180));
+        Pose2d behind2 = new Pose2d(new Vector2d(40, -50), Math.toRadians(180));
+        Pose2d push2 = new Pose2d(new Vector2d(8, -60), Math.toRadians(180));
+        Pose2d thirdHang = new Pose2d(new Vector2d(23, 4), Math.toRadians(0));
+        Pose2d park = new Pose2d(new Vector2d(12, -40), Math.toRadians(-135));
+
+        Action armAndShoulderPickup = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.SEARCH);
+            arm.gotoMin(AUTO_POWER);
+            return false;
+        };
+
+        Action pickup = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.GROUND);
+            hand.grab(800);
+            return false;
+        };
+
+        Action readyToHang = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
+        };
+
+        Action drop = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
+        };
+
+
+
+
         //TO DO: check for sample in hand, if we dont have one then search for another, else
         //Backs up to get out of the way of our alliance
         Pose2d backUpToChannel = new Pose2d(new Vector2d (3.5, 0), Math.toRadians(90));
