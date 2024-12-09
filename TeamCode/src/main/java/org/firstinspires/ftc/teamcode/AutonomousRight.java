@@ -18,6 +18,8 @@ public class AutonomousRight extends AutonomousOpMode{
         super.runOpMode();
 
         //TO DO: check for sample in hand, if we dont have one then search for another, else
+        boolean haveBlock = camera.blockCaptured();
+
         //Backs up to get out of the way of our alliance
         Pose2d backUpToChannel = new Pose2d(new Vector2d (3.5, 0), Math.toRadians(90));
         Action driveToBackUpChannelAction = legs.moveToAction(AUTO_POWER, backUpToChannel);

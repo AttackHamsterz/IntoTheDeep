@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad2;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -10,7 +7,6 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
@@ -30,6 +26,12 @@ public class ColorCamera extends Thread {
     private static final int RED_ID = 2;
     private static final int BLUE_ID = 3;
     private final int colorId;
+
+    // Capture area - TODO get real values
+    public static final int CAPTURE_X1 = 160 - 50/2;
+    public static final int CAPTURE_Y1 = 200 - 50/2;
+    public static final int CAPTURE_X2 = 160 + 50/2;
+    public static final int CAPTURE_Y2 = 200 + 50/2;
 
     // Point for good pick-up
     public static final int TARGET_X = 160;
@@ -93,9 +95,35 @@ public class ColorCamera extends Thread {
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_RED);
     }
 
-    public int getCapturedBlock()
+    /**
+     * Get the id of the first block completely contained in the capture area
+     *
+     * @return captured id
+     */
+    public int getCapturedBlockId()
     {
-        return NONE_ID;
+        // Find color blocks
+        HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
+        HuskyLens.Block[] redBlocks = huskyLens.blocks(RED_ID);
+        HuskyLens.Block[] blueBlocks = huskyLens.blocks(BLUE_ID);
+
+        ArrayList<HuskyLens.Block> blocksOnScreen = new ArrayList<>();
+        blocksOnScreen.addAll(Arrays.asList(yellowBlocks));
+        blocksOnScreen.addAll(Arrays.asList(redBlocks));
+        blocksOnScreen.addAll(Arrays.asList(blueBlocks));
+        blocksOnScreen.removeIf(b -> b.x - b.width / 2 < CAPTURE_X1 || b.x + b.width / 2 > CAPTURE_X2 || b.y - b.height / 2 < CAPTURE_Y1 || b.y + b.height / 2 > CAPTURE_Y2);
+
+        return blocksOnScreen.isEmpty() ? NONE_ID : blocksOnScreen.get(0).id;
+    }
+
+    /**
+     * If we have our alliance color or yellow captured
+     * @return true if captured
+     */
+    public boolean blockCaptured()
+    {
+        int capturedId = getCapturedBlockId();
+        return capturedId == colorId || capturedId == YELLOW_ID;
     }
 
     /**
@@ -114,7 +142,6 @@ public class ColorCamera extends Thread {
     public HuskyLens.Block getClosestBlock() {
 
         // Find color blocks
-        //huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
         HuskyLens.Block[] yellowBlocks = huskyLens.blocks(YELLOW_ID);
         HuskyLens.Block[] redBlocks = huskyLens.blocks(RED_ID);
         HuskyLens.Block[] blueBlocks = huskyLens.blocks(BLUE_ID);
