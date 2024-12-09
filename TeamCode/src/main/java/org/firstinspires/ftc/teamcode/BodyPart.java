@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 public abstract class BodyPart extends Thread{
     // Gamepad variables
     protected Gamepad gamepad;
+    protected Gamepad extraGamepad;
     protected boolean ignoreGamepad = false;
 
     // Motor overload protection

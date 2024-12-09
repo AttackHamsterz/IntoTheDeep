@@ -43,7 +43,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             hand.hangSample();
             return false;
         };
-        Pose2d dropPose = new Pose2d(new Vector2d(23, 0), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(22.5, 0), 0);
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position

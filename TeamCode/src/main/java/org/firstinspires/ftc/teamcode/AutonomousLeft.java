@@ -14,33 +14,39 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
+        boolean haveBlock = camera.blockCaptured();
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0, 47.5), Math.toRadians(160));
         int bucketDropArmPosition = 1750;
-        Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
+
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, bucketDropArmPosition);
             hand.bucket();
             return false;
         };
-        Action raiseShoulderAction = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
-            return false;
-        };
-        Action driveAndExtendAction = new ParallelAction(
-                new CompleteAction(driveToLowBucketDrop, legs),
-                new CompleteAction(raiseShoulderAction, shoulder),
-                new CompleteAction(extendArmAction, arm)
-        );
 
         Action releaseSample = telemetryPacket -> {
             hand.release(RELEASE_MS);
             return false;
         };
 
-        Action binDrop = new SequentialAction(
-                driveAndExtendAction,
-                new CompleteAction(releaseSample, hand));
-        Actions.runBlocking(binDrop);
+        if(haveBlock) {
+            Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
+
+            Action raiseShoulderAction = telemetryPacket -> {
+                shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
+                return false;
+            };
+            Action driveAndExtendAction = new ParallelAction(
+                    new CompleteAction(driveToLowBucketDrop, legs),
+                    new CompleteAction(raiseShoulderAction, shoulder),
+                    new CompleteAction(extendArmAction, arm)
+            );
+
+            Action binDrop = new SequentialAction(
+                    driveAndExtendAction,
+                    new CompleteAction(releaseSample, hand));
+            Actions.runBlocking(binDrop);
+        }
 
         Action raiseAction = telemetryPacket -> {
             shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
@@ -51,7 +57,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         for(int i = 0; i < 3; i++)
         {
             Double wristAngle = 0.35 + (double)i * 0.15;
-            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 940;
+            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 960;
 
             Action retractForPickupAction = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, searchPosition);

@@ -33,11 +33,12 @@ public class Arm extends BodyPart {
      * @param hardwareMap map with arm parts
      * @param gamepad the gamepad used to control the arm
      */
-    public Arm(HardwareMap hardwareMap, Gamepad gamepad, Shoulder shoulder) {
+    public Arm(HardwareMap hardwareMap, Gamepad gamepad, Gamepad extraGamepad, Shoulder shoulder) {
         // Assignments
         armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
         armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
         this.gamepad = gamepad;
+        this.extraGamepad = extraGamepad;
         this.shoulder = shoulder;
 
         // Setup
@@ -122,9 +123,11 @@ public class Arm extends BodyPart {
      * @param power the power of the arm's movements
      * @param position arm position
      */
-    public void setPosition(double power, int position) {
+    public void setPosition(double power, int position, boolean clipPosition) {
         // Check the current position against the target position (do nothing if close enough)
-        position = Range.clip(position, MIN_POS, MAX_POS);
+        if(clipPosition) {
+            position = Range.clip(position, MIN_POS, MAX_POS);
+        }
         int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS) {
             protectMotors(position);
@@ -147,6 +150,10 @@ public class Arm extends BodyPart {
         if (shoulder != null) shoulder.targetArmRatio((double)(position - MIN_POS) / (double)(MAX_POS - MIN_POS));
     }
 
+    public void setPosition(double power, int position){
+        setPosition(power, position, true);
+    }
+
     /**
      * This sets hold externally (forces a new hold if false)
      * @param hold if true we implement a hold call
@@ -162,7 +169,6 @@ public class Arm extends BodyPart {
         // Two ways to fix this I think:
         //   1) Allow the tool to rotate slightly for differences in motor speeds and ticks
         //   2) Power one motor for hold and test
-        /* STILL RUN THIS IF THE COUNTS GET REALLY FAR APART
         int posLeft = Range.clip(armMotorLeft.getCurrentPosition(), MIN_POS, MAX_POS);
         int posRight = Range.clip(armMotorRight.getCurrentPosition(), MIN_POS, MAX_POS);
         if (posLeft < posRight) {
@@ -178,18 +184,6 @@ public class Arm extends BodyPart {
             armMotorRight.setTargetPosition(posRight);
             armMotorLeft.setTargetPosition(posRight);
         }
-        */
-        armMotorRight.setTargetPosition(position);
-        armMotorLeft.setTargetPosition(position);
-        armMotorRight.setPower(HOLD_POWER);
-        armMotorLeft.setPower(HOLD_POWER);
-
-        // This is belt slip protection
-        if(position <= MIN_POS)
-        {
-            // TODO - If we are at ARM_IN and the motor ticks don't match, one of them slipped
-            // so we should reset the encoder counts here to reset for full extension
-        }
 
         // I've stopped moving, tell the shoulder to recheck safety one last time
         if (shoulder != null) shoulder.setHold(false);
@@ -203,8 +197,28 @@ public class Arm extends BodyPart {
         while (!isInterrupted()) {
             if(!ignoreGamepad)
             {
-                // Sets the arm speed to a number MIN to MAX based on the left stick's position
+                // Get the power
                 double power = gamepad.left_stick_y;
+
+                // Arm belts have slipped, reset them
+                if(extraGamepad.start){
+                    armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    armMotorLeft.setTargetPosition(0);
+                    armMotorRight.setTargetPosition(0);
+                    armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    protectMotors(0);
+                    continue;
+                }
+
+                // Allow the motors to go past safety stops
+                if(extraGamepad.back){
+                    //setPosition(power, getCurrentPosition() + (int)Math.round(power * 10), false);
+                    //continue;
+                }
+
+                // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
                     // Stop the motors, sleep a tiny bit to arrest momentum and safe hold
                     halt();

@@ -11,7 +11,8 @@ import java.util.function.Consumer;
  * A CompleteAction wrapper class starts an action then waits for a body part to complete.
  */
 public class CompleteAction implements Action, Consumer<Boolean> {
-    private static final long DEFAULT_PROTECTION_MS = 3000;
+    // Short sleeps here are causing issues with longer auto right
+    private static final long DEFAULT_PROTECTION_MS = 10000;
 
     private final BodyPart bodyPart;
     private final Action action;

@@ -42,7 +42,6 @@ public class Eye extends BodyPart{
 
     public Eye(HardwareMap hardwareMap, Shoulder shoulder, Arm arm, StandardSetupOpMode.COLOR color, Gamepad gamepad, Telemetry telemetry)
     {
-        this.camera = new ColorCamera(hardwareMap, color);
         this.shoulder = shoulder;
         this.arm = arm;
         this.color = color;

@@ -24,7 +24,7 @@ public class Hand extends BodyPart{
     private static final double MANUAL_SPIN_INCREMENT = 0.05;
     private static final long INTAKE_MS = 100;
     private static final long RELEASE_MS = 500;
-    private static final long SPIN_MS = 400;
+    private static final long SPIN_MS = 200;
 
     private CRServo left;
     private CRServo right;
@@ -149,6 +149,7 @@ public class Hand extends BodyPart{
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
         startServosForTime( RELEASE_POWER,-RELEASE_POWER, ms);
+        hangSample();
     }
 
     /**
@@ -202,11 +203,11 @@ public class Hand extends BodyPart{
             if(!ignoreGamepad) {
                 // Left bumper rotates the sample counter clockwise
                 if (gamepad.left_bumper) {
-                    rotate(SPIN_MS, true);
+                    rotate(SPIN_MS, false);
                 }
                 // Right bumper rotates the sample clockwise
                 else if (gamepad.right_bumper) {
-                    rotate(SPIN_MS, false);
+                    rotate(SPIN_MS, true);
                 }
                 // Left trigger runs sample intake
                 else if (gamepad.left_trigger > MIN_TRIGGER) {
@@ -235,7 +236,7 @@ public class Hand extends BodyPart{
                 }
 
                 // If the user pressed a button for hang or bucket, get sample ready
-                if(gamepad.x)
+                if(gamepad.b)
                     hangSample();
                 else if(gamepad.y)
                     bucket();
