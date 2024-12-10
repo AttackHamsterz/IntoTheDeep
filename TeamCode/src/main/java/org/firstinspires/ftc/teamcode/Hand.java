@@ -144,13 +144,18 @@ public class Hand extends BodyPart{
      *
      * @param ms milliseconds to run the servos
      */
-    public void release(long ms)
+    public void release(long ms, boolean resetHand)
     {
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
         startServosForTime( RELEASE_POWER,-RELEASE_POWER, ms);
-        hangSample();
+        if(resetHand)
+            hangSample();
     }
+    public void release(long ms){
+        release(ms, false);
+    }
+
 
     /**
      * Run the finger servos forwards to intake the sample.  This method should be called
@@ -211,7 +216,7 @@ public class Hand extends BodyPart{
                 }
                 // Left trigger runs sample intake
                 else if (gamepad.left_trigger > MIN_TRIGGER) {
-                    release(RELEASE_MS);
+                    release(RELEASE_MS, true);
                 }
                 // Right trigger runs sample release
                 else if (gamepad.right_trigger > MIN_TRIGGER) {

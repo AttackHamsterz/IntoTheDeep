@@ -4,6 +4,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
@@ -15,8 +16,8 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         boolean haveBlock = camera.blockCaptured();
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0, 47.5), Math.toRadians(160));
-        int bucketDropArmPosition = 1750;
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0, 47.5), Math.toRadians(164));
+        int bucketDropArmPosition = 1730;
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, bucketDropArmPosition);
@@ -57,16 +58,16 @@ public class AutonomousLeft extends AutonomousOpMode{
         for(int i = 0; i < 3; i++)
         {
             Double wristAngle = 0.35 + (double)i * 0.15;
-            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 960;
+            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 980;
 
             Action retractForPickupAction = telemetryPacket -> {
-                arm.setPosition(AUTO_POWER, searchPosition);
+                arm.setPosition(0.9, searchPosition);
                 return false;
             };
 
             // Cycle from bucket to floor samples
             Action lowerAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, searchPosition);
                 return false;
             };
 
@@ -84,14 +85,22 @@ public class AutonomousLeft extends AutonomousOpMode{
             double turnAngle = (i==2) ? 32 : (i==1) ? 0 : -32;
             Pose2d pickupPose = new Pose2d(new Vector2d(20.87, 47.5), Math.toRadians(turnAngle));
             Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, 1);
-            Action turnAndLower = new ParallelAction(
-                    wristAction,
+
+            Action lower = new ParallelAction(
                     new CompleteAction(retractForPickupAction, arm),
-                    new CompleteAction(turnToPickup, legs),
                     new CompleteAction(lowerAction, shoulder)
             );
+            Action pauseAndLower = new SequentialAction(
+                    new SleepAction(0.35),
+                    lower
+            );
+            Action turnAndLower = new ParallelAction(
+                    wristAction,
+                    new CompleteAction(turnToPickup, legs),
+                    pauseAndLower
+            );
             Action grabAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.7, searchPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, searchPosition);
                 hand.grab(GRAB_MS);
                 return false;
             };
@@ -128,7 +137,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         Pose2d parkPose = new Pose2d(new Vector2d(20.87, 47.5), Math.toRadians(-45));
         Action resetAction = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1), legs),
-        new CompleteAction(resetShoulder, shoulder),
+                new CompleteAction(resetShoulder, shoulder),
                 new CompleteAction(resetArm, arm));
         Actions.runBlocking(resetAction);
     }

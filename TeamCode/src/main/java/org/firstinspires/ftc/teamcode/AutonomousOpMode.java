@@ -17,6 +17,10 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
 
+    protected static int dropShoulderPositionTop = 2050;
+    protected static int dropShoulderPositionBottom = 1450;
+    protected static int dropArmPosition = 960;
+
     @Override
     public void runOpMode() throws InterruptedException {
         super.runOpMode();
@@ -29,9 +33,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        int dropShoulderPositionTop = 2050;
-        int dropShoulderPositionBottom = 1450;
-        int dropArmPosition = 960;
         int dropArmPullin = 320;
         int searchArmPosition = 1070;
         Action liftShoulderAction = telemetryPacket -> {
@@ -43,7 +44,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             hand.hangSample();
             return false;
         };
-        Pose2d dropPose = new Pose2d(new Vector2d(22.5, 0), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(22.75, 0), 0);
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
