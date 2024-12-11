@@ -69,37 +69,40 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
-        Pose2d searchPose = new Pose2d(new Vector2d(27.0, 0), 0);
-        Action searchAction = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchArmPosition);
-            return false;
-        };
-        Action extendAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, searchArmPosition);
-            return false;
-        };
-        Action pickupAction = telemetryPacket -> {
-            hand.grab(GRAB_MS);
-            shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
-            return false;
-        };
-        Action liftShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 550);
-            return false;
-        };
-        Action retractFromPickup = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 100);
-            legs.moveToPose(AUTO_MOVE_POWER, dropPose);
-            return false;
-        };
+        boolean doSearch = false;
+        if(doSearch) {
+            Pose2d searchPose = new Pose2d(new Vector2d(27.0, 0), 0);
+            Action searchAction = telemetryPacket -> {
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchArmPosition);
+                return false;
+            };
+            Action extendAction = telemetryPacket -> {
+                arm.setPosition(AUTO_POWER, searchArmPosition);
+                return false;
+            };
+            Action pickupAction = telemetryPacket -> {
+                hand.grab(GRAB_MS);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
+                return false;
+            };
+            Action liftShoulder = telemetryPacket -> {
+                shoulder.setPosition(AUTO_POWER, 550);
+                return false;
+            };
+            Action retractFromPickup = telemetryPacket -> {
+                arm.setPosition(AUTO_POWER, 100);
+                legs.moveToPose(AUTO_MOVE_POWER, dropPose);
+                return false;
+            };
 
-        Action grabFromSubmersible = new SequentialAction(
-                new CompleteAction(searchAction, shoulder), // Search height
-                legs.moveToAction(AUTO_MOVE_POWER, searchPose),
-                new CompleteAction(extendAction, arm),      // Extend arm
-                new CompleteAction(pickupAction, hand),     // Pickup sample
-                new CompleteAction(liftShoulder, shoulder),
-                new CompleteAction(retractFromPickup, arm));          // Retract arm
-        Actions.runBlocking(grabFromSubmersible);
+            Action grabFromSubmersible = new SequentialAction(
+                    new CompleteAction(searchAction, shoulder), // Search height
+                    legs.moveToAction(AUTO_MOVE_POWER, searchPose),
+                    new CompleteAction(extendAction, arm),      // Extend arm
+                    new CompleteAction(pickupAction, hand),     // Pickup sample
+                    new CompleteAction(liftShoulder, shoulder),
+                    new CompleteAction(retractFromPickup, arm));          // Retract arm
+            Actions.runBlocking(grabFromSubmersible);
+        }
     }
 }

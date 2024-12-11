@@ -145,8 +145,8 @@ public class AutonomousRight extends AutonomousOpMode{
         );
         Actions.runBlocking(action6);
 
-        Action resetShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 100);
+        Action hoverShoulder = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, Shoulder.Mode.SEARCH.armInPos());
             return false;
         };
         Action resetArm = telemetryPacket -> {
@@ -154,10 +154,26 @@ public class AutonomousRight extends AutonomousOpMode{
             arm.setPosition(AUTO_POWER, 0);
             return false;
         };
+
         Action resetAction = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, park, 1), legs),
-                new CompleteAction(resetShoulder, shoulder),
+                new CompleteAction(hoverShoulder, shoulder),
                 new CompleteAction(resetArm, arm));
         Actions.runBlocking(resetAction);
+
+        Action grab3 = telemetryPacket -> {
+            hand.grab(800);
+            return false;
+        };
+
+        Action resetShoulder = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, 0);
+            return false;
+        };
+
+        Action extraResetAction = new ParallelAction(
+                new CompleteAction(resetShoulder, arm),
+                new CompleteAction(grab3, hand));
+        Actions.runBlocking(extraResetAction);
     }
 }
