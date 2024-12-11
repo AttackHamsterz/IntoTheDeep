@@ -7,6 +7,7 @@ public class AutonomousRedLeft extends AutonomousLeft {
     @Override
     public void runOpMode() throws InterruptedException {
         setup(COLOR.RED, SIDE.LEFT, true, true);
+        searchSubmersible();
         super.runOpMode();
     }
 }

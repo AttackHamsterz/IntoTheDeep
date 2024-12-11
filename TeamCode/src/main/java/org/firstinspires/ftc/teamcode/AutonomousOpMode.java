@@ -21,10 +21,15 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     protected static int dropShoulderPositionBottom = 1450;
     protected static int dropArmPosition = 960;
 
+    protected boolean submersibleSearch = false;
     protected boolean partnerHasSpecimen = false;
 
     public void partnerHasSpecimen(){
         this.partnerHasSpecimen = true;
+    }
+
+    public void searchSubmersible(){
+        this.submersibleSearch = true;
     }
 
     @Override
@@ -75,8 +80,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
-        boolean doSearch = false;
-        if(doSearch) {
+        if(submersibleSearch) {
             Pose2d searchPose = new Pose2d(new Vector2d(27.0, 0), 0);
             Action searchAction = telemetryPacket -> {
                 shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchArmPosition);
