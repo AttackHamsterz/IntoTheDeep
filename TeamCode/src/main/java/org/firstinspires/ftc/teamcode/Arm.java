@@ -130,10 +130,12 @@ public class Arm extends BodyPart {
         if(clipPosition) {
             // if our shoulder is low enough, then decrease our max extension distance
             // this is just in case we don't pass inspection
-            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
-                position = Range.clip(position, MIN_POS, MAX_POS - SHORTEN_MAX);
-            } else {
-                position = Range.clip(position, MIN_POS, MAX_POS);
+            if (shoulder != null) {
+                if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+                    position = Range.clip(position, MIN_POS, MAX_POS - SHORTEN_MAX);
+                } else {
+                    position = Range.clip(position, MIN_POS, MAX_POS);
+                }
             }
         }
         int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
@@ -216,21 +218,30 @@ public class Arm extends BodyPart {
 
                 // Arm belts have slipped, reset them
                 if(extraGamepad.start){
+
                     armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     armMotorLeft.setTargetPosition(0);
                     armMotorRight.setTargetPosition(0);
                     armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    protectMotors(0);
+                    //protectMotors(0);
                     continue;
                 }
 
                 // Allow the motors to go past safety stops
                 if(extraGamepad.back){
-                    setPosition(power, getCurrentPosition() + (int)Math.round(power * 30), false);
+                    setPosition(-Math.abs(power), getCurrentPosition() - (int)Math.round(power * 200), false);
+                    armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    armMotorLeft.setTargetPosition(0);
+                    armMotorRight.setTargetPosition(0);
+                    armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     continue;
                 }
+
+
 
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 if (!hold && Math.abs(power) <= TRIM_POWER) {

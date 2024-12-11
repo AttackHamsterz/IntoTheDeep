@@ -477,7 +477,7 @@ public class ColorCamera extends Thread {
             };
             Action raiseShoulder = telemetryPacket -> {
                 shoulder.setMode(Shoulder.Mode.NONE);
-                shoulder.setPosition(1.0, shoulder.getPositionForMode(Shoulder.Mode.SEARCH, arm.getCurrentPosition())/2);
+                shoulder.setPosition(1.0, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
                 hand.hangSample();
                 return false;
             };
