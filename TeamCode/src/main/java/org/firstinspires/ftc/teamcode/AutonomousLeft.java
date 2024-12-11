@@ -134,7 +134,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        Pose2d parkPose = new Pose2d(new Vector2d(20.87, 47.5), Math.toRadians(-45));
+        Pose2d parkPose = new Pose2d(new Vector2d(21, 45), Math.toRadians(-45));
         Action resetAction = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1), legs),
                 new CompleteAction(resetShoulder, shoulder),
