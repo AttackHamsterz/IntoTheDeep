@@ -20,6 +20,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d push1 = new Pose2d(new Vector2d(8, -35), Math.toRadians(180));
         Pose2d behind2 = new Pose2d(new Vector2d(46.5, -47), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(8, -47), Math.toRadians(180));
+        Pose2d safeSpot = new Pose2d(new Vector2d(14, -32.2 ), Math.toRadians(-135));
         Pose2d thirdHang = new Pose2d(new Vector2d(23, 4), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3, -32.2), Math.toRadians(-135));
 
@@ -52,11 +53,11 @@ public class AutonomousRight extends AutonomousOpMode{
             return false;
         };
 
-        Action action2 = new SequentialAction(
+        Action grabAction = new SequentialAction(
                 ground,
                 new CompleteAction(grab, hand)
         );
-        Actions.runBlocking(action2);
+        Actions.runBlocking(grabAction);
 
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
@@ -106,12 +107,46 @@ public class AutonomousRight extends AutonomousOpMode{
                 new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind2), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2, -1), legs)
+                new CompleteAction(legs.moveToAction(0.8, push2, -1), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs)
         );
         Actions.runBlocking(driveAction);
 
+        Action grab2 = telemetryPacket -> {
+            hand.grab(800);
+            return false;
+        };
+
+        Action ground2 = telemetryPacket -> {
+            shoulder.setPosition(0.8, Shoulder.Mode.GROUND.armInPos());
+            return false;
+        };
+
+        Action grab2Action = new SequentialAction(
+                ground2,
+                new CompleteAction(grab2, hand)
+        );
+
+        Actions.runBlocking(grab2Action);
+
+        Action action5 = new ParallelAction(
+                new CompleteAction(liftShoulderAction, shoulder),
+                new CompleteAction(extendArmAction, arm),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, thirdHang, 1), legs)
+                //new CompleteAction(spinHand, hand)
+        );
+        Actions.runBlocking(action5);
+
+        Action action6 = new SequentialAction(
+                new CompleteAction(drop, shoulder),
+                new CompleteAction(release, hand),
+                new CompleteAction(armIn, arm)
+        );
+        Actions.runBlocking(action6);
+
         Action resetShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 0);
+            shoulder.setPosition(AUTO_POWER, 100);
             return false;
         };
         Action resetArm = telemetryPacket -> {
