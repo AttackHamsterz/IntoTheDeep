@@ -13,21 +13,23 @@ public class AutonomousRight extends AutonomousOpMode{
     public void runOpMode() throws InterruptedException{
         super.runOpMode();
 
+        // No overriding mode for shoulder
+        shoulder.setMode(Shoulder.Mode.NONE);
+
+        // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3, -32.2), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(22.5, 2), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(22.5, 2), Math.toRadians(-1));
         Pose2d avoidSub = new Pose2d(new Vector2d(25.5, -24.2), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46.5, -39), Math.toRadians(180));
         Pose2d push1 = new Pose2d(new Vector2d(8, -35), Math.toRadians(180));
         Pose2d behind2 = new Pose2d(new Vector2d(46.5, -47), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(8, -47), Math.toRadians(180));
-        Pose2d safeSpot = new Pose2d(new Vector2d(14, -32.2 ), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(23, 4), Math.toRadians(0));
+        Pose2d safeSpot = new Pose2d(new Vector2d(15.3, -25.2 ), Math.toRadians(-135));
+        Pose2d thirdHang = new Pose2d(new Vector2d(23, 4), Math.toRadians(-1));
         Pose2d park = new Pose2d(new Vector2d(8.3, -32.2), Math.toRadians(-135));
 
-        // No override mode for shoulder
-        shoulder.setMode(Shoulder.Mode.NONE);
-
-        Action search = telemetryPacket -> {
+        // Common actions for the right side
+        Action hoverShoulder = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, Shoulder.Mode.SEARCH.armInPos());
             return false;
         };
@@ -37,14 +39,8 @@ public class AutonomousRight extends AutonomousOpMode{
             return false;
         };
 
-        Action action1 = new ParallelAction(
-                new CompleteAction(search, shoulder),
-                new CompleteAction(armIn, arm),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs));
-        Actions.runBlocking(action1);
-
         Action grab = telemetryPacket -> {
-            hand.grab(800);
+            hand.grab(500);
             return false;
         };
 
@@ -53,36 +49,15 @@ public class AutonomousRight extends AutonomousOpMode{
             return false;
         };
 
-        Action grabAction = new SequentialAction(
-                ground,
-                new CompleteAction(grab, hand)
-        );
-        Actions.runBlocking(grabAction);
-
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
             return false;
         };
 
         Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER,dropArmPosition);
+            arm.setPosition(0.8, dropArmPosition);
             return false;
         };
-
-        Actions.runBlocking(new CompleteAction(search, shoulder));
-
-        Action spinHand = telemetryPacket -> {
-            hand.grab(500);
-            return false;
-        };
-
-        Action action3 = new ParallelAction(
-                new CompleteAction(liftShoulderAction, shoulder),
-                new CompleteAction(extendArmAction, arm),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
-                //new CompleteAction(spinHand, hand)
-        );
-        Actions.runBlocking(action3);
 
         Action drop = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, 1450);
@@ -90,19 +65,65 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action release = telemetryPacket -> {
-            hand.release(500);
+            hand.release(800);
             return false;
         };
 
-        Action action4 = new SequentialAction(
-                new CompleteAction(drop, shoulder),
-                new CompleteAction(release, hand),
-                new CompleteAction(armIn, arm)
+        Action resetArm = telemetryPacket -> {
+            hand.hangSample();
+            arm.setPosition(AUTO_POWER, 0);
+            return false;
+        };
+
+        Action resetShoulder = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, 0);
+            return false;
+        };
+
+        // If our partner is not using the alliance color specimen (do second hang)
+        if(!partnerHasSpecimen) {
+            Action gotoPickup = new ParallelAction(
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(hoverShoulder, shoulder),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs));
+            Actions.runBlocking(gotoPickup);
+
+            Action grabAction = new SequentialAction(
+                    ground,
+                    new CompleteAction(grab, hand)
+            );
+            Actions.runBlocking(grabAction);
+
+            // Use if tool is dragging on the ground
+            //Actions.runBlocking(new CompleteAction(hoverShoulder, shoulder));
+
+            Action gotoSecondHang = new ParallelAction(
+                    new CompleteAction(liftShoulderAction, shoulder),
+                    new CompleteAction(extendArmAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
+            );
+            Actions.runBlocking(gotoSecondHang);
+
+            Action releasePull = new ParallelAction(
+                    new CompleteAction(release, hand),
+                    new CompleteAction(armIn, arm)
+            );
+
+            Action dropAndRelease = new SequentialAction(
+                    new CompleteAction(drop, shoulder),
+                    releasePull
+            );
+            Actions.runBlocking(dropAndRelease);
+        }
+
+        Action avoidAndHover = new ParallelAction(
+                new CompleteAction(armIn, arm),
+                new CompleteAction(hoverShoulder, shoulder),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub), legs)
         );
-        Actions.runBlocking(action4);
 
         Action driveAction = new SequentialAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub), legs),
+                avoidAndHover,
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1), legs),
@@ -113,67 +134,70 @@ public class AutonomousRight extends AutonomousOpMode{
         );
         Actions.runBlocking(driveAction);
 
-        Action grab2 = telemetryPacket -> {
-            hand.grab(800);
-            return false;
-        };
-
-        Action ground2 = telemetryPacket -> {
-            shoulder.setPosition(0.8, Shoulder.Mode.GROUND.armInPos());
-            return false;
-        };
-
         Action grab2Action = new SequentialAction(
-                ground2,
-                new CompleteAction(grab2, hand)
+                ground,
+                new CompleteAction(grab, hand)
         );
-
         Actions.runBlocking(grab2Action);
 
-        Action action5 = new ParallelAction(
+        Action gotoThirdHang = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder),
                 new CompleteAction(extendArmAction, arm),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, thirdHang, 1), legs)
-                //new CompleteAction(spinHand, hand)
         );
-        Actions.runBlocking(action5);
+        Actions.runBlocking(gotoThirdHang);
 
-        Action action6 = new SequentialAction(
-                new CompleteAction(drop, shoulder),
+        Action releasePull2 = new ParallelAction(
                 new CompleteAction(release, hand),
                 new CompleteAction(armIn, arm)
         );
-        Actions.runBlocking(action6);
+        Action dropAndRelease2 = new SequentialAction(
+                new CompleteAction(drop, shoulder),
+                releasePull2
+        );
+        Actions.runBlocking(dropAndRelease2);
 
-        Action hoverShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, Shoulder.Mode.SEARCH.armInPos());
-            return false;
-        };
-        Action resetArm = telemetryPacket -> {
-            hand.hangSample();
-            arm.setPosition(AUTO_POWER, 0);
-            return false;
-        };
+        // If our partner used a specimen we have time for one more hang
+        if(partnerHasSpecimen){
+            Action finalPickup = new ParallelAction(
+                    new CompleteAction(resetArm, arm),
+                    new CompleteAction(hoverShoulder, shoulder),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup, 1), legs));
+            Actions.runBlocking(finalPickup);
+
+            Action grab3Action = new SequentialAction(
+                    ground,
+                    new CompleteAction(grab, hand)
+            );
+            Actions.runBlocking(grab3Action);
+
+            Action repeatSecondHang = new ParallelAction(
+                    new CompleteAction(liftShoulderAction, shoulder),
+                    new CompleteAction(extendArmAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
+            );
+            Actions.runBlocking(repeatSecondHang);
+
+            Action releasePull3 = new ParallelAction(
+                    new CompleteAction(release, hand),
+                    new CompleteAction(armIn, arm)
+            );
+            Action dropAndRelease3 = new SequentialAction(
+                    new CompleteAction(drop, shoulder),
+                    releasePull3
+            );
+            Actions.runBlocking(dropAndRelease3);
+        }
 
         Action resetAction = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, park, 1), legs),
+                new CompleteAction(resetArm, arm),
                 new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(resetArm, arm));
+                new CompleteAction(legs.moveToAction(AUTO_POWER, park, 1), legs));
         Actions.runBlocking(resetAction);
 
-        Action grab3 = telemetryPacket -> {
-            hand.grab(800);
-            return false;
-        };
-
-        Action resetShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 0);
-            return false;
-        };
-
         Action extraResetAction = new ParallelAction(
-                new CompleteAction(resetShoulder, arm),
-                new CompleteAction(grab3, hand));
+                new CompleteAction(resetShoulder, shoulder),
+                new CompleteAction(grab, hand));
         Actions.runBlocking(extraResetAction);
     }
 }

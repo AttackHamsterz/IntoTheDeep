@@ -21,6 +21,12 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     protected static int dropShoulderPositionBottom = 1450;
     protected static int dropArmPosition = 960;
 
+    protected boolean partnerHasSpecimen = false;
+
+    public void partnerHasSpecimen(){
+        this.partnerHasSpecimen = true;
+    }
+
     @Override
     public void runOpMode() throws InterruptedException {
         super.runOpMode();
