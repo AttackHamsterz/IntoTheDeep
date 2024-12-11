@@ -16,6 +16,8 @@ public class Arm extends BodyPart {
     private static final double HOLD_POWER = 0.1;
     private static final double NO_POWER = 0.0;
 
+    private static final int SHORTEN_MAX = 0;
+
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
     public static final int MAX_POS = 2180;
@@ -126,7 +128,13 @@ public class Arm extends BodyPart {
     public void setPosition(double power, int position, boolean clipPosition) {
         // Check the current position against the target position (do nothing if close enough)
         if(clipPosition) {
-            position = Range.clip(position, MIN_POS, MAX_POS);
+            // if our shoulder is low enough, then decrease our max extension distance
+            // this is just in case we don't pass inspection
+            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+                position = Range.clip(position, MIN_POS, MAX_POS - SHORTEN_MAX);
+            } else {
+                position = Range.clip(position, MIN_POS, MAX_POS);
+            }
         }
         int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS) {
@@ -147,7 +155,13 @@ public class Arm extends BodyPart {
         protectMotors(position);
 
         // Tell the shoulder to update for ground protection
-        if (shoulder != null) shoulder.targetArmRatio((double)(position - MIN_POS) / (double)(MAX_POS - MIN_POS));
+        if (shoulder != null)  {
+            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+                shoulder.targetArmRatio((double) (position - MIN_POS) / (double) ((MAX_POS-SHORTEN_MAX) - MIN_POS));
+            } else {
+                shoulder.targetArmRatio((double) (position - MIN_POS) / (double) (MAX_POS - MIN_POS));
+            }
+        }
     }
 
     public void setPosition(double power, int position){
@@ -214,8 +228,8 @@ public class Arm extends BodyPart {
 
                 // Allow the motors to go past safety stops
                 if(extraGamepad.back){
-                    //setPosition(power, getCurrentPosition() + (int)Math.round(power * 10), false);
-                    //continue;
+                    setPosition(power, getCurrentPosition() + (int)Math.round(power * 30), false);
+                    continue;
                 }
 
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position

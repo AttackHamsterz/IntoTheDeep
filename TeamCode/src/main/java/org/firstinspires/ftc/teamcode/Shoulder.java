@@ -288,7 +288,8 @@ public class Shoulder extends BodyPart {
                 }
                 // Allow the shoulder to be reset
                 if(extraGamepad.back){
-                    //setMode(Mode.NONE);
+                    setMode(Mode.NONE);
+                    shoulderMotor.setPower(0);
                     //setPosition(power, shoulderMotor.getCurrentPosition() + (int)Math.round(power * 10), false);
                     //continue;
                 }
