@@ -322,7 +322,6 @@ public class Shoulder extends BodyPart {
                     mode = Mode.NONE;
                 }
 
-
                 if(gamepad.x && !pressing) {
                     pressing = true;
                     mode = Mode.SEARCH;
@@ -335,7 +334,7 @@ public class Shoulder extends BodyPart {
                     pressing = true;
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
-                        setPosition(1.0, 1450);
+                        setPosition(1.0, 1550);
                     }
                     else {
                         mode = Mode.HIGH_BAR;
@@ -351,8 +350,10 @@ public class Shoulder extends BodyPart {
                     else
                         mode = Mode.HIGH_BUCKET;
                 }
-                else
-                    pressing = false;
+                else {
+                    if (!(gamepad.x || gamepad.y || gamepad.a || gamepad.b))
+                        pressing = false;
+                }
             }
 
             // Always satisfy the mode if no buttons were pressed

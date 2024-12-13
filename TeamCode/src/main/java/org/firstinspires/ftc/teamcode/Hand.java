@@ -149,8 +149,16 @@ public class Hand extends BodyPart{
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
         startServosForTime( RELEASE_POWER,-RELEASE_POWER, ms);
-        if(resetHand)
-            hangSample();
+        if(resetHand) {
+            Thread thread = new Thread(() -> {
+                try {
+                    sleep(ms);
+                } catch (InterruptedException e) {
+                }
+                hangSample();
+            });
+            thread.start();
+        }
     }
     public void release(long ms){
         release(ms, false);
@@ -245,6 +253,8 @@ public class Hand extends BodyPart{
                     hangSample();
                 else if(gamepad.y)
                     bucket();
+                else if(gamepad.a)
+                    grab(800);
             }
 
             // Short sleep to keep this loop from saturating
