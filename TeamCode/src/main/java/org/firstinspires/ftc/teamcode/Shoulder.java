@@ -279,13 +279,14 @@ public class Shoulder extends BodyPart {
                     power *= 0.5f;
 
                 // Reset the encoder on the shoulder
-                if(extraGamepad.start){
-                    shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    shoulderMotor.setTargetPosition(0);
-                    shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    //protectMotors(0);
-                    continue;
-                }
+                //if(extraGamepad.start){
+                //    shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                //    shoulderMotor.setTargetPosition(0);
+                //    shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                //    //protectMotors(0);
+                //    continue;
+                //}
+
                 // Allow the shoulder to be reset
                 if(extraGamepad.back){
                     setMode(Mode.NONE);

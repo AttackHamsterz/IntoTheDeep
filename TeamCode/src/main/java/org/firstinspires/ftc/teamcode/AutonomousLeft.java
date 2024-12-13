@@ -16,7 +16,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         boolean haveBlock = camera.blockCaptured();
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0, 47.5), Math.toRadians(164));
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(164));
         int bucketDropArmPosition = 1730;
 
         Action extendArmAction = telemetryPacket -> {
@@ -83,7 +83,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
             // Turn to ground samples, pick one up
             double turnAngle = (i==2) ? 32 : (i==1) ? 0 : -32;
-            Pose2d pickupPose = new Pose2d(new Vector2d(20.87, 47.5), Math.toRadians(turnAngle));
+            Pose2d pickupPose = new Pose2d(new Vector2d(20.87 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, 1);
 
             Action lower = new ParallelAction(
@@ -134,7 +134,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        Pose2d parkPose = new Pose2d(new Vector2d(21, 45), Math.toRadians(-45));
+        Pose2d parkPose = new Pose2d(new Vector2d(21 + X_OFFSET, 45 + Y_OFFSET), Math.toRadians(-45));
         Action resetAction = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1), legs),
                 new CompleteAction(resetShoulder, shoulder),

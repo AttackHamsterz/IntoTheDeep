@@ -18,11 +18,17 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final double AUTO_POWER = 1.0;
 
     protected static int dropShoulderPositionTop = 2050;
-    protected static int dropShoulderPositionBottom = 1450;
+    protected static int dropShoulderPositionBottom = 1550;
     protected static int dropArmPosition = 960;
 
     protected boolean submersibleSearch = false;
     protected boolean partnerHasSpecimen = false;
+
+    // If the field is asymmetric offset poses' (inches)
+    // Offsets are considered positive for blue and negative for red
+    // For instance Blue at badger bots is a quarter inch shorter
+    protected double X_OFFSET = 0;
+    protected double Y_OFFSET = 0;
 
     public void partnerHasSpecimen(){
         this.partnerHasSpecimen = true;
@@ -39,6 +45,12 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // Remove the floor protection (causing some position override issues in autonomous)
         arm.setShoulder(null);
 
+        // Flip offsets if red (asymmetric field)
+        if(color == COLOR.RED){
+            X_OFFSET = -X_OFFSET;
+            Y_OFFSET = -Y_OFFSET;
+        }
+
         // Every autonomous will drive forward, lift the shoulder, and
         // extend the arms at the same time.  Once the arms are
         // extended the shoulder is dropped slightly until the sample
@@ -46,6 +58,10 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // while the fingers release the sample.
         int dropArmPullin = 320;
         int searchArmPosition = 1070;
+
+        Pose2d dropPose = new Pose2d(new Vector2d(22.5 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d searchPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), 0);
+
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
             return false;
@@ -55,13 +71,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             hand.hangSample();
             return false;
         };
-        Pose2d dropPose = new Pose2d(new Vector2d(22.5, 0), 0);
-        Action liftExtendDrive = new ParallelAction(
-                new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
-                new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.4, dropPose), legs));
-
-
         Action dropAction = telemetryPacket -> {
             hand.grab(400);
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
@@ -71,17 +80,39 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             arm.setPosition(AUTO_POWER, dropArmPullin);
             return false;
         };
+        Action releaseAction = telemetryPacket -> {
+            hand.release(600);
+            return false;
+        };
+        // Get into safe travel position
+        Action retractArm = telemetryPacket -> {
+            arm.setPosition(AUTO_POWER, 100);
+            return false;
+        };
+        Action retractBody = telemetryPacket -> {
+            legs.moveToPose(AUTO_MOVE_POWER, dropPose);
+            return false;
+        };
+
+        Action liftExtendDrive = new ParallelAction(
+                new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
+                new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
+                new CompleteAction(legs.moveToAction(0.4, dropPose), legs));
+
+        Action retractAndRelease = new ParallelAction(
+                new CompleteAction(retractArmAction, arm),
+                new CompleteAction(releaseAction, hand)
+        );
 
         Action hangSampleToolAction = new SequentialAction(
                 liftExtendDrive,                             // Drive and extend
                 new CompleteAction(dropAction, shoulder),    // Run dropAction
-                new CompleteAction(retractArmAction, arm));
+                retractAndRelease);
         Actions.runBlocking(hangSampleToolAction);
 
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
         if(submersibleSearch) {
-            Pose2d searchPose = new Pose2d(new Vector2d(27.0, 0), 0);
             Action searchAction = telemetryPacket -> {
                 shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, searchArmPosition);
                 return false;
@@ -90,29 +121,47 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 arm.setPosition(AUTO_POWER, searchArmPosition);
                 return false;
             };
-            Action pickupAction = telemetryPacket -> {
-                hand.grab(GRAB_MS);
-                shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
-                return false;
-            };
+            Action extendAndMoveAction = new ParallelAction(
+                    new CompleteAction(extendAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs)
+            );
+            Action setupSearch = new SequentialAction(
+                    searchAction, // Search height
+                    extendAndMoveAction);
+            Actions.runBlocking(setupSearch);
+
+            // Was old fake search
+            //Action pickupAction = telemetryPacket -> {
+            //    hand.grab(GRAB_MS);
+            //    shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
+            //    return false;
+            //};
+            //Action liftShoulder = telemetryPacket -> {
+            //    shoulder.setPosition(AUTO_POWER, 550);
+            //    return false;
+            //};
+            //Action fakeSearch = new SequentialAction(
+            //        new CompleteAction(pickupAction, hand), // Search height
+            //        new CompleteAction(liftShoulder, shoulder));          // Retract arm
+            //Actions.runBlocking(fakeSearch);
+
+            // Real Search (should block until complete)
+            camera.autoGrab();
+
+            // Safe height for shoulder
             Action liftShoulder = telemetryPacket -> {
                 shoulder.setPosition(AUTO_POWER, 550);
                 return false;
             };
-            Action retractFromPickup = telemetryPacket -> {
-                arm.setPosition(AUTO_POWER, 100);
-                legs.moveToPose(AUTO_MOVE_POWER, dropPose);
-                return false;
-            };
-
-            Action grabFromSubmersible = new SequentialAction(
-                    new CompleteAction(searchAction, shoulder), // Search height
-                    legs.moveToAction(AUTO_MOVE_POWER, searchPose),
-                    new CompleteAction(extendAction, arm),      // Extend arm
-                    new CompleteAction(pickupAction, hand),     // Pickup sample
-                    new CompleteAction(liftShoulder, shoulder),
-                    new CompleteAction(retractFromPickup, arm));          // Retract arm
-            Actions.runBlocking(grabFromSubmersible);
+            Actions.runBlocking(new CompleteAction(liftShoulder, shoulder));
         }
+
+        // Get into a safe travel position
+        Action retractFromPickup = new ParallelAction(
+                new CompleteAction(retractArm, arm),
+                new CompleteAction(retractBody, legs)
+        );
+
+        Actions.runBlocking(retractFromPickup);
     }
 }

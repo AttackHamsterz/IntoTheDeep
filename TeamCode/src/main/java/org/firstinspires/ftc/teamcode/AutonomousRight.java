@@ -17,16 +17,16 @@ public class AutonomousRight extends AutonomousOpMode{
         shoulder.setMode(Shoulder.Mode.NONE);
 
         // All the poses for the right side
-        Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3, -32.2), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(22.5, 2), Math.toRadians(-1));
-        Pose2d avoidSub = new Pose2d(new Vector2d(25.5, -24.2), Math.toRadians(0));
-        Pose2d behind1 = new Pose2d(new Vector2d(46.5, -39), Math.toRadians(180));
-        Pose2d push1 = new Pose2d(new Vector2d(8, -35), Math.toRadians(180));
-        Pose2d behind2 = new Pose2d(new Vector2d(46.5, -47), Math.toRadians(180));
-        Pose2d push2 = new Pose2d(new Vector2d(8, -47), Math.toRadians(180));
-        Pose2d safeSpot = new Pose2d(new Vector2d(15.3, -25.2 ), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(23, 4), Math.toRadians(-1));
-        Pose2d park = new Pose2d(new Vector2d(8.3, -32.2), Math.toRadians(-135));
+        Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
+        Pose2d secondHang = new Pose2d(new Vector2d(22.5 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d avoidSub = new Pose2d(new Vector2d(25.5 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d behind1 = new Pose2d(new Vector2d(46.5 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind2 = new Pose2d(new Vector2d(46.5 + X_OFFSET, -47 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push2 = new Pose2d(new Vector2d(8 + X_OFFSET, -47 + Y_OFFSET), Math.toRadians(180));
+        Pose2d safeSpot = new Pose2d(new Vector2d(15 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
+        Pose2d thirdHang = new Pose2d(new Vector2d(23 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
+        Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
 
         // Common actions for the right side
         Action hoverShoulder = telemetryPacket -> {
@@ -40,7 +40,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action grab = telemetryPacket -> {
-            hand.grab(500);
+            hand.grab(600);
             return false;
         };
 
@@ -60,7 +60,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action drop = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 1450);
+            shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
             return false;
         };
 
