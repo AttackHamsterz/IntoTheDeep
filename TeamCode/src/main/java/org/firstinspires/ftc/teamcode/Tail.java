@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -101,8 +102,6 @@ public class Tail extends Thread{
                         lifting = 1;
                     } else if (gamepad.start && !gamepad.back) {
                         setTail(MIN_POS);
-                    } else if (gamepad.back && !gamepad.start) {
-                        setTail(MAX_POS);
                     }
                 }
 
