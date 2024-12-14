@@ -99,7 +99,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                         double ySlope = firstBlock.y * SHIFT_M + SHIFT_B;
                         double shift = (firstBlock.x - CENTER_X) * ySlope;
                         telemetry.addData("block1 shift", shift);
-                        legs.moveLeft(shift);
+                        legs.moveLeft(shift, false);
                         return false;
                     };
                     ParallelAction centerBlockAction = new ParallelAction(
@@ -158,7 +158,7 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
                         double ySlope = secondBlock.y * SHIFT_M + SHIFT_B;
                         double shift = (secondBlock.x - CENTER_X) * ySlope;
                         telemetry.addData("block2 shift", ticks);
-                        legs.moveLeft(shift);
+                        legs.moveLeft(shift, false);
 
                         // Move wrist with a good average
                         if (numAverage > 0) {

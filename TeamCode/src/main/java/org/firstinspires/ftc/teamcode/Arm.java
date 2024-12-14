@@ -66,7 +66,6 @@ public class Arm extends BodyPart {
         telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
         telemetry.addData("Arm Power Left", armMotorLeft.getPower());
         telemetry.addData("Arm Power Right", armMotorRight.getPower());
-        telemetry.addData("Arm Ratio", getArmRatio());
     }
 
     @Override

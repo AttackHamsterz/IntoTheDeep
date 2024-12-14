@@ -422,25 +422,25 @@ public final class MecanumDrive extends BodyPart{
         boolean oneCancel = false;
         while (!isInterrupted()  && gamepad != null && !ignoreGamepad) {
             if (gamepad.dpad_left) {
-                if (!moveThread.isAlive()) telemetry.addLine("move left"); telemetry.update(); moveLeft(10.0);
+                if (!moveThread.isAlive()) moveLeft(10.0, true);
             } else if (gamepad.dpad_right) {
-                if (!moveThread.isAlive()) moveLeft(-10.0);
+                if (!moveThread.isAlive()) moveLeft(-10.0, true);
             } else if (gamepad.dpad_up) {
-                if (!moveThread.isAlive()) moveForward(10.0);
+                if (!moveThread.isAlive()) moveForward(10.0, true);
             } else if (gamepad.dpad_down) {
-                if (!moveThread.isAlive()) moveForward(-10.0);
+                if (!moveThread.isAlive()) moveForward(-10.0, true);
             } else if (gamepad.left_bumper) {
-                if (!moveThread.isAlive()) rotate(90.0);
+                if (!moveThread.isAlive()) rotate(90.0, true);
             } else if (gamepad.right_bumper) {
-                if (!moveThread.isAlive()) rotate(-90.0);
+                if (!moveThread.isAlive()) rotate(-90.0, true);
             } else if (gamepad.x) {
                 leftPose = getPose();
             } else if (gamepad.a) {
                 rightPose = getPose();
             } else if (gamepad.y) {
-                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, leftPose);
+                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, leftPose, false);
             } else if (gamepad.b) {
-                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, rightPose);
+                if (!moveThread.isAlive()) moveToPose(AUTO_MOVE_POWER, rightPose, false);
             }
             else if(Math.abs(gamepad.left_stick_x) > 0.01 ||
                     Math.abs(gamepad.left_stick_y) > 0.01 ||
@@ -478,36 +478,36 @@ public final class MecanumDrive extends BodyPart{
      * Quick rotate
      * @param degrees amount to turn in degrees
      */
-    public void rotate(double degrees) {
+    public void rotate(double degrees, boolean waypoint) {
         Pose2d currentPose = getPose();
         Pose2d newPose = new Pose2d(currentPose.position, currentPose.heading.plus(Math.toRadians(degrees)));
-        moveToPose(AUTO_MOVE_POWER, newPose);
+        moveToPose(AUTO_MOVE_POWER, newPose, waypoint);
     }
 
     /**
      * Amount to move forward
      * @param dist inches
      */
-    public void moveForward(double dist) {
+    public void moveForward(double dist, boolean waypoint) {
         Pose2d currentPose = getPose();
         double currentHeading = currentPose.heading.toDouble();
         Vector2d forwardUnit = new Vector2d(Math.cos(currentHeading), Math.sin(currentHeading));
         Vector2d forward = forwardUnit.times(dist);
         Pose2d newPose = new Pose2d(currentPose.position.plus(forward), currentPose.heading);
-        moveToPose(AUTO_MOVE_POWER, newPose);
+        moveToPose(AUTO_MOVE_POWER, newPose, waypoint);
     }
 
     /**
      * Amount to move left
      * @param dist inches
      */
-    public void moveLeft(double dist) {
+    public void moveLeft(double dist, boolean waypoint) {
         Pose2d currentPose = getPose();
         double currentHeading = currentPose.heading.toDouble();
         Vector2d leftUnit = new Vector2d(-Math.sin(currentHeading), Math.cos(currentHeading));
         Vector2d left = leftUnit.times(dist);
         Pose2d newPose = new Pose2d(currentPose.position.plus(left), currentPose.heading);
-        moveToPose(AUTO_MOVE_POWER, newPose);
+        moveToPose(AUTO_MOVE_POWER, newPose, waypoint);
     }
 
     /**
@@ -525,20 +525,28 @@ public final class MecanumDrive extends BodyPart{
      * @param expectedPose The pose you would like to end with
      * @return The action you can run in your action list
      */
-    public Action moveToAction(double power, Pose2d expectedPose, int direction, long timeout_ms)
+    public Action moveToAction(double power, Pose2d expectedPose, int direction, boolean waypoint, long timeout_ms)
     {
         return telemetryPacket -> {
-            moveToPose(power, expectedPose, direction, timeout_ms);
+            moveToPose(power, expectedPose, direction, waypoint, timeout_ms);
             return false;
         };
     }
+    public Action moveToAction(double power, Pose2d expectedPose, int direction, boolean waypoint)
+    {
+        return moveToAction(power, expectedPose, direction, waypoint, DEFAULT_TIMEOUT_MS);
+    }
+    public Action moveToAction(double power, Pose2d expectedPose, boolean waypoint)
+    {
+        return moveToAction(power, expectedPose, DEFAULT_SPIN_DIRECTION, waypoint, DEFAULT_TIMEOUT_MS);
+    }
     public Action moveToAction(double power, Pose2d expectedPose, int direction)
     {
-        return moveToAction(power, expectedPose, direction, DEFAULT_TIMEOUT_MS);
+        return moveToAction(power, expectedPose, direction, false, DEFAULT_TIMEOUT_MS);
     }
     public Action moveToAction(double power, Pose2d expectedPose)
     {
-        return moveToAction(power, expectedPose, DEFAULT_SPIN_DIRECTION, DEFAULT_TIMEOUT_MS);
+        return moveToAction(power, expectedPose, DEFAULT_SPIN_DIRECTION, false, DEFAULT_TIMEOUT_MS);
     }
 
     // Tweak these variables if you have wheel slip
@@ -555,9 +563,12 @@ public final class MecanumDrive extends BodyPart{
     private static final double MIN_LEFT_POWER = 0.2;           // Minimum power when not close enough
     private static final double MIN_ROTATION_POWER = 0.15;      // Minimum power when not close enough
     private static final double CLOSE_ENOUGH_POSITION = 0.5;    // Stop when this close
-    private static final double CLOSE_ENOUGH_ANGLE = 1.0;       // Stop within this angle
+    private static final double CLOSE_ENOUGH_ANGLE = 0.6;       // Stop within this angle
     private static final double CLOSE_ENOUGH_SPIN = 45.0;       // Flip spin direction if further
     private static final double OVERSHOOT_POWER = 0.3;          // More power than this will likely cause over shoot
+
+    private static final double WAYPOINT_CLOSE_ENOUGH_POSITION = 2.0; // Waypoint doesn't have to be as accurate
+    private static final double WAYPOINT_CLOSE_ENOUGH_ANGLE = 5.0;    // Waypoint doesn't have to be as accurate
 
     static
     {
@@ -589,6 +600,7 @@ public final class MecanumDrive extends BodyPart{
         private final Pose2d endPose;       // final target pose (used for ramp down)
         private final int spinDirection;    // positive left, 0 don't care, negative right
         private final long maxTime_ms;      // Maximum time allowed to drive in milliseconds
+        private final boolean isWaypoint;   // Waypoints aren't as accurate
 
         /**
          * A thread to move the robot, be careful when you call this
@@ -597,13 +609,14 @@ public final class MecanumDrive extends BodyPart{
          * @param spinDirection direction you would prefer the robot to spin
          * @param maxTime_ms maximum number of milliseconds before we stop moving
          */
-        public MoveThread(double power, Pose2d endPose, int spinDirection, long maxTime_ms){
+        public MoveThread(double power, Pose2d endPose, int spinDirection,  boolean wayPoint, long maxTime_ms){
             // Ensure the power doesn't exceed +/- 1.0
             this.power = minTowardZero(power, Math.signum(power));
 
             // Save the final target position and preferred spin direction
             this.endPose = endPose;
             this.spinDirection = spinDirection;
+            this.isWaypoint = wayPoint;
             this.maxTime_ms = Math.abs(maxTime_ms);
         }
 
@@ -613,7 +626,6 @@ public final class MecanumDrive extends BodyPart{
             // Setup for the run getting the starting pose and the current time
             long start_ms = System.currentTimeMillis();
             long current_ms;
-            long cnt = 0;
 
             // Loop until we are close enough or run out of time
             do
@@ -665,9 +677,17 @@ public final class MecanumDrive extends BodyPart{
                 double rotationPower = nextDeltaAng / RAMP_DOWN_ANGLE;
 
                 // If we're close enough we are done
-                boolean closeEnoughForward = Math.abs(nextForward) < CLOSE_ENOUGH_POSITION && forwardPower < OVERSHOOT_POWER;
-                boolean closeEnoughLeft = Math.abs(nextLeft) < CLOSE_ENOUGH_POSITION && leftPower < OVERSHOOT_POWER;
-                boolean closeEnoughAngle = Math.abs(nextDeltaAng) < CLOSE_ENOUGH_ANGLE && rotationPower < OVERSHOOT_POWER;
+                boolean closeEnoughForward, closeEnoughLeft, closeEnoughAngle;
+                if(isWaypoint){
+                    closeEnoughForward = Math.abs(nextForward) < WAYPOINT_CLOSE_ENOUGH_POSITION;
+                    closeEnoughLeft = Math.abs(nextLeft) < WAYPOINT_CLOSE_ENOUGH_POSITION;
+                    closeEnoughAngle = Math.abs(nextDeltaAng) < WAYPOINT_CLOSE_ENOUGH_ANGLE;
+                }
+                else {
+                    closeEnoughForward = Math.abs(nextForward) < CLOSE_ENOUGH_POSITION && forwardPower < OVERSHOOT_POWER;
+                    closeEnoughLeft = Math.abs(nextLeft) < CLOSE_ENOUGH_POSITION && leftPower < OVERSHOOT_POWER;
+                    closeEnoughAngle = Math.abs(nextDeltaAng) < CLOSE_ENOUGH_ANGLE && rotationPower < OVERSHOOT_POWER;
+                }
                 if(closeEnoughForward && closeEnoughLeft && closeEnoughAngle)
                     break;
 
@@ -688,14 +708,14 @@ public final class MecanumDrive extends BodyPart{
                 rotationPower = minTowardZero(rotationPower, power * Math.signum(rotationPower));
 
                 // Debug
-                telemetry.addData("How Close Position", "%f", nextDeltaPos.norm());
-                telemetry.addData("How Cose Angle", "%f", nextDeltaAng);
-                telemetry.addData("Foward Power", "%f", forwardPower);
-                telemetry.addData("Left Power", "%f", leftPower);
-                telemetry.addData("Rotation Power", "%f", rotationPower);
-                telemetry.addData("Count", ++cnt);
-                telemetry.addData("getNumListeners", getNumListeners());
-                telemetry.update();
+                //telemetry.addData("How Close Position", "%f", nextDeltaPos.norm());
+                //telemetry.addData("How Cose Angle", "%f", nextDeltaAng);
+                //telemetry.addData("Foward Power", "%f", forwardPower);
+                //telemetry.addData("Left Power", "%f", leftPower);
+                //telemetry.addData("Rotation Power", "%f", rotationPower);
+                //telemetry.addData("Count", ++cnt);
+                //telemetry.addData("getNumListeners", getNumListeners());
+                //telemetry.update();
 
                 // Tell the motors
                 setDrivePowers(new PoseVelocity2d(new Vector2d(forwardPower,leftPower),rotationPower));
@@ -733,9 +753,10 @@ public final class MecanumDrive extends BodyPart{
      * @param power maximum power to apply to the motors [-1.0,1.0]
      * @param expectedPose final pose of the robot
      * @param spinDirection direction you would like to spin (positive is left, 0 is don't care, negative is right)
+     * @param waypoint a less accurate pose along the path
      * @param timeout_ms number of milliseconds before we cancel our motion
      */
-    public void moveToPose(double power, Pose2d expectedPose, int spinDirection, long timeout_ms)
+    protected void moveToPose(double power, Pose2d expectedPose, int spinDirection, boolean waypoint, long timeout_ms)
     {
         // Start a new thread that keeps setting drive powers until we hit our spot
         if(expectedPose != null) {
@@ -743,7 +764,7 @@ public final class MecanumDrive extends BodyPart{
             moveThread.interrupt();
 
             // Start the new thread
-            moveThread = new MoveThread(power, expectedPose, spinDirection, timeout_ms);
+            moveThread = new MoveThread(power, expectedPose, spinDirection, waypoint, timeout_ms);
             moveThread.start();
         }
     }
@@ -753,9 +774,9 @@ public final class MecanumDrive extends BodyPart{
      * @param power max power for motors
      * @param expectedPose final pose
      */
-    public void moveToPose(double power, Pose2d expectedPose)
+    protected void moveToPose(double power, Pose2d expectedPose, boolean waypoint)
     {
-        moveToPose(power, expectedPose, DEFAULT_SPIN_DIRECTION, DEFAULT_TIMEOUT_MS);
+        moveToPose(power, expectedPose, DEFAULT_SPIN_DIRECTION, waypoint, DEFAULT_TIMEOUT_MS);
     }
 
     /**

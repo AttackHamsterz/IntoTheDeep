@@ -128,7 +128,6 @@ public class Shoulder extends BodyPart {
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
         telemetry.addData("Shoulder Power", shoulderMotor.getPower());
-        telemetry.addData("Shoulder Ratio", getShoulderRatio());
     }
 
     /**

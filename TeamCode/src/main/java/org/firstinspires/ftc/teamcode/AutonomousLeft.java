@@ -30,7 +30,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1), legs));
+        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1, true), legs));
 
         boolean haveBlock = camera.blockCaptured();
 
@@ -141,7 +141,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         Pose2d parkPose = new Pose2d(new Vector2d(21 + X_OFFSET, 45 + Y_OFFSET), Math.toRadians(-45));
         Action resetAction = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1, true), legs),
                 new CompleteAction(resetShoulder, shoulder),
                 new CompleteAction(resetArm, arm));
         Actions.runBlocking(resetAction);

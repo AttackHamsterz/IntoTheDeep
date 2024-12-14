@@ -81,11 +81,13 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         // If our partner is not using the alliance color specimen (do second hang)
+        double APPROACH_POWER = 0.8;
         if(!partnerHasSpecimen) {
             Action gotoPickup = new ParallelAction(
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
+                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup), legs));
             Actions.runBlocking(gotoPickup);
 
             Action grabAction = new SequentialAction(
@@ -119,18 +121,18 @@ public class AutonomousRight extends AutonomousOpMode{
         Action avoidAndHover = new ParallelAction(
                 new CompleteAction(armIn, arm),
                 new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub), legs)
+                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub, true), legs)
         );
 
         Action driveAction = new SequentialAction(
                 avoidAndHover,
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind2), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2, -1), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs)
+                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
+                new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
+                new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup), legs)
         );
         Actions.runBlocking(driveAction);
 
@@ -162,7 +164,8 @@ public class AutonomousRight extends AutonomousOpMode{
             Action finalPickup = new ParallelAction(
                     new CompleteAction(resetArm, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup, 1), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, 1, true), legs),
+                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup, 1), legs));
             Actions.runBlocking(finalPickup);
 
             Action grab3Action = new SequentialAction(
@@ -189,7 +192,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(dropAndRelease3);
         }
 
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, 1), legs));
+        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, 1, true), legs));
 
         Action resetAction = new ParallelAction(
                 new CompleteAction(resetArm, arm),

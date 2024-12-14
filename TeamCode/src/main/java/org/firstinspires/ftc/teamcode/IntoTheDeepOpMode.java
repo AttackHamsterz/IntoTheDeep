@@ -56,15 +56,15 @@ public class IntoTheDeepOpMode extends StandardSetupOpMode {
         while (opModeIsActive())
         {
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime);
-            telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y);
-            telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad1.right_stick_x, gamepad1.right_stick_y);
-            telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad2.left_stick_x, gamepad2.left_stick_y);
-            telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad2.right_stick_x, gamepad2.right_stick_y);
-            legs.debugTelemetry(telemetry);
+            //telemetry.addData("Status", "Run Time: " + runtime);
+            //telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y);
+            //telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad1.right_stick_x, gamepad1.right_stick_y);
+            //telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad2.left_stick_x, gamepad2.left_stick_y);
+            //telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad2.right_stick_x, gamepad2.right_stick_y);
+            //legs.debugTelemetry(telemetry);
             shoulder.debugTelemetry(telemetry);
             arm.debugTelemetry(telemetry);
-            hand.debugTelemetry(telemetry);
+            //hand.debugTelemetry(telemetry);
             telemetry.update();
 
             // Short sleep to keep this loop from saturating
