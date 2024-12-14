@@ -28,10 +28,10 @@ public class ColorCamera extends Thread {
     private final int colorId;
 
     // Capture area - TODO get real values
-    public static final int CAPTURE_X1 = 160 - 50/2;
-    public static final int CAPTURE_Y1 = 200 - 50/2;
-    public static final int CAPTURE_X2 = 160 + 50/2;
-    public static final int CAPTURE_Y2 = 200 + 50/2;
+    public static final int CAPTURE_X1 = 180 - 60;
+    public static final int CAPTURE_Y1 = 58 - 60;
+    public static final int CAPTURE_X2 = 180 + 60;
+    public static final int CAPTURE_Y2 = 58 + 60;
 
     // Point for good pick-up
     public static final int TARGET_X = 160;

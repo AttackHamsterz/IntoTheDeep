@@ -71,15 +71,15 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
         while(opModeIsActive()) {
 
             // This block helps us calibrate (disable once calibrated)
-            //HuskyLens.Block block = camera.getClosestBlock();
-            //if (block != null) {
-            //    telemetry.addData("Closest Block", block.toString());
-            //    int blockCenterY = block.y;
-            //    arm.debugTelemetry(telemetry);
-            //    legs.debugTelemetry(telemetry);
-            //    telemetry.update();
-            //    arm.halt(); // Lets us manually tug the arm for measurements
-            //}
+            HuskyLens.Block block = camera.getClosestBlock();
+            if (block != null) {
+                telemetry.addData("Closest Block", block.toString());
+                int blockCenterY = block.y;
+                arm.debugTelemetry(telemetry);
+                legs.debugTelemetry(telemetry);
+                telemetry.update();
+                arm.halt(); // Lets us manually tug the arm for measurements
+            }
 
             if(gamepad2.x && shoulder.getMode() == Shoulder.Mode.SEARCH && !running) {
                 // Grab the nearest block

@@ -27,6 +27,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected MecanumDrive legs;
     protected Arm arm;
     protected Shoulder shoulder;
+
     protected Hand hand;
     protected Tail tail;
     protected ColorCamera camera;

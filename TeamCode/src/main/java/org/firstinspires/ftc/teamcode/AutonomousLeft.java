@@ -15,8 +15,8 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        boolean haveBlock = camera.blockCaptured();
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(164));
+        Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(90));
         int bucketDropArmPosition = 1730;
 
         Action extendArmAction = telemetryPacket -> {
@@ -29,6 +29,10 @@ public class AutonomousLeft extends AutonomousOpMode{
             hand.release(RELEASE_MS);
             return false;
         };
+
+        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1), legs));
+
+        boolean haveBlock = camera.blockCaptured();
 
         if(haveBlock) {
             Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
@@ -82,9 +86,10 @@ public class AutonomousLeft extends AutonomousOpMode{
             };
 
             // Turn to ground samples, pick one up
-            double turnAngle = 1 + ((i==2) ? 32 : (i==1) ? 0 : -32);
+            double turnAngle = ((i==2) ? 32 : (i==1) ? 0 : -32);
             Pose2d pickupPose = new Pose2d(new Vector2d(20.87 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
-            Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, 1);
+            int direction = (i==0 && !haveBlock) ? -1 : 1;
+            Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, direction);
 
             Action lower = new ParallelAction(
                     new CompleteAction(retractForPickupAction, arm),
