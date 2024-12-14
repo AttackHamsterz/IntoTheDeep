@@ -72,7 +72,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action dropAction = telemetryPacket -> {
-            hand.grab(400);
+            hand.grab(100);
             shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
             return false;
         };
@@ -121,13 +121,10 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 arm.setPosition(AUTO_POWER, searchArmPosition);
                 return false;
             };
-            Action extendAndMoveAction = new ParallelAction(
-                    new CompleteAction(extendAction, arm),
-                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs)
-            );
             Action setupSearch = new SequentialAction(
                     searchAction, // Search height
-                    extendAndMoveAction);
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs),
+                    new CompleteAction(extendAction, arm));
             Actions.runBlocking(setupSearch);
 
             // Was old fake search

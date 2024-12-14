@@ -82,7 +82,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             };
 
             // Turn to ground samples, pick one up
-            double turnAngle = (i==2) ? 32 : (i==1) ? 0 : -32;
+            double turnAngle = 1 + ((i==2) ? 32 : (i==1) ? 0 : -32);
             Pose2d pickupPose = new Pose2d(new Vector2d(20.87 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, 1);
 
