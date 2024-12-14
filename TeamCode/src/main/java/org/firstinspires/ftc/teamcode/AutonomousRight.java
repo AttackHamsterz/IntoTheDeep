@@ -86,8 +86,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Action gotoPickup = new ParallelAction(
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
-                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs));
             Actions.runBlocking(gotoPickup);
 
             Action grabAction = new SequentialAction(
