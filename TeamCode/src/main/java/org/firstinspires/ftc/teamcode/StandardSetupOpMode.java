@@ -32,7 +32,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Tail tail;
     protected ColorCamera camera;
     protected boolean ignoreGamepad = false;
-    protected boolean favorYellow = false;
+    protected boolean favorYellow = true;
     protected final Pose2d startPose = new Pose2d(0,0,0);
 
     // @Override

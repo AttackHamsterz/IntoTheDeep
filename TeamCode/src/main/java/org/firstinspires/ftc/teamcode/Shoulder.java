@@ -70,8 +70,8 @@ public class Shoulder extends BodyPart {
     public static int SAMPLE_HOOK_DROP = 700;
 
     //Variables for shoulder speed
-    private static final double MIN_SHOULDER_POWER = -0.9;
-    private static final double MAX_SHOULDER_POWER = 0.9;
+    private static double MIN_SHOULDER_POWER = -0.9;
+    private static double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.075;
     private static final double MODE_POWER = 1.0;
@@ -137,6 +137,11 @@ public class Shoulder extends BodyPart {
     {
         setMode(Mode.NONE);
         setPosition(DROP_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
+    }
+
+    public void setShoulderSpeed(double val) {
+        MAX_SHOULDER_POWER = val;
+        MIN_SHOULDER_POWER = -val;
     }
 
     public Mode getMode()

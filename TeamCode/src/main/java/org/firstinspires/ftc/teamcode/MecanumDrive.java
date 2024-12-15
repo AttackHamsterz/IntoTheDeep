@@ -429,6 +429,7 @@ public final class MecanumDrive extends BodyPart{
                 if (!moveThread.isAlive()) moveForward(10.0, true);
             } else if (gamepad.dpad_down) {
                 if (!moveThread.isAlive()) moveForward(-10.0, true);
+                // Change later to lower shoulder speed
             } else if (gamepad.left_bumper) {
                 if (!moveThread.isAlive()) rotate(90.0, true);
             } else if (gamepad.right_bumper) {

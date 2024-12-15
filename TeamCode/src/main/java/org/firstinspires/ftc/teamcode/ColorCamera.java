@@ -40,11 +40,11 @@ public class ColorCamera extends Thread {
     // Other variables
     private static final int MIN_DETECTION_EDGE_SIZE = 5;
 
-    // Arm calibration values (ensure shoulder is in
-    private static final int NEAR_Y = 160;
-    private static final int FAR_Y = 50;
+    // Arm calibration values (ensure shoulder is in)
+    private static final int NEAR_Y = 200;
+    private static final int FAR_Y = 3;
     private static final int NEAR_TICKS = 0;
-    private static final int FAR_TICKS = 550;
+    private static final int FAR_TICKS = 1145;
 
     // y=mx+b where y is ticks and x is the relative y pixel location
     private static final double M = (double)(FAR_TICKS - NEAR_TICKS) / (double)(FAR_Y - NEAR_Y);
@@ -53,12 +53,13 @@ public class ColorCamera extends Thread {
     // Leg calibration values
     private static final int CENTER_X = 160;
     private static final int INCHES_FROM_CENTER = 4;
-    private static final int SHIFT_NEAR_X = 283;
-    private static final int SHIFT_NEAR_Y = 139;
+    // measure 4in from right side
+    private static final int SHIFT_NEAR_X = 286;
+    private static final int SHIFT_NEAR_Y = 140;
     private static final double SHIFT_NEAR_M = (double)INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_NEAR_X);
 
-    private static final int SHIFT_FAR_X = 252;
-    private static final int SHIFT_FAR_Y = 109;
+    private static final int SHIFT_FAR_X = 286;
+    private static final int SHIFT_FAR_Y = 100;
     private static final double SHIFT_FAR_M = (double) INCHES_FROM_CENTER / (double)(CENTER_X - SHIFT_FAR_X) ;
 
     // how much our slop is changing based on y

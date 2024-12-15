@@ -16,6 +16,7 @@ public class Arm extends BodyPart {
     private static final double HOLD_POWER = 0.1;
     private static final double NO_POWER = 0.0;
 
+    // set to 120 if we are too far
     private static final int SHORTEN_MAX = 0;
 
     // Min and max pos of the arm
