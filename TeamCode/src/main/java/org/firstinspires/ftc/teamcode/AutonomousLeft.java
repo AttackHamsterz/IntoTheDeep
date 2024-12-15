@@ -62,7 +62,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         for(int i = 0; i < 3; i++)
         {
             Double wristAngle = 0.35 + (double)i * 0.15;
-            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 980;
+            Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 990;
 
             Action retractForPickupAction = telemetryPacket -> {
                 arm.setPosition(0.9, searchPosition);
@@ -86,7 +86,7 @@ public class AutonomousLeft extends AutonomousOpMode{
             };
 
             // Turn to ground samples, pick one up
-            double turnAngle = ((i==2) ? 32 : (i==1) ? 0 : -32);
+            double turnAngle = ((i==2) ? 32 : (i==1) ? 1 : -30);
             Pose2d pickupPose = new Pose2d(new Vector2d(20.87 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             int direction = (i==0 && !haveBlock) ? -1 : 1;
             Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, direction);
