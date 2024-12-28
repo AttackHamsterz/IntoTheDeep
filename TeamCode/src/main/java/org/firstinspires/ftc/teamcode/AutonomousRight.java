@@ -22,7 +22,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d avoidSub = new Pose2d(new Vector2d(25.5 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
         Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
-        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -47 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -48 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(8 + X_OFFSET, -47 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d thirdHang = new Pose2d(new Vector2d(23 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
@@ -40,7 +40,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action grab = telemetryPacket -> {
-            hand.grab(600);
+            hand.grab(550);
             return false;
         };
 

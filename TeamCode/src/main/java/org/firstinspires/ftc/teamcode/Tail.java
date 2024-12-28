@@ -184,7 +184,7 @@ public class Tail extends Thread{
                     shoulder.setMode(Shoulder.Mode.NONE);
                     tailUp();
                     Action bendAction = telemetryPacket -> {
-                        shoulder.setPosition(0.5, 325);
+                        shoulder.setPosition(0.5, 400);
                         return false;
                     };
                     Action relaxAction = telemetryPacket -> {
@@ -192,8 +192,8 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action finalAction = new SequentialAction(
-                            new CompleteAction(bendAction, shoulder),
-                            new CompleteAction(relaxAction, shoulder)
+                            new CompleteAction(bendAction, shoulder)
+                            //new CompleteAction(relaxAction, shoulder)
                     );
                     Actions.runBlocking(finalAction);
                     lifting++;

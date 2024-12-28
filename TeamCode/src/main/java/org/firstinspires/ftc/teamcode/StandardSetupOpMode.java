@@ -32,8 +32,9 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Tail tail;
     protected ColorCamera camera;
     protected boolean ignoreGamepad = false;
-    protected boolean favorYellow = true;
+    protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
+
 
     // @Override
     public void runOpMode() throws InterruptedException {
@@ -47,9 +48,13 @@ public class StandardSetupOpMode extends LinearOpMode {
         camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
         setIgnoreGamepad(ignoreGamepad);
 
-        // A little bit of init to not drag the tool (auto and teleop)
-        hand.grab(300);
-        shoulder.setPosition(0.2, 150);
+        // A little bit of init to not drag the tool (auto)
+        if (ignoreGamepad) {
+            hand.grab(300);
+
+
+            shoulder.setPosition(0.2, 150);
+        }
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();

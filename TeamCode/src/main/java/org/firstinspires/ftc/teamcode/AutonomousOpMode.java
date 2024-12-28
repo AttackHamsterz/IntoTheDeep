@@ -59,7 +59,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         int dropArmPullin = 320;
         int searchArmPosition = 1070;
 
-        Pose2d dropPose = new Pose2d(new Vector2d(22.5 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(23 + X_OFFSET, Y_OFFSET), 0);
         Pose2d searchPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {
