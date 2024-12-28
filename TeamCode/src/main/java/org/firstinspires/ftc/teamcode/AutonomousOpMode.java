@@ -17,8 +17,8 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
 
-    protected static int dropShoulderPositionTop = 2050;
-    protected static int dropShoulderPositionBottom = 1550;
+    protected static int dropShoulderPositionTop = 1512;
+    protected static int dropShoulderPositionBottom = 1143;
     protected static int dropArmPosition = 960;
 
     protected boolean submersibleSearch = false;
@@ -130,7 +130,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             //    return false;
             //};
             //Action liftShoulder = telemetryPacket -> {
-            //    shoulder.setPosition(AUTO_POWER, 550);
+            //    shoulder.setPosition(AUTO_POWER, 406);
             //    return false;
             //};
             //Action fakeSearch = new SequentialAction(
@@ -143,7 +143,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
             // Safe height for shoulder
             Action liftShoulder = telemetryPacket -> {
-                shoulder.setPosition(AUTO_POWER, 550);
+                shoulder.setPosition(AUTO_POWER, 406);
                 return false;
             };
             Actions.runBlocking(new CompleteAction(liftShoulder, shoulder));

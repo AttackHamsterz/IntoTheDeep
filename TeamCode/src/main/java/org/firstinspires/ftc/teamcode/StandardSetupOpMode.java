@@ -35,7 +35,6 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
 
-
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
@@ -53,7 +52,7 @@ public class StandardSetupOpMode extends LinearOpMode {
             hand.grab(300);
 
 
-            shoulder.setPosition(0.2, 150);
+            shoulder.setPosition(0.2, 111);
         }
 
         telemetry.addData("Status", "Initialized");

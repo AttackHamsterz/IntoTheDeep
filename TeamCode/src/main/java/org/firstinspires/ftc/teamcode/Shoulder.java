@@ -43,31 +43,32 @@ public class Shoulder extends BodyPart {
     }
 
     // Shoulder positions for each mode when the arm is all the way in
+    // 30rpm to 43rpm ratio 0.7377061597015773
     public static ArrayList<Integer> ARM_IN_POS = new ArrayList<>(Arrays.asList(
-            3,  // Ground
-            495,  // Search
-            1454, // Low Bar
-            2719, // High Bar
-            2380,//2907, // Low Bucket
-            3018, // High Bucket
-            3375, // Hang
-            143   // None is like ground
+            2,  // Ground
+            365,  // Search
+            1073, // Low Bar
+            2006, // High Bar
+            1756, // Low Bucket
+            2226, // High Bucket
+            2490, // Hang
+            105   // None is like ground
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
-            500,  // Ground
-            681,  // Search
-            1192, // Low Bar
-            1781, // High Bar
-            1901, // Low Bucket
-            3018, // High Bucket
-            3375, // Hang
-            500   // None is like ground
+            369,  // Ground
+            502,  // Search
+            879, // Low Bar
+            1314, // High Bar
+            1402, // Low Bucket
+            2226, // High Bucket
+            2490, // Hang
+            369   // None is like ground
     ));
 
     // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 700;
+    public static int SAMPLE_HOOK_DROP = 516;
 
     //Variables for shoulder speed
     private static double MIN_SHOULDER_POWER = -0.9;
@@ -128,20 +129,6 @@ public class Shoulder extends BodyPart {
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
         telemetry.addData("Shoulder Power", shoulderMotor.getPower());
-    }
-
-    /**
-     * Method to drop the shoulder to hook the sample onto the bar
-     */
-    public void dropSample()
-    {
-        setMode(Mode.NONE);
-        setPosition(DROP_POWER, getCurrentPosition() - SAMPLE_HOOK_DROP);
-    }
-
-    public void setShoulderSpeed(double val) {
-        MAX_SHOULDER_POWER = val;
-        MIN_SHOULDER_POWER = -val;
     }
 
     public Mode getMode()
@@ -339,7 +326,7 @@ public class Shoulder extends BodyPart {
                     pressing = true;
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
-                        setPosition(1.0, 1550);
+                        setPosition(1.0, 1143);
                     }
                     else {
                         mode = Mode.HIGH_BAR;
