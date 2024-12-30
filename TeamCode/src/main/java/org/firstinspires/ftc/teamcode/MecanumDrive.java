@@ -130,10 +130,10 @@ public final class MecanumDrive extends BodyPart{
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "frontLeftDrive");
-        leftBack = hardwareMap.get(DcMotorEx.class, "rearLeftDrive");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rearRightDrive");
-        rightFront = hardwareMap.get(DcMotorEx.class, "frontRightDrive");
+        leftFront = hardwareMap.get(DcMotorEx.class, "frontLeftDrive"); //ch3
+        leftBack = hardwareMap.get(DcMotorEx.class, "rearLeftDrive"); //ch1
+        rightBack = hardwareMap.get(DcMotorEx.class, "rearRightDrive"); //ch0
+        rightFront = hardwareMap.get(DcMotorEx.class, "frontRightDrive"); //ch2
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

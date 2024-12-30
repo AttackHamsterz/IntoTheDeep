@@ -27,7 +27,7 @@ public class Tail extends Thread{
     private static final double MAX_POS = 1.0; // +90 degrees
 
     public Tail(HardwareMap hardwareMap, Gamepad gamepad, Shoulder shoulder, Arm arm) {
-        this.tail = hardwareMap.get(Servo.class, "tailServo");
+        this.tail = hardwareMap.get(Servo.class, "tailServo"); //ch4 Servo
         this.gamepad = gamepad;
         this.ignoreGamepad = false;
         this.shoulder = shoulder;

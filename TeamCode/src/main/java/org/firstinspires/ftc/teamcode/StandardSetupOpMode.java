@@ -31,6 +31,7 @@ public class StandardSetupOpMode extends LinearOpMode {
     protected Hand hand;
     protected Tail tail;
     protected ColorCamera camera;
+    protected Eye eye;
     protected boolean ignoreGamepad = false;
     protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
@@ -44,7 +45,8 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
         tail = new Tail(hardwareMap, gamepad2, shoulder, arm);
-        camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
+        //camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
+        eye = new Eye(hardwareMap, shoulder, arm, gamepad2, telemetry);
         setIgnoreGamepad(ignoreGamepad);
 
         // A little bit of init to not drag the tool (auto)
@@ -66,7 +68,8 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.start();
         hand.start();
         tail.start();
-        camera.start();
+        //camera.start();
+        eye.start();
     }
 
     /**
@@ -99,7 +102,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         if(arm != null) arm.setIgnoreGamepad(ignoreGamepad);
         if(hand != null) hand.setIgnoreGamepad(ignoreGamepad);
         if (tail != null) tail.setIgnoreGamepad(ignoreGamepad);
-        if (camera != null) camera.setIgnoreGamepad(ignoreGamepad);
+        //if (camera != null) camera.setIgnoreGamepad(ignoreGamepad);
     }
 
     /**
@@ -113,14 +116,16 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.interrupt();
         hand.interrupt();
         tail.interrupt();
-        camera.interrupt();
+        //camera.interrupt();
+        eye.interrupt();
 
         legs.join();
         shoulder.join();
         arm.join();
         hand.join();
         tail.join();
-        camera.join();
+        //camera.join();
+        eye.join();
     }
 }
 

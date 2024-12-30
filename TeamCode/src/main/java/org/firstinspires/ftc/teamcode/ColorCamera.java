@@ -18,7 +18,7 @@ import java.util.List;
 public class ColorCamera extends Thread {
 
     public final HuskyLens huskyLens;
-    private final RevBlinkinLedDriver blinkin;
+    //private final RevBlinkinLedDriver blinkin;
 
     // variable to store the color of alliance
     private static final int NONE_ID = 0;
@@ -88,12 +88,15 @@ public class ColorCamera extends Thread {
         this.gamepad = gamepad;
         this.favorYellow = favorYellow;
 
+        /*
         // LED setup
         this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
         if(colorId == BLUE_ID)
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_BLUE);
         else
             blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_RED);
+
+         */
     }
 
     /**
@@ -516,6 +519,7 @@ public class ColorCamera extends Thread {
 
             // TODO - is it captured?
 
+            /*
             // Indicate color we have locked on to
             if(block == null)
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
@@ -527,6 +531,8 @@ public class ColorCamera extends Thread {
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
             else
                 blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+
+             */
 
             // If search is pressed and the shoulder is close enough to search height
             if(!ignoreGamepad && gamepad.x && shoulder.modeReady(Shoulder.Mode.SEARCH)) {

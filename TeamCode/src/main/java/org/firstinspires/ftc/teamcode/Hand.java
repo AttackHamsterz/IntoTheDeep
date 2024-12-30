@@ -42,8 +42,8 @@ public class Hand extends BodyPart{
     {
         // Initial assignments
         this.wrist = hardwareMap.get(Servo.class, "wristServo"); //ch0 expansion hub Servo
-        this.left = hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Servo
-        this.right = hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Servo
+        this.left = hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Continuous Servo
+        this.right = hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Continuous Servo
         this.gamepad = gamepad;
 
         // Initial setup
