@@ -6,9 +6,9 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
-import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import java.util.ArrayList;
@@ -18,7 +18,11 @@ import java.util.List;
 public class ColorCamera extends Thread {
 
     public final HuskyLens huskyLens;
-    private final RevBlinkinLedDriver blinkin;
+
+    private static final double OFF_POWER = 0.0;
+    private static final double RED_POWER = 0.279;
+    private static final double YELLOW_POWER = 0.388;
+    private static final double BLUE_POWER = 0.611;
 
     // variable to store the color of alliance
     private static final int NONE_ID = 0;
@@ -66,6 +70,8 @@ public class ColorCamera extends Thread {
     private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
+    public Servo lights;
+
     protected MecanumDrive legs;
     protected Arm arm;
     protected Shoulder shoulder;
@@ -89,11 +95,11 @@ public class ColorCamera extends Thread {
         this.favorYellow = favorYellow;
 
         // LED setup
-        this.blinkin = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+        this.lights = hardwareMap.get(Servo.class, "lights");
         if(colorId == BLUE_ID)
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_BLUE);
+            lights.setPosition(BLUE_POWER);
         else
-            blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BREATH_RED);
+            lights.setPosition(RED_POWER);
     }
 
     /**
@@ -518,15 +524,15 @@ public class ColorCamera extends Thread {
 
             // Indicate color we have locked on to
             if(block == null)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+                lights.setPosition(OFF_POWER);
             else if(block.id == YELLOW_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+                lights.setPosition(YELLOW_POWER);
             else if(block.id == RED_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+                lights.setPosition(RED_POWER);
             else if(block.id == BLUE_ID)
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+                lights.setPosition(BLUE_POWER);
             else
-                blinkin.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLACK);
+                lights.setPosition(OFF_POWER);
 
             // If search is pressed and the shoulder is close enough to search height
             if(!ignoreGamepad && gamepad.x && shoulder.modeReady(Shoulder.Mode.SEARCH)) {
