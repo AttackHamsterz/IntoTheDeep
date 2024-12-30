@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -28,6 +29,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Eye extends BodyPart {
+
+    private static final double OFF_POWER = 0.0;
+    private static final double RED_POWER = 0.279;
+    private static final double YELLOW_POWER = 0.388;
+    private static final double BLUE_POWER = 0.555;
+
+    // variable to store the color of alliance
+    private static final int NONE_ID = 0;
+    private static final int YELLOW_ID = 1;
+    private static final int RED_ID = 2;
+    private static final int BLUE_ID = 3;
+    private final int colorId;
+
     protected static final int WEBCAM_WIDTH = 640;
     protected static final int WEBCAM_HEIGHT = 480;
     // Arm calibration values
@@ -64,13 +78,23 @@ public class Eye extends BodyPart {
     Gamepad gamepad;
     StandardSetupOpMode.COLOR color;
     Telemetry telemetry;
+    public Servo lights;
 
-    public Eye(HardwareMap hardwareMap, Shoulder shoulder, Arm arm, Gamepad gamepad, Telemetry telemetry) {
+    public Eye(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, Shoulder shoulder, Arm arm, Gamepad gamepad, Telemetry telemetry) {
         this.shoulder = shoulder;
         this.arm = arm;
         //this.color = color;
         this.gamepad = gamepad;
         this.telemetry = telemetry;
+
+        this.lights = hardwareMap.get(Servo.class, "lights"); // Expansion hub ch3
+        // LED setup
+        colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+
+        if(colorId == BLUE_ID)
+            lights.setPosition(BLUE_POWER);
+        else
+            lights.setPosition(RED_POWER);
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         this.webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -129,6 +153,19 @@ public class Eye extends BodyPart {
             telemetry.addData("Winner Angles", winnerAngles);
             telemetry.update();
 
+            /*
+            if(block == null)
+                lights.setPosition(OFF_POWER);
+            else if(block.id == YELLOW_ID)
+                lights.setPosition(YELLOW_POWER);
+            else if(block.id == RED_ID)
+                lights.setPosition(RED_POWER);
+            else if(block.id == BLUE_ID)
+                lights.setPosition(BLUE_POWER);
+            else
+                lights.setPosition(OFF_POWER);
+
+             */
 
             try {
                 sleep(BodyPart.LOOP_PAUSE_MS);
@@ -203,6 +240,10 @@ public class Eye extends BodyPart {
             Imgproc.findContours(redMask, redContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             Imgproc.findContours(blueMask, blueContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
+            telemetry.addData("yellow contours", yellowContours);
+            telemetry.addData("red contours", redContours);
+            telemetry.addData("blue contours", blueContours);
+
             int min_area = 10000;
 
             yellowContours.removeIf(cnt -> Imgproc.contourArea(cnt) <= min_area);
@@ -212,7 +253,12 @@ public class Eye extends BodyPart {
             int binSize = 5;
 
 
+/*
+            telemetry.addData("yellow contours", yellowContours);
+            telemetry.addData("red contours", redContours);
+            telemetry.addData("blue contours", blueContours);
 
+ */
 
             for (MatOfPoint contour : yellowContours) {
                 // smooth contour

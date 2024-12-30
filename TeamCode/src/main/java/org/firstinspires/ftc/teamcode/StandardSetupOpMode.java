@@ -46,7 +46,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         hand = new Hand(hardwareMap, gamepad2);
         tail = new Tail(hardwareMap, gamepad2, shoulder, arm);
         //camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
-        eye = new Eye(hardwareMap, shoulder, arm, gamepad2, telemetry);
+        eye = new Eye(hardwareMap, color, shoulder, arm, gamepad2, telemetry);
         setIgnoreGamepad(ignoreGamepad);
 
         // A little bit of init to not drag the tool (auto)
