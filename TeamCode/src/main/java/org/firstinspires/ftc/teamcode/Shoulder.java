@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
@@ -85,6 +86,7 @@ public class Shoulder extends BodyPart {
     public static double DELTA_MIN_POS_ARM = Mode.GROUND.armOutPos() - MIN_POS_ARM_IN;
 
     //Setting up vars of threading
+    private final DigitalChannel shoulderSwitch;
     private final DcMotor shoulderMotor;
     private final Arm arm;
 
@@ -92,7 +94,10 @@ public class Shoulder extends BodyPart {
     private boolean hold = false;
 
     // Values for arm ratio and floor protection
+    private boolean homed = false;
     private double armRatio;
+    private static int ABSOLUTE_MIN = -250;
+    private static int ABSOLUTE_MAX = Mode.HANG.armInPos();
     private int MIN_POS = Mode.NONE.armInPos();
     public static int MAX_POS = Mode.HANG.armInPos();
 
@@ -107,12 +112,14 @@ public class Shoulder extends BodyPart {
      */
     public Shoulder(HardwareMap hardwareMap, Arm arm, Gamepad gamepad, Gamepad extraGamepad) {
         // Assignments
+        shoulderSwitch = hardwareMap.get(DigitalChannel.class, "shoulderSwitch"); //digital 2 control hub
         shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor;
         this.arm = arm;
         this.gamepad = gamepad;
         this.extraGamepad = extraGamepad;
 
         // Setup
+        shoulderSwitch.setMode(DigitalChannel.Mode.INPUT);
         shoulderMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         shoulderMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -129,6 +136,7 @@ public class Shoulder extends BodyPart {
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
         telemetry.addData("Shoulder Power", shoulderMotor.getPower());
+        //telemetry.addData("Shoulder Switch", !shoulderSwitch.getState());
     }
 
     public Mode getMode()
@@ -201,11 +209,17 @@ public class Shoulder extends BodyPart {
      * @param power    power of the shoulder motor
      * @param position position to set the shoulder to
      */
-    public void setPosition(double power, int position, boolean clipPosition)
+    public void setPosition(double power, int position)
     {
+        // Never let the shoulder go too high
+        if(position > ABSOLUTE_MAX)
+            position = ABSOLUTE_MAX;
+
+        // Never let us go too low unless we've never homed
+        if(homed && position < ABSOLUTE_MIN)
+            position = ABSOLUTE_MIN;
+
         // Check the current position against the target position (do nothing if close enough)
-        if(clipPosition)
-            position = Range.clip(position, MIN_POS, MAX_POS);
         int currentPos = shoulderMotor.getCurrentPosition();
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS)
         {
@@ -222,10 +236,6 @@ public class Shoulder extends BodyPart {
 
         // Generate a new motor protection thread
         protectMotors(position);
-    }
-
-    public void setPosition(double power, int position){
-        setPosition(power, position, true);
     }
 
     public void setMode(Mode mode)
@@ -256,6 +266,16 @@ public class Shoulder extends BodyPart {
     public void run() {
         boolean pressing = false;
         while (!isInterrupted()) {
+
+            // Reset the motor count if limit switch is triggered and current value is poor
+            if(!shoulderSwitch.getState() && Math.abs(shoulderMotor.getCurrentPosition())>10){
+               shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+               shoulderMotor.setTargetPosition(0);
+               shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+               homed = true;
+               continue;
+            }
+
             // Always get the current arm ratio (use this to maintain heights given arm reach)
             armRatio = arm.getArmRatio();
 
@@ -268,28 +288,6 @@ public class Shoulder extends BodyPart {
                 float power = gamepad.right_stick_y;
                 if(shoulderMotor.getCurrentPosition() > Mode.HIGH_BUCKET.armInPos())
                     power *= 0.5f;
-
-                // Reset the encoder on the shoulder
-                //if(extraGamepad.start){
-                //    shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                //    shoulderMotor.setTargetPosition(0);
-                //    shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                //    //protectMotors(0);
-                //    continue;
-                //}
-
-                // Allow the shoulder to be reset
-                if(extraGamepad.back){
-                    setMode(Mode.NONE);
-                    shoulderMotor.setPower(0);
-
-                    shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    shoulderMotor.setTargetPosition(0);
-                    shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    //protectMotors(0);
-                    //setPosition(power, shoulderMotor.getCurrentPosition() + (int)Math.round(power * 10), false);
-                    continue;
-                }
 
                 // Move the shoulder
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
@@ -309,7 +307,8 @@ public class Shoulder extends BodyPart {
                 } else if (power > TRIM_POWER) {
                     // Calling setPosition here adds the motor protection, even if the driver
                     // holds the shoulder stick up forever
-                    setPosition(power, MIN_POS);
+                    int finalPosition = shoulderSwitch.getState() ? -MAX_POS : MIN_POS;
+                    setPosition(power, finalPosition);
                     hold = false;
                     mode = Mode.NONE;
                 }

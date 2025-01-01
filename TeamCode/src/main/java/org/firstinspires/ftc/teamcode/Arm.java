@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
@@ -22,8 +23,10 @@ public class Arm extends BodyPart {
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
     public static final int MAX_POS = 2180;
+    public static final int RESET_POS = -MAX_POS - 100;
 
     // Vars for the arm motors
+    private final DigitalChannel armSwitch;
     private final DcMotor armMotorLeft;
     private final DcMotor armMotorRight;
 
@@ -38,6 +41,7 @@ public class Arm extends BodyPart {
      */
     public Arm(HardwareMap hardwareMap, Gamepad gamepad, Gamepad extraGamepad, Shoulder shoulder) {
         // Assignments
+        armSwitch = hardwareMap.get(DigitalChannel.class, "armSwitch"); //digital 0 control hub
         armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
         armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
         this.gamepad = gamepad;
@@ -45,6 +49,7 @@ public class Arm extends BodyPart {
         this.shoulder = shoulder;
 
         // Setup
+        armSwitch.setMode(DigitalChannel.Mode.INPUT);
         armMotorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         armMotorRight.setDirection(DcMotorSimple.Direction.FORWARD);
         armMotorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -59,7 +64,7 @@ public class Arm extends BodyPart {
 
     /**
      * Method adds important things to telemetry
-     * @param telemetry
+     * @param telemetry store info
      */
     public void debugTelemetry(Telemetry telemetry)
     {
@@ -67,6 +72,7 @@ public class Arm extends BodyPart {
         telemetry.addData("Arm Counts Right", armMotorRight.getCurrentPosition());
         telemetry.addData("Arm Power Left", armMotorLeft.getPower());
         telemetry.addData("Arm Power Right", armMotorRight.getPower());
+        //telemetry.addData("Arm switch", !armSwitch.getState());
     }
 
     @Override
@@ -93,8 +99,8 @@ public class Arm extends BodyPart {
 
     /**
      * Given a position we would like to get to, what is an ideal arm ratio.
-     * @param targetPosition
-     * @return
+     * @param targetPosition where we would like to end up
+     * @return The ratio from 0.0 to 1.0
      */
     public double getArmRatio(int targetPosition)
     {
@@ -104,11 +110,6 @@ public class Arm extends BodyPart {
     public void gotoMin(double power)
     {
         setPosition(power, MIN_POS);
-    }
-
-    public void gotoMax(double power)
-    {
-        setPosition(power, MAX_POS);
     }
 
     /**
@@ -121,23 +122,25 @@ public class Arm extends BodyPart {
     }
 
     /**
-     * Sets the position of the arm
+     * Sets the position of the arm, this does allow negative positions now that we have a limit
+     * switch.
      * @param power the power of the arm's movements
      * @param position arm position
      */
-    public void setPosition(double power, int position, boolean clipPosition) {
-        // Check the current position against the target position (do nothing if close enough)
-        if(clipPosition) {
-            // if our shoulder is low enough, then decrease our max extension distance
-            // this is just in case we don't pass inspection
-            if (shoulder != null) {
-                if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+    public void setPosition(double power, int position) {
+        // Never extend too far, ever
+        if(position > MAX_POS)
+            position = MAX_POS;
+
+        // If our shoulder is low enough, then decrease our max extension distance
+        // this is just in case we don't pass inspection
+        if (shoulder != null && SHORTEN_MAX > 0) {
+            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+                if(position > MAX_POS - SHORTEN_MAX)
                     position = Range.clip(position, MIN_POS, MAX_POS - SHORTEN_MAX);
-                } else {
-                    position = Range.clip(position, MIN_POS, MAX_POS);
-                }
             }
         }
+
         int currentPos = (armMotorLeft.getCurrentPosition() +  armMotorRight.getCurrentPosition()) / 2;
         if(Math.abs(currentPos - position) < CLOSE_ENOUGH_TICKS) {
             protectMotors(position);
@@ -156,18 +159,14 @@ public class Arm extends BodyPart {
         // Generate a new motor protection thread
         protectMotors(position);
 
-        // Tell the shoulder to update for ground protection
-        if (shoulder != null)  {
+        // Tell the shoulder to update if it's in a mode
+        if (shoulder != null && shoulder.getMode() != Shoulder.Mode.NONE)  {
             if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
                 shoulder.targetArmRatio((double) (position - MIN_POS) / (double) ((MAX_POS-SHORTEN_MAX) - MIN_POS));
             } else {
                 shoulder.targetArmRatio((double) (position - MIN_POS) / (double) (MAX_POS - MIN_POS));
             }
         }
-    }
-
-    public void setPosition(double power, int position){
-        setPosition(power, position, true);
     }
 
     /**
@@ -201,8 +200,8 @@ public class Arm extends BodyPart {
             armMotorLeft.setTargetPosition(posRight);
         }
 
-        // I've stopped moving, tell the shoulder to recheck safety one last time
-        if (shoulder != null) shoulder.setHold(false);
+        // I've stopped moving, tell the shoulder to recheck mode one last time
+        if (shoulder != null && shoulder.getMode() != Shoulder.Mode.NONE) shoulder.setHold(false);
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();
@@ -211,37 +210,23 @@ public class Arm extends BodyPart {
     @Override
     public void run() {
         while (!isInterrupted()) {
+            // Reset the motor count if limit switch is triggered and current value is poor
+            if(!armSwitch.getState() && (Math.abs(armMotorLeft.getCurrentPosition())>10 || Math.abs(armMotorRight.getCurrentPosition())>10)){
+                armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armMotorLeft.setTargetPosition(0);
+                armMotorRight.setTargetPosition(0);
+                armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armMotorRight.setPower(NO_POWER);
+                armMotorLeft.setPower(HOLD_POWER);
+                continue;
+            }
+
             if(!ignoreGamepad)
             {
                 // Get the power
                 double power = gamepad.left_stick_y;
-
-                // Arm belts have slipped, reset them
-                if(extraGamepad.start){
-
-                    armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    armMotorLeft.setTargetPosition(0);
-                    armMotorRight.setTargetPosition(0);
-                    armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    //protectMotors(0);
-                    continue;
-                }
-
-                // Allow the motors to go past safety stops
-                if(extraGamepad.back){
-                    setPosition(-Math.abs(power), getCurrentPosition() - (int)Math.round(power * 200), false);
-                    armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    armMotorLeft.setTargetPosition(0);
-                    armMotorRight.setTargetPosition(0);
-                    armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    continue;
-                }
-
-
 
                 // Sets the arm speed to a number MIN to MAX based on the left stick's position
                 if (!hold && Math.abs(power) <= TRIM_POWER) {
@@ -261,7 +246,8 @@ public class Arm extends BodyPart {
                 } else if (power > TRIM_POWER) {
                     // Calling setArmPosition here adds the motor protection, even if the driver
                     // holds the extension stick up forever
-                    setPosition(power, MIN_POS);
+                    int finalPosition = armSwitch.getState() ? RESET_POS : MIN_POS;
+                    setPosition(power, finalPosition);
                     hold = false;
                 }
             }

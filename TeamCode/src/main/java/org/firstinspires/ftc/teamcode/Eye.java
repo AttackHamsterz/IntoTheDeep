@@ -33,7 +33,7 @@ public class Eye extends BodyPart {
     private static final double OFF_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
-    private static final double BLUE_POWER = 0.555;
+    private static final double BLUE_POWER = 0.611;
 
     // variable to store the color of alliance
     private static final int NONE_ID = 0;
@@ -194,29 +194,27 @@ public class Eye extends BodyPart {
      class Pipeline extends OpenCvPipeline {
         boolean viewportPaused;
 
+        private Mat lab = new Mat();
+         private Mat yellowMask = new Mat();
+         private Mat blueMask = new Mat();
+         private Mat redMask = new Mat();
+
         @Override
         public Mat processFrame(Mat input) {
-            Mat lab = new Mat();
-
+            webcam.stopStreaming();
             Imgproc.cvtColor(input, lab, Imgproc.COLOR_BGR2Lab);
 
             Scalar yellow_low = new Scalar(220, 110, 150);
             Scalar yellow_high = new Scalar(255, 125, 220);
-            Mat yellowMask = new Mat();
             Core.inRange(lab, yellow_low, yellow_high, yellowMask);
 
             Scalar blue_low = new Scalar(70, 140, 45);
             Scalar blue_high = new Scalar(150, 170, 65);
-            Mat blueMask = new Mat();
             Core.inRange(lab, blue_low, blue_high, blueMask);
 
             Scalar red_low = new Scalar(160, 140, 125);
             Scalar red_high = new Scalar(240, 190, 190);
-            Mat redMask = new Mat();
             Core.inRange(lab, red_low, red_high, redMask);
-
-
-
 
             Mat mask = Mat.zeros(lab.size(), CvType.CV_8UC1); // Create an empty mask
             // Set values for yellow, red, and blue masks in the combined mask
