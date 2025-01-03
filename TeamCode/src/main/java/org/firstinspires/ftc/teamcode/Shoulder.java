@@ -75,7 +75,7 @@ public class Shoulder extends BodyPart {
     private static double MIN_SHOULDER_POWER = -0.9;
     private static double MAX_SHOULDER_POWER = 0.9;
     private static final double TRIM_POWER = 0.15;
-    private static final double HOLD_POWER = 0.15;
+    private static final double HOLD_POWER = 0.25;
     private static final double MODE_POWER = 1.0;
     private static final double DROP_POWER = -0.9;
     private static final double NO_POWER = 0.0;

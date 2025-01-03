@@ -16,8 +16,10 @@ import org.opencv.imgproc.Imgproc;
  * A class to perform frame processing in opencv.  Also lets us easily unit test the algorithm
  */
 public class FrameProcessing {
-    private final Mat lab;
+    private final Mat hsv;
     private final Mat mask;
+    private final Mat maskLow;
+    private final Mat maskHi;
     private final Mat heirarchy;
 
     public List<MatOfPoint> contours = new ArrayList<>();
@@ -28,16 +30,21 @@ public class FrameProcessing {
     private final int MIN_AREA;
 
     private static final double MAX_CHANGE = Math.toRadians(10);
-    private static final Scalar YELLOW_LOW = new Scalar(220, 110, 150);
-    private static final Scalar YELLOW_HIGH = new Scalar(255, 125, 220);
-    private static final Scalar RED_LOW = new Scalar(160, 140, 125);
-    private static final Scalar RED_HIGH = new Scalar(240, 190, 190);
-    private static final Scalar BLUE_LOW = new Scalar(70, 140, 45);
-    private static final Scalar BLUE_HIGH = new Scalar(150, 170, 65);
+
+    private static final Scalar HSV_YELLOW_LOW = new Scalar(20, 100, 100);
+    private static final Scalar HSV_YELLOW_HIGH = new Scalar(40, 255, 255);
+    private static final Scalar HSV_RED1_LOW = new Scalar(0, 100, 100);
+    private static final Scalar HSV_RED1_HIGH = new Scalar(10, 255, 255);
+    private static final Scalar HSV_RED2_LOW = new Scalar(170, 100, 100);
+    private static final Scalar HSV_RED2_HIGH = new Scalar(180, 255, 255);
+    private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
+    private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
 
     public FrameProcessing( int width, int height){
-        lab = new Mat(height, width * 3, CvType.CV_8U);
+        hsv = new Mat(height, width * 3, CvType.CV_8U);
         mask = new Mat(height, width, CvType.CV_8UC1);
+        maskLow = new Mat(height, width, CvType.CV_8UC1);
+        maskHi = new Mat(height, width, CvType.CV_8UC1);
         heirarchy = new Mat();
 
         MIN_AREA = (int)Math.round((double)(width * height) * 0.005);
@@ -46,7 +53,7 @@ public class FrameProcessing {
     public void matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
     {
         // Convert from BGR to LAB
-        Imgproc.cvtColor(input, lab, Imgproc.COLOR_BGR2Lab);
+        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_BGR2HSV);
 
         // Clear existing detections
         contours.clear();
@@ -56,7 +63,7 @@ public class FrameProcessing {
 
         // Detect yellow
         if(favorYellow){
-            Core.inRange(lab, YELLOW_LOW, YELLOW_HIGH, mask);
+            Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
             Imgproc.findContours(mask, contours, heirarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
         }
@@ -64,10 +71,12 @@ public class FrameProcessing {
         // Only process alliance if we didn't want or find any yellow
         if(contours.size() == 0){
             if(alliance == StandardSetupOpMode.COLOR.RED){
-                Core.inRange(lab, RED_LOW, RED_HIGH, mask);
+                Core.inRange(hsv, HSV_RED1_LOW, HSV_RED1_HIGH, maskLow);
+                Core.inRange(hsv, HSV_RED2_LOW, HSV_RED2_HIGH, maskHi);
+                Core.add(maskLow, maskHi, mask);
             }
             else{
-                Core.inRange(lab, BLUE_LOW, BLUE_HIGH, mask);
+                Core.inRange(hsv, HSV_BLUE_LOW, HSV_BLUE_HIGH, mask);
             }
             Imgproc.findContours(mask, contours, heirarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);

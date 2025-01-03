@@ -2,32 +2,19 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class Eye extends BodyPart {
 
@@ -43,8 +30,8 @@ public class Eye extends BodyPart {
     private static final int BLUE_ID = 3;
     private final int colorId;
 
-    protected static final int WEBCAM_WIDTH = 640;
-    protected static final int WEBCAM_HEIGHT = 480;
+    protected static final int WEBCAM_WIDTH = 1920;
+    protected static final int WEBCAM_HEIGHT = 1080;
     public static final int TARGET_X = WEBCAM_WIDTH / 2;
     public static final int TARGET_Y = WEBCAM_HEIGHT * 4 / 10;
 
@@ -105,7 +92,7 @@ public class Eye extends BodyPart {
             lights.setPosition(RED_POWER);
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        this.webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         webcam.setPipeline(new Pipeline());
         webcam.setMillisecondsPermissionTimeout(5000);
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
@@ -150,8 +137,6 @@ public class Eye extends BodyPart {
 
         boolean pressingX = false;
         while (!isInterrupted()) {
-
-
             if (gamepad.x && !pressingX) {
                 pressingX = true;
                 search = true;
@@ -232,15 +217,17 @@ public class Eye extends BodyPart {
                     // Move body for a good pickup
 
                     // Move wrist with a good average
-                    double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
+                    double wristPos = 0.5 - Math.cos(fp.angleVal.get(smallestDistIndex)) * 0.5;
                     hand.setWrist(wristPos);
 
                     // Plunge to pickup
 
                     // Debug
+                    telemetry.addData("Total num", fp.centerXVal.size());
                     telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
                     telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
-                    telemetry.addData("Winner a", fp.angleVal.get(smallestDistIndex));
+                    telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
+                    telemetry.addData("Wrist pos", wristPos);
                 }
                 telemetry.update();
             }
