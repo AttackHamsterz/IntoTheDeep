@@ -30,8 +30,8 @@ public class Eye extends BodyPart {
     private static final int BLUE_ID = 3;
     private final int colorId;
 
-    protected static final int WEBCAM_WIDTH = 1920;
-    protected static final int WEBCAM_HEIGHT = 1080;
+    protected static final int WEBCAM_WIDTH = 800;//1920;//640;//1920;
+    protected static final int WEBCAM_HEIGHT = 600;//1080;//480;//1080;
     public static final int TARGET_X = WEBCAM_WIDTH / 2;
     public static final int TARGET_Y = WEBCAM_HEIGHT * 4 / 10;
 
@@ -141,8 +141,11 @@ public class Eye extends BodyPart {
                 pressingX = true;
                 search = true;
             }
-            else{
-                pressingX = false;
+            else if(!gamepad.x){
+                if(pressingX) {
+                    pressingX = false;
+                    // Move and plunge
+                }
             }
 
             /*
@@ -217,7 +220,7 @@ public class Eye extends BodyPart {
                     // Move body for a good pickup
 
                     // Move wrist with a good average
-                    double wristPos = 0.5 - Math.cos(fp.angleVal.get(smallestDistIndex)) * 0.5;
+                    double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
                     hand.setWrist(wristPos);
 
                     // Plunge to pickup

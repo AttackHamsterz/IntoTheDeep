@@ -20,7 +20,7 @@ public class FrameProcessing {
     private final Mat mask;
     private final Mat maskLow;
     private final Mat maskHi;
-    private final Mat heirarchy;
+    private final Mat hierarchy;
 
     public List<MatOfPoint> contours = new ArrayList<>();
     public List<Integer> centerXVal = new ArrayList<>();
@@ -45,7 +45,7 @@ public class FrameProcessing {
         mask = new Mat(height, width, CvType.CV_8UC1);
         maskLow = new Mat(height, width, CvType.CV_8UC1);
         maskHi = new Mat(height, width, CvType.CV_8UC1);
-        heirarchy = new Mat();
+        hierarchy = new Mat();
 
         MIN_AREA = (int)Math.round((double)(width * height) * 0.005);
     }
@@ -64,7 +64,7 @@ public class FrameProcessing {
         // Detect yellow
         if(favorYellow){
             Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
-            Imgproc.findContours(mask, contours, heirarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
         }
 
@@ -78,7 +78,7 @@ public class FrameProcessing {
             else{
                 Core.inRange(hsv, HSV_BLUE_LOW, HSV_BLUE_HIGH, mask);
             }
-            Imgproc.findContours(mask, contours, heirarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+            Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
         }
 
