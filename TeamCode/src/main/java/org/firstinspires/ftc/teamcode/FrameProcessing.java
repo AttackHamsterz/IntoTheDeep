@@ -21,12 +21,14 @@ public class FrameProcessing {
     private final Mat maskLow;
     private final Mat maskHi;
     private final Mat hierarchy;
+    private final Mat image;
 
     public List<MatOfPoint> contours = new ArrayList<>();
     public List<Integer> centerXVal = new ArrayList<>();
     public List<Integer> centerYVal = new ArrayList<>();
     public List<Double> angleVal = new ArrayList<>();
 
+    private static final boolean DRAW = true;
     private final int MIN_AREA;
 
     private static final double MAX_CHANGE = Math.toRadians(10);
@@ -46,11 +48,13 @@ public class FrameProcessing {
         maskLow = new Mat(height, width, CvType.CV_8UC1);
         maskHi = new Mat(height, width, CvType.CV_8UC1);
         hierarchy = new Mat();
+        if(DRAW)
+            image = new Mat(height, width, CvType.CV_8U);
 
         MIN_AREA = (int)Math.round((double)(width * height) * 0.005);
     }
 
-    public void matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
+    public Mat matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
     {
         // Convert from BGR to LAB
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_BGR2HSV);
@@ -60,6 +64,8 @@ public class FrameProcessing {
         centerXVal.clear();
         centerYVal.clear();
         angleVal.clear();
+        if(DRAW)
+            image.setTo(new Scalar(0));
 
         // Detect yellow
         if(favorYellow){
@@ -89,6 +95,14 @@ public class FrameProcessing {
             double epsilon = 0.005 * Imgproc.arcLength(contour2f, true);
             MatOfPoint2f approxContour = new MatOfPoint2f();
             Imgproc.approxPolyDP(contour2f, approxContour, epsilon, true);
+
+            // Draw
+            if (DRAW) {
+                MatOfPoint mop2f = new MatOfPoint(approxContour.toArray());
+                List<MatOfPoint> contoursList = new ArrayList<>();
+                contoursList.add(mop2f);
+                Imgproc.drawContours(image, contoursList, -1, new Scalar(255), 3);
+            }
 
             double accumAngle = 0;
             double accumDistance = 0;
@@ -187,6 +201,23 @@ public class FrameProcessing {
             centerXVal.add((int)weightedCenterx);
             angleVal.add(maxAngle);
         }
+
+        // Draw
+        if (DRAW) {
+            Imgproc.drawContours(image, contours, -1, new Scalar(255), 1);
+            for (int i = 0; i < centerXVal.size(); i++) {
+                double centerx = centerXVal.get(i);
+                double centery = centerYVal.get(i);
+                double angle = angleVal.get(i);
+                Imgproc.circle(image, new Point(centerx, centery), 3, new Scalar(128), -1);
+                double endx = centerx + 50 * Math.cos(angle);
+                double endy = centery + 50 * Math.sin(angle);
+                Imgproc.line(image, new Point(centerx, centery), new Point(endx, endy), new Scalar(128), 10);
+            }
+            return image;
+        }
+        else
+            return input;
     }
 
     public void matToBar(Mat input)
