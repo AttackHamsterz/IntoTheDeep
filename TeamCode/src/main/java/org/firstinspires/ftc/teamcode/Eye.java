@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -15,7 +16,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-
 public class Eye extends BodyPart {
 
     private static final double OFF_POWER = 0.0;
@@ -30,8 +30,8 @@ public class Eye extends BodyPart {
     private static final int BLUE_ID = 3;
     private final int colorId;
 
-    protected static final int WEBCAM_WIDTH = 800;//1920;//640;//1920;
-    protected static final int WEBCAM_HEIGHT = 600;//1080;//480;//1080;
+    protected static final int WEBCAM_WIDTH = 640; //800;//1920;//640;//1920;
+    protected static final int WEBCAM_HEIGHT = 480; //600;//1080;//480;//1080;
     public static final int TARGET_X = WEBCAM_WIDTH / 2;
     public static final int TARGET_Y = WEBCAM_HEIGHT * 4 / 10;
 
@@ -98,6 +98,8 @@ public class Eye extends BodyPart {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
+                //webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(webcam, 60);
                 webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
             }
 
@@ -136,7 +138,9 @@ public class Eye extends BodyPart {
     public void run() {
 
         boolean pressingX = false;
+
         while (!isInterrupted()) {
+
             if (gamepad.x && !pressingX) {
                 pressingX = true;
                 search = true;
