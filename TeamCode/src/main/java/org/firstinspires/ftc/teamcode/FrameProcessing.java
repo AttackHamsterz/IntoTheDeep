@@ -64,8 +64,8 @@ public class FrameProcessing {
         centerXVal.clear();
         centerYVal.clear();
         angleVal.clear();
-        if(DRAW)
-            image.setTo(new Scalar(0));
+        //if(DRAW)
+        //    image.setTo(new Scalar(0));
 
         // Detect yellow
         if(favorYellow){
@@ -97,12 +97,12 @@ public class FrameProcessing {
             Imgproc.approxPolyDP(contour2f, approxContour, epsilon, true);
 
             // Draw
-            if (DRAW) {
-                MatOfPoint mop2f = new MatOfPoint(approxContour.toArray());
-                List<MatOfPoint> contoursList = new ArrayList<>();
-                contoursList.add(mop2f);
-                Imgproc.drawContours(image, contoursList, -1, new Scalar(255), 3);
-            }
+            //if (DRAW) {
+            //    MatOfPoint mop2f = new MatOfPoint(approxContour.toArray());
+            //    List<MatOfPoint> contoursList = new ArrayList<>();
+            //    contoursList.add(mop2f);
+            //    Imgproc.drawContours(image, contoursList, -1, new Scalar(255), 3);
+            //}
 
             double accumAngle = 0;
             double accumDistance = 0;
@@ -204,17 +204,17 @@ public class FrameProcessing {
 
         // Draw
         if (DRAW) {
-            Imgproc.drawContours(image, contours, -1, new Scalar(255), 1);
+            Imgproc.drawContours(hsv, contours, -1, new Scalar(0, 0, 255), 1);
             for (int i = 0; i < centerXVal.size(); i++) {
                 double centerx = centerXVal.get(i);
                 double centery = centerYVal.get(i);
                 double angle = angleVal.get(i);
-                Imgproc.circle(image, new Point(centerx, centery), 3, new Scalar(128), -1);
+                Imgproc.circle(hsv, new Point(centerx, centery), 3, new Scalar(0, 0, 128), -1);
                 double endx = centerx + 50 * Math.cos(angle);
                 double endy = centery + 50 * Math.sin(angle);
-                Imgproc.line(image, new Point(centerx, centery), new Point(endx, endy), new Scalar(128), 10);
+                Imgproc.line(hsv, new Point(centerx, centery), new Point(endx, endy), new Scalar(0, 0, 128), 10);
             }
-            return image;
+            return hsv;
         }
         else
             return input;
