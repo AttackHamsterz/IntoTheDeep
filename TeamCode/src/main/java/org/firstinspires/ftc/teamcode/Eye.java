@@ -138,6 +138,7 @@ public class Eye extends BodyPart {
     public void run() {
 
         boolean pressingX = false;
+        boolean pressingB = false;
 
         while (!isInterrupted()) {
 
@@ -148,7 +149,15 @@ public class Eye extends BodyPart {
             else if(!gamepad.x){
                 if(pressingX) {
                     pressingX = false;
-                    // Move and plunge
+                }
+            }
+            if (gamepad.b && !pressingB) {
+                pressingB = true;
+                hang = true;
+            }
+            else if(!gamepad.b){
+                if(pressingB) {
+                    pressingB = false;
                 }
             }
 
@@ -239,8 +248,46 @@ public class Eye extends BodyPart {
                 telemetry.update();
             }
             if(hang){
+                // Only check once
                 hang = false;
-                fp.matToBar(input);
+                input = fp.matToBar(input, color);
+
+                // Stats
+                telemetry.addData("Frame Count", webcam.getFrameCount());
+                telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
+                telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
+                telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
+                telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
+                telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
+
+                // Act on the y positions
+                final int EXPECTED_LEFT_Y = 237;
+                final int EXPECTED_RIGHT_Y = 242;
+                final int TOO_CLOSE_LEFT_Y = 209;
+                final int TOO_CLOSE_RIGHT_Y = 213;
+                final int TOO_FAR_LEFT_Y = 308;
+                final int TOO_FAR_RIGHT_Y = 315;
+                final double TOO_CLOSE_DISTANCE_IN = 1.0;
+                final double TOO_FAR_DISTANCE_IN = 4.0;
+                final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
+                final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
+                final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
+                final double IN_PER_PIXEL_TOO_FAR_RIGHT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_RIGHT_Y - EXPECTED_RIGHT_Y);
+
+                if(fp.bar_left_y > 0 && fp.bar_right_y > 0){
+                    int deltaLeft = fp.bar_left_y - EXPECTED_LEFT_Y;
+                    int deltaRight = fp.bar_right_y - EXPECTED_RIGHT_Y;
+
+                    double inchesLeft = deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT);
+                    double inchesRight = deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT);
+
+                    // TODO - Move the robot
+
+                    // Debug
+                    telemetry.addData("Inches left", inchesLeft);
+                    telemetry.addData("Inches right", inchesRight);
+                }
+                telemetry.update();
             }
             return input;
         }
