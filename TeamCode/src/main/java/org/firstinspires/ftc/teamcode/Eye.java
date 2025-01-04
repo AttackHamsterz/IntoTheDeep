@@ -189,7 +189,7 @@ public class Eye extends BodyPart {
         public Mat processFrame(Mat input) {
             if(search){
                 search = false;
-                fp.matToDetection(input, color, favorYellow);
+                input = fp.matToDetection(input, color, favorYellow);
 
                 // Stats
                 telemetry.addData("Frame Count", webcam.getFrameCount());
