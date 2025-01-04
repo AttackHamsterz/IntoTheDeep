@@ -57,7 +57,7 @@ public class FrameProcessing {
     public Mat matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
     {
         // Convert from BGR to LAB
-        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_BGR2HSV);
+        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
 
         // Clear existing detections
         contours.clear();
