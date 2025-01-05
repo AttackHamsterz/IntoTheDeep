@@ -276,8 +276,8 @@ public class FrameProcessing {
         // Convert slices from RGB to HSV
         Rect leftROI = new Rect(0, 0, BAR_SAMPLE_WIDTH, input.height());
         Rect rightROI = new Rect(input.width()-BAR_SAMPLE_WIDTH-1, 0, BAR_SAMPLE_WIDTH, input.height());
-        Imgproc.cvtColor(input.submat(leftROI), bar_left_slice, Imgproc.COLOR_BGR2HSV);
-        Imgproc.cvtColor(input.submat(rightROI), bar_right_slice, Imgproc.COLOR_BGR2HSV);
+        Imgproc.cvtColor(input.submat(leftROI), bar_left_slice, Imgproc.COLOR_RGB2HSV);
+        Imgproc.cvtColor(input.submat(rightROI), bar_right_slice, Imgproc.COLOR_RGB2HSV);
 
         // Detect bar
         if (alliance == StandardSetupOpMode.COLOR.BLUE) {
