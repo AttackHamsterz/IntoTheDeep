@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.dfrobot.HuskyLens;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -36,10 +40,10 @@ public class Eye extends BodyPart {
     public static final int TARGET_Y = WEBCAM_HEIGHT * 4 / 10;
 
     // Arm calibration values
-    protected static final int NEAR_Y = 186;
-    protected static final int FAR_Y = 66;
+    protected static final int NEAR_Y = 370;
+    protected static final int FAR_Y = 161;
     protected static final int NEAR_TICKS = 0;
-    protected static final int FAR_TICKS = 680;
+    protected static final int FAR_TICKS = 853;
 
     // y=mx+b where y is ticks and x is the relative y pixel location
     protected static final double M = (double) (FAR_TICKS - NEAR_TICKS) / (double) (FAR_Y - NEAR_Y);
@@ -71,6 +75,10 @@ public class Eye extends BodyPart {
     boolean favorYellow;
     Telemetry telemetry;
     public Servo lights;
+    private FrameProcessing fp;
+    private double smallestDist = 10000;
+    private int smallestDistIndex = 0;
+
 
     public Eye(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, boolean favorYellow, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, Telemetry telemetry) {
         this.legs = legs;
@@ -81,6 +89,8 @@ public class Eye extends BodyPart {
         this.favorYellow = favorYellow;
         this.gamepad = gamepad;
         this.telemetry = telemetry;
+
+        fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT);
 
         this.lights = hardwareMap.get(Servo.class, "lights"); // Expansion hub ch3
         // LED setup
@@ -111,6 +121,18 @@ public class Eye extends BodyPart {
                 }
             }
         });
+    }
+
+    public void debugTelemetry(Telemetry telemetry)
+    {
+        if (fp.centerXVal.size() > 0) {
+            telemetry.addData("Total num", fp.centerXVal.size());
+            telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
+            telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
+            telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
+            telemetry.addData("Wrist pos", fp.angleVal.get(smallestDistIndex) / Math.PI);
+            telemetry.addData("Arm pos", arm.getCurrentPosition());
+        }
     }
 
     public void moveArmToColor() {
@@ -196,7 +218,7 @@ public class Eye extends BodyPart {
     }
 
      class Pipeline extends OpenCvPipeline {
-        FrameProcessing fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT);
+
 
         @Override
         public Mat processFrame(Mat input) {
@@ -214,8 +236,8 @@ public class Eye extends BodyPart {
 
                 // Find closest center and rotate to angle
                 if(fp.centerXVal.size() > 0){
-                    double smallestDist = 10000;
-                    int smallestDistIndex = 0;
+                     smallestDist = 10000;
+                     smallestDistIndex = 0;
                     // use pythagorean theorem to draw a line from the camera to each block's position
                     // whichever block has the shortest distance is the block we are closest to
                     for (int i = 0; i < fp.centerXVal.size(); i++) {
@@ -230,22 +252,23 @@ public class Eye extends BodyPart {
                         }
                     }
 
-                    // Move body for a good pickup
+                    // Move arm for a good pickup
 
                     // Move wrist with a good average
                     double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
                     hand.setWrist(wristPos);
 
-                    // Plunge to pickup
-
                     // Debug
+                    /*
                     telemetry.addData("Total num", fp.centerXVal.size());
                     telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
                     telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
                     telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
                     telemetry.addData("Wrist pos", wristPos);
+
+                     */
                 }
-                telemetry.update();
+                //telemetry.update();
             }
             if(hang){
                 // Only check once
