@@ -37,11 +37,11 @@ public class Eye extends BodyPart {
     protected static final int WEBCAM_WIDTH = 640; //800;//1920;//640;//1920;
     protected static final int WEBCAM_HEIGHT = 480; //600;//1080;//480;//1080;
     public static final int TARGET_X = WEBCAM_WIDTH / 2;
-    public static final int TARGET_Y = WEBCAM_HEIGHT * 4 / 10;
+    public static final int TARGET_Y = 100;
 
     // Arm calibration values
     protected static final int NEAR_Y = 370;
-    protected static final int FAR_Y = 155;
+    protected static final int FAR_Y = 145;
     protected static final int NEAR_TICKS = 0;
     protected static final int FAR_TICKS = 853;
 
@@ -142,8 +142,13 @@ public class Eye extends BodyPart {
 
     public void moveArmToColor() {
             // Set new arm position!
+        Action moveArmToBlock = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.SEARCH);
             int ticks = (int) Math.round((M * fp.centerYVal.get(smallestDistIndex) + B));
             arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
+            //telemetry.addData("block1 ticks", ticks);
+            return false;
+        };
     }
 
     public void moveLegsToColor() {
@@ -156,6 +161,24 @@ public class Eye extends BodyPart {
         SequentialAction centerBlockAction = new SequentialAction(
                 new CompleteAction(strafeToBlock, legs));
         Actions.runBlocking(centerBlockAction);
+    }
+
+    public void plunge() {
+        Action grab = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.GROUND);
+            hand.grab(1000);
+            return false;
+        };
+        Action raiseShoulder = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.NONE);
+            shoulder.setPosition(1.0, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
+            hand.hangSample();
+            return false;
+        };
+        Action snag = new SequentialAction(
+                new CompleteAction(grab, hand),
+                new CompleteAction(raiseShoulder, shoulder));
+        Actions.runBlocking(snag);
     }
     private boolean search = false;
     private boolean hang = false;
@@ -261,6 +284,8 @@ public class Eye extends BodyPart {
                     // Move wrist with a good average
                     double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
                     hand.setWrist(wristPos);
+
+                    plunge();
 
                     // Debug
                     /*

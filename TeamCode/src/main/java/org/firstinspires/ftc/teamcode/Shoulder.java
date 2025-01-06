@@ -322,14 +322,16 @@ public class Shoulder extends BodyPart {
                     mode = Mode.GROUND;
                 }
                 else if(gamepad.b && !pressing) {
+                    mode = Mode.NONE;
+
                     pressing = true;
+                    arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
                         setPosition(1.0, 1143);
                     }
                     else {
                         mode = Mode.HIGH_BAR;
-                        arm.setPosition(1.0, 250);
                     }
                 }
                 else if(gamepad.y && !pressing){
