@@ -41,7 +41,7 @@ public class Eye extends BodyPart {
 
     // Arm calibration values
     protected static final int NEAR_Y = 370;
-    protected static final int FAR_Y = 161;
+    protected static final int FAR_Y = 155;
     protected static final int NEAR_TICKS = 0;
     protected static final int FAR_TICKS = 853;
 
@@ -50,14 +50,14 @@ public class Eye extends BodyPart {
     protected static final double B = (double) FAR_TICKS - (M * (double) FAR_Y);
 
     // Leg calibration values
-    protected static final int CENTER_X = 160;
+    protected static final int CENTER_X = 343;
     protected static final int INCHES_FROM_CENTER = 4;
-    protected static final int SHIFT_NEAR_X = 283;
-    protected static final int SHIFT_NEAR_Y = 139;
+    protected static final int SHIFT_NEAR_X = 501;
+    protected static final int SHIFT_NEAR_Y = 294;
     protected static final double SHIFT_NEAR_M = (double) INCHES_FROM_CENTER / (double) (CENTER_X - SHIFT_NEAR_X);
 
-    protected static final int SHIFT_FAR_X = 252;
-    protected static final int SHIFT_FAR_Y = 109;
+    protected static final int SHIFT_FAR_X = 471;
+    protected static final int SHIFT_FAR_Y = 197;
     protected static final double SHIFT_FAR_M = (double) INCHES_FROM_CENTER / (double) (CENTER_X - SHIFT_FAR_X);
 
     // how much our slop is changing based on y
@@ -132,26 +132,30 @@ public class Eye extends BodyPart {
             telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
             telemetry.addData("Wrist pos", fp.angleVal.get(smallestDistIndex) / Math.PI);
             telemetry.addData("Arm pos", arm.getCurrentPosition());
+            if (smallestDistIndex >= 0 && smallestDist < fp.centerYVal.size()) {
+                telemetry.addData("blockCenterY", fp.centerYVal.get(smallestDistIndex));
+                telemetry.addData("deltaTicks", (int) Math.round((M * fp.centerYVal.get(smallestDistIndex) + B)));
+                telemetry.addData("Arm Pos", arm.getCurrentPosition());
+            }
         }
     }
 
     public void moveArmToColor() {
-        camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
-        HuskyLens.Block block = camera.getClosestBlock();
-        if (block != null) {
             // Set new arm position!
-            int ticks = (int) Math.round((M * (double) block.y + B));
-            telemetry.addData("M", M);
-            telemetry.addData("blockCenterY", block.y);
-            telemetry.addData("B", B);
-            telemetry.addData("deltaTicks", ticks);
-            telemetry.addData("Arm Pos", arm.getCurrentPosition());
-            arm.setPosition(0.3, arm.getCurrentPosition() + ticks);
-        }
+            int ticks = (int) Math.round((M * fp.centerYVal.get(smallestDistIndex) + B));
+            arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
     }
 
     public void moveLegsToColor() {
-
+        Action strafeToBlock = telemetryPacket -> {
+            double ySlope = fp.centerYVal.get(smallestDistIndex) * SHIFT_M + SHIFT_B;
+            double shift = (fp.centerXVal.get(smallestDistIndex) - CENTER_X) * ySlope;
+            legs.moveLeft(shift, false);
+            return false;
+        };
+        SequentialAction centerBlockAction = new SequentialAction(
+                new CompleteAction(strafeToBlock, legs));
+        Actions.runBlocking(centerBlockAction);
     }
     private boolean search = false;
     private boolean hang = false;
@@ -253,7 +257,8 @@ public class Eye extends BodyPart {
                     }
 
                     // Move arm for a good pickup
-
+                    moveArmToColor();
+                    moveLegsToColor();
                     // Move wrist with a good average
                     double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
                     hand.setWrist(wristPos);
