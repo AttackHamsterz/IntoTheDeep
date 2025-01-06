@@ -212,14 +212,11 @@ public class Arm extends BodyPart {
         while (!isInterrupted()) {
             // Reset the motor count if limit switch is triggered and current value is poor
             if(!armSwitch.getState() && (Math.abs(armMotorLeft.getCurrentPosition())>10 || Math.abs(armMotorRight.getCurrentPosition())>10)){
+                // TODO - make sure this retains power and target positions
                 armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                armMotorLeft.setTargetPosition(0);
-                armMotorRight.setTargetPosition(0);
                 armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                armMotorRight.setPower(NO_POWER);
-                armMotorLeft.setPower(HOLD_POWER);
                 continue;
             }
 

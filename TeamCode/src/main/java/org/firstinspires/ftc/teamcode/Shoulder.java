@@ -269,11 +269,11 @@ public class Shoulder extends BodyPart {
 
             // Reset the motor count if limit switch is triggered and current value is poor
             if(!shoulderSwitch.getState() && Math.abs(shoulderMotor.getCurrentPosition())>10){
-               shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-               shoulderMotor.setTargetPosition(0);
-               shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-               homed = true;
-               continue;
+                // TODO - make sure this retains power and target positions
+                shoulderMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                homed = true;
+                continue;
             }
 
             // Always get the current arm ratio (use this to maintain heights given arm reach)
