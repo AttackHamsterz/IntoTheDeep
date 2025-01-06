@@ -163,6 +163,17 @@ public class Eye extends BodyPart {
         Actions.runBlocking(centerBlockAction);
     }
 
+    public void moveLegsToBar(double leftInches, double rightInches){
+        Action moveToBar = telemetryPacket -> {
+            double averageInches = (leftInches + rightInches) / 2.0;
+            legs.moveForward(averageInches, false);
+            return false;
+        };
+        SequentialAction gotoBar = new SequentialAction(
+                new CompleteAction(moveToBar, legs));
+        Actions.runBlocking(gotoBar);
+    }
+
     public void plunge() {
         Action grab = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.GROUND);
@@ -333,7 +344,8 @@ public class Eye extends BodyPart {
                     double inchesLeft = deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT);
                     double inchesRight = deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT);
 
-                    // TODO - Move the robot
+                    // Wiggle robot
+                    moveLegsToBar(inchesLeft, inchesRight);
 
                     // Debug
                     telemetry.addData("Inches left", inchesLeft);
