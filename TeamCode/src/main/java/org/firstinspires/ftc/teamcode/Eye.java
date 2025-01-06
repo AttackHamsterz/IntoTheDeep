@@ -166,7 +166,8 @@ public class Eye extends BodyPart {
 
             if (gamepad.x && !pressingX) {
                 pressingX = true;
-                search = true;
+                if(shoulder.getMode() == Shoulder.Mode.SEARCH)
+                    search = true;
             }
             else if(!gamepad.x){
                 if(pressingX) {
@@ -175,7 +176,8 @@ public class Eye extends BodyPart {
             }
             if (gamepad.b && !pressingB) {
                 pressingB = true;
-                hang = true;
+                if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
+                    hang = true;
             }
             else if(!gamepad.b){
                 if(pressingB) {
@@ -202,9 +204,6 @@ public class Eye extends BodyPart {
                 interrupt();
             }
         }
-
-        // start the color recognition algorithm
-        //camera.huskyLens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
     }
 
     @Override
