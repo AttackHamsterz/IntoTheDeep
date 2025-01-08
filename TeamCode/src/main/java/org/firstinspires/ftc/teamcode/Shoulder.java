@@ -58,8 +58,8 @@ public class Shoulder extends BodyPart {
 
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
-            369,  // Ground
-            502,  // Search
+            340,  // Ground
+            490,  // Search
             879, // Low Bar
             1314, // High Bar
             1402, // Low Bucket
@@ -136,6 +136,7 @@ public class Shoulder extends BodyPart {
     {
         telemetry.addData("Shoulder Position", "(%7d)", shoulderMotor.getCurrentPosition());
         telemetry.addData("Shoulder Power", shoulderMotor.getPower());
+        telemetry.addData("Shoulder Mode", mode.value);
         //telemetry.addData("Shoulder Switch", !shoulderSwitch.getState());
     }
 
@@ -322,8 +323,6 @@ public class Shoulder extends BodyPart {
                     mode = Mode.GROUND;
                 }
                 else if(gamepad.b && !pressing) {
-                    mode = Mode.NONE;
-
                     pressing = true;
                     arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {

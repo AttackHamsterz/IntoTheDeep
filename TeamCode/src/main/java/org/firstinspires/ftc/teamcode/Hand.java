@@ -255,8 +255,8 @@ public class Hand extends BodyPart{
                     bucket();
                 else if(gamepad.a)
                     grab(800);
-                else if (gamepad.x)
-                    hangSample();
+                //else if (gamepad.x)
+                    //hangSample();
             }
 
             // Short sleep to keep this loop from saturating
