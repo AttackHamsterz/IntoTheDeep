@@ -184,7 +184,7 @@ public class Tail extends Thread{
                     shoulder.setMode(Shoulder.Mode.NONE);
                     tailUp();
                     Action bendAction = telemetryPacket -> {
-                        shoulder.setPosition(0.5, 280);
+                        shoulder.setPosition(0.8, 50);
                         return false;
                     };
                     Action finalAction = new SequentialAction(
