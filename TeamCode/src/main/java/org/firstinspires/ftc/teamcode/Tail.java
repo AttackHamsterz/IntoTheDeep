@@ -131,7 +131,7 @@ public class Tail extends Thread{
                 if(lifting == 3) {
                     tailDown();
                     Action armDownAction = telemetryPacket -> {
-                        arm.gotoMin(1.0);
+                        arm.setPosition(1.0, -10);
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
