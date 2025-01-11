@@ -244,25 +244,20 @@ public class FrameProcessing {
     }
 
     /**
-     * Returns the centroid y value of the largest contour.  If no contours then -1 is returned
+     * Returns the centroid y value of the highest contour.  If no contours then -1 is returned
      * @param contours Contours to search
-     * @return The y position of the largest contour centroid (-1 if none found)
+     * @return The y position of the highest contour centroid (-1 if none found)
      */
-    private static int getLargestContourY(List<MatOfPoint> contours){
-        double maxArea = 0;
-        MatOfPoint largestContour = null;
+    private static int getHighestContourY(List<MatOfPoint> contours){
+        int minY = -1;
         for (MatOfPoint contour : contours) {
-            double area = Imgproc.contourArea(contour);
-            if (area > maxArea) {
-                maxArea = area;
-                largestContour = contour;
+            Moments moments = Imgproc.moments(contour);
+            int y = (int)Math.round(moments.get_m01() / moments.get_m00());
+            if (y < 0 || y < minY) {
+                minY = y;
             }
         }
-        if(largestContour != null){
-            Moments moments = Imgproc.moments(largestContour);
-            return (int)Math.round(moments.get_m01() / moments.get_m00());
-        }
-        return -1;
+        return minY;
     }
 
     public Mat matToBar(Mat input, StandardSetupOpMode.COLOR alliance)
@@ -299,8 +294,8 @@ public class FrameProcessing {
         bar_right_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
 
         // Find the largest contour (the one with the max area)
-        bar_left_y = getLargestContourY(bar_left_contours);
-        bar_right_y = getLargestContourY(bar_right_contours);
+        bar_left_y = getHighestContourY(bar_left_contours);
+        bar_right_y = getHighestContourY(bar_right_contours);
 
         // Just give them the original frame
         return input;    }
