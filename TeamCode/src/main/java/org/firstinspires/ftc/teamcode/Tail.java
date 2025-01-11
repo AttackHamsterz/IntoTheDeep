@@ -22,13 +22,15 @@ public class Tail extends Thread{
 
     private boolean ignoreGamepad;
     private final Gamepad gamepad;
+    private final Gamepad otherGamepad;
 
     private static final double MIN_POS = 0.0; // 0 degrees
     private static final double MAX_POS = 1.0; // +90 degrees
 
-    public Tail(HardwareMap hardwareMap, Gamepad gamepad, Shoulder shoulder, Arm arm) {
+    public Tail(HardwareMap hardwareMap, Gamepad gamepad, Shoulder shoulder, Arm arm, Gamepad otherGamepad) {
         this.tail = hardwareMap.get(Servo.class, "tailServo"); //ch4 Servo
         this.gamepad = gamepad;
+        this.otherGamepad = otherGamepad;
         this.ignoreGamepad = false;
         this.shoulder = shoulder;
         this.arm = arm;
@@ -81,6 +83,10 @@ public class Tail extends Thread{
             int lifting = 0;
             while (!isInterrupted())
             {
+                if (otherGamepad.start) {
+                    setTail(MIN_POS);
+                    lifting = 0;
+                }
                 // The following implements the lifting finite state machine.  The procedure
                 // starts after listening for back and start pressed at the same time.
                 // The lift runs in four parts:

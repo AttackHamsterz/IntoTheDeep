@@ -58,7 +58,7 @@ public class Shoulder extends BodyPart {
 
     // Shoulder positions for each mode when the arm is all the way out
     public static ArrayList<Integer> ARM_OUT_POS = new ArrayList<>(Arrays.asList(
-            340,  // Ground
+            300,  // Ground
             490,  // Search
             879, // Low Bar
             1314, // High Bar

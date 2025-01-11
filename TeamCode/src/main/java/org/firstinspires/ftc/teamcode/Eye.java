@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -78,8 +79,8 @@ public class Eye extends BodyPart {
     private FrameProcessing fp;
     private double smallestDist = 10000;
     private int smallestDistIndex = 0;
-    private double inchesLeft;
-    private double inchesRight;
+    public double inchesLeft;
+    public double inchesRight;
 
 
     public Eye(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, boolean favorYellow, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, Telemetry telemetry) {
@@ -92,7 +93,7 @@ public class Eye extends BodyPart {
         this.gamepad = gamepad;
         this.telemetry = telemetry;
 
-        fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT);
+        fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT, telemetry);
 
         this.lights = hardwareMap.get(Servo.class, "lights"); // Expansion hub ch3
         // LED setup
@@ -140,11 +141,11 @@ public class Eye extends BodyPart {
                 telemetry.addData("Arm Pos", arm.getCurrentPosition());
             }
         }
-        if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
+        //if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
             telemetry.addData("Inches left", inchesLeft);
             telemetry.addData("Inches right", inchesRight);
 
-        }
+        //}
     }
 
     public void moveToColor() {
@@ -168,7 +169,7 @@ public class Eye extends BodyPart {
         };
         Action raiseShoulder = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.NONE);
-            shoulder.setPosition(1.0, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
+            shoulder.setPosition(0.8, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
             //hand.hangSample();
             return false;
         };
@@ -200,7 +201,7 @@ public class Eye extends BodyPart {
         Actions.runBlocking(centerBlockAction);
     }
 
-    public void moveLegsToBar(double leftInches, double rightInches){
+    public SequentialAction moveLegsToBar(double leftInches, double rightInches){
         shoulder.setMode(Shoulder.Mode.NONE);
         Action moveToBar = telemetryPacket -> {
             double averageInches = (leftInches + rightInches) / 2.0;
@@ -214,7 +215,8 @@ public class Eye extends BodyPart {
         SequentialAction gotoBar = new SequentialAction(
                 new CompleteAction(moveToBar, legs));
                 new CompleteAction(lowerShoulder, shoulder);
-        Actions.runBlocking(gotoBar);
+        //Actions.runBlocking(gotoBar);
+        return gotoBar;
     }
 
     public void plunge() {
@@ -258,8 +260,8 @@ public class Eye extends BodyPart {
             }
             if (gamepad.b && !pressingB) {
                 pressingB = true;
-                if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
-                    hang = true;
+                //if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
+                    //hang = true;
             }
             else if(!gamepad.b){
                 if(pressingB) {
@@ -293,6 +295,10 @@ public class Eye extends BodyPart {
 
     }
 
+    public void safeHang() {
+        hang = true;
+    }
+
     @Override
     public int getCurrentPosition() {
         return 0;
@@ -308,6 +314,7 @@ public class Eye extends BodyPart {
                 input = fp.matToDetection(input, color, favorYellow);
 
                 // Stats
+
                 telemetry.addData("Frame Count", webcam.getFrameCount());
                 telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
                 telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -365,6 +372,7 @@ public class Eye extends BodyPart {
                 input = fp.matToBar(input, color);
 
                 // Stats
+/*
                 telemetry.addData("Frame Count", webcam.getFrameCount());
                 telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
                 telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -372,15 +380,19 @@ public class Eye extends BodyPart {
                 telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
                 telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
 
+ */
+
+
+
                 // Act on the y positions
-                final int EXPECTED_LEFT_Y = 237;
-                final int EXPECTED_RIGHT_Y = 242;
-                final int TOO_CLOSE_LEFT_Y = 209;
-                final int TOO_CLOSE_RIGHT_Y = 213;
-                final int TOO_FAR_LEFT_Y = 308;
-                final int TOO_FAR_RIGHT_Y = 315;
+                final int EXPECTED_LEFT_Y = 225;
+                final int EXPECTED_RIGHT_Y = 225;
+                final int TOO_CLOSE_LEFT_Y = 180;
+                final int TOO_CLOSE_RIGHT_Y = 180;
+                final int TOO_FAR_LEFT_Y = 305;
+                final int TOO_FAR_RIGHT_Y = 305;
                 final double TOO_CLOSE_DISTANCE_IN = 1.0;
-                final double TOO_FAR_DISTANCE_IN = 3.0;
+                final double TOO_FAR_DISTANCE_IN = 5.0;
                 final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
@@ -402,6 +414,8 @@ public class Eye extends BodyPart {
                 }
                 //telemetry.update();
             }
+
+            Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
             return input;
         }
     }

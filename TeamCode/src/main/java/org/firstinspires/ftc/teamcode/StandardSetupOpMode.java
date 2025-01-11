@@ -44,7 +44,7 @@ public class StandardSetupOpMode extends LinearOpMode {
         shoulder = new Shoulder(hardwareMap, arm, gamepad2, gamepad1);
         arm.setShoulder(shoulder);
         hand = new Hand(hardwareMap, gamepad2);
-        tail = new Tail(hardwareMap, gamepad2, shoulder, arm);
+        tail = new Tail(hardwareMap, gamepad2, shoulder, arm, gamepad1);
         //camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
         eye = new Eye(hardwareMap, color, favorYellow, legs, arm, shoulder, hand, gamepad2, telemetry);
         setIgnoreGamepad(ignoreGamepad);

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -45,8 +46,8 @@ public class FrameProcessing {
     public int bar_left_y;
     public int bar_right_y;
 
-    private final int BAR_SAMPLE_WIDTH = 20;
-    private final int BAR_MIN_AREA = BAR_SAMPLE_WIDTH * 10;
+    private final int BAR_SAMPLE_WIDTH = 40;
+    private final int BAR_MIN_AREA = BAR_SAMPLE_WIDTH * 2;
 
     private static final double MAX_CHANGE = Math.toRadians(10);
 
@@ -59,7 +60,9 @@ public class FrameProcessing {
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
 
-    public FrameProcessing( int width, int height){
+    private Telemetry telemetry;
+
+    public FrameProcessing(int width, int height, Telemetry telemetry){
         hsv = new Mat(height, width * 3, CvType.CV_8U);
         mask = new Mat(height, width, CvType.CV_8UC1);
         maskLow = new Mat(height, width, CvType.CV_8UC1);
@@ -75,6 +78,9 @@ public class FrameProcessing {
         bar_right_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_low_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_high_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
+
+        this.telemetry = telemetry;
+
     }
 
     public Mat matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
@@ -253,7 +259,7 @@ public class FrameProcessing {
         for (MatOfPoint contour : contours) {
             Moments moments = Imgproc.moments(contour);
             int y = (int)Math.round(moments.get_m01() / moments.get_m00());
-            if (y < 0 || y < minY) {
+            if (minY < 0 || y < minY) {
                 minY = y;
             }
         }
@@ -292,11 +298,20 @@ public class FrameProcessing {
         Imgproc.findContours(bar_right_mask, bar_right_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         bar_left_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
         bar_right_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
+       // telemetry.addData("Left Bar Contours", bar_left_contours.size());
+        //telemetry.addData("Right Bar Contours", bar_right_contours.size());
+
+
 
         // Find the largest contour (the one with the max area)
         bar_left_y = getHighestContourY(bar_left_contours);
         bar_right_y = getHighestContourY(bar_right_contours);
 
+        telemetry.addData("Left High", bar_left_y);
+        telemetry.addData("Right High", bar_right_y);
+        telemetry.update();
+
         // Just give them the original frame
+
         return input;    }
 }

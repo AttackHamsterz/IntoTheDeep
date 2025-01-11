@@ -99,9 +99,10 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(retractArmAction, arm),
                 new CompleteAction(releaseAction, hand)
         );
-
-        Action hangSampleToolAction = new SequentialAction(
-                liftExtendDrive,                             // Drive and extend
+        Actions.runBlocking(liftExtendDrive);
+        eye.safeHang();
+        Action hangSampleToolAction = new SequentialAction(                 // Drive and extend
+                eye.moveLegsToBar(eye.inchesLeft, eye.inchesRight),
                 new CompleteAction(dropAction, shoulder),    // Run dropAction
                 retractAndRelease);
         Actions.runBlocking(hangSampleToolAction);
