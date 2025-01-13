@@ -18,14 +18,14 @@ public class AutonomousRight extends AutonomousOpMode{
 
         // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(22.5 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(25.5 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
         Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
         Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -48 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(8 + X_OFFSET, -53 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(23 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
+        Pose2d thirdHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
 
         // Common actions for the right side
@@ -50,7 +50,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action liftShoulderAction = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
+            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
             return false;
         };
 
@@ -60,7 +60,8 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action drop = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
+            shoulder.setMode(Shoulder.Mode.NONE);
+            shoulder.setPosition(AUTO_POWER, Shoulder.DROP_SHOULDER_POS);
             return false;
         };
 
@@ -105,6 +106,11 @@ public class AutonomousRight extends AutonomousOpMode{
             );
             Actions.runBlocking(gotoSecondHang);
 
+            // Extra alignment
+            Action action = eye.safeHang();
+            if(action != null)
+                Actions.runBlocking(action);
+
             Action releasePull = new ParallelAction(
                     new CompleteAction(release, hand),
                     new CompleteAction(armIn, arm)
@@ -148,6 +154,11 @@ public class AutonomousRight extends AutonomousOpMode{
         );
         Actions.runBlocking(gotoThirdHang);
 
+        // Extra alignment
+        Action action = eye.safeHang();
+        if(action != null)
+            Actions.runBlocking(action);
+
         Action releasePull2 = new ParallelAction(
                 new CompleteAction(release, hand),
                 new CompleteAction(armIn, arm)
@@ -179,6 +190,11 @@ public class AutonomousRight extends AutonomousOpMode{
                     new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
             );
             Actions.runBlocking(repeatSecondHang);
+
+            // Extra alignment
+            Action action2 = eye.safeHang();
+            if(action2 != null)
+                Actions.runBlocking(action2);
 
             Action releasePull3 = new ParallelAction(
                     new CompleteAction(release, hand),

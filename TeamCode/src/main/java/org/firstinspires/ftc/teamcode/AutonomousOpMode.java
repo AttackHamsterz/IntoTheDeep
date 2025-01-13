@@ -17,9 +17,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
 
-    protected static int dropShoulderPositionTop = 1512;
-    protected static int dropShoulderPositionBottom = 1143;
-    protected static int dropArmPosition = 960;
+    protected static int dropArmPosition = 100;
 
     protected boolean submersibleSearch = false;
     protected boolean partnerHasSpecimen = false;
@@ -59,25 +57,26 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         int dropArmPullin = 320;
         int searchArmPosition = 1070;
 
-        Pose2d dropPose = new Pose2d(new Vector2d(23 + X_OFFSET, Y_OFFSET), 0);
-        Pose2d searchPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(30.5 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d searchPose = new Pose2d(new Vector2d(25.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, dropShoulderPositionTop);
+            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
             return false;
         };
         Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER,dropArmPosition);
+            arm.setPosition(1.0, 250);
             hand.hangSample();
             return false;
         };
         Action dropAction = telemetryPacket -> {
-            hand.grab(100);
-            shoulder.setPosition(AUTO_POWER, dropShoulderPositionBottom);
+            //hand.grab(100);
+            shoulder.setMode(Shoulder.Mode.NONE);
+            shoulder.setPosition(AUTO_POWER, Shoulder.DROP_SHOULDER_POS);
             return false;
         };
         Action retractArmAction = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, dropArmPullin);
+            arm.setPosition(AUTO_POWER, 0);
             return false;
         };
         Action releaseAction = telemetryPacket -> {
@@ -93,18 +92,23 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.4, dropPose), legs));
+                new CompleteAction(legs.moveToAction(0.5, dropPose), legs));
+        Actions.runBlocking(liftExtendDrive);
 
-        Action retractAndRelease = new ParallelAction(
+        // Extra alignment
+        Action action = eye.safeHang();
+        if(action != null)
+            Actions.runBlocking(action);
+
+        Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),
                 new CompleteAction(releaseAction, hand)
         );
-        Actions.runBlocking(liftExtendDrive);
-        eye.safeHang();
+
         Action hangSampleToolAction = new SequentialAction(                 // Drive and extend
-                eye.moveLegsToBar(eye.inchesLeft, eye.inchesRight),
                 new CompleteAction(dropAction, shoulder),    // Run dropAction
-                retractAndRelease);
+                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs),
+                retractReleaseBackup);
         Actions.runBlocking(hangSampleToolAction);
 
         // This action will grab a sample from the submersible
@@ -120,7 +124,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             };
             Action setupSearch = new SequentialAction(
                     searchAction, // Search height
-                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs),
                     new CompleteAction(extendAction, arm));
             Actions.runBlocking(setupSearch);
 
@@ -151,11 +154,11 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         }
 
         // Get into a safe travel position
-        Action retractFromPickup = new ParallelAction(
-                new CompleteAction(retractArm, arm),
-                new CompleteAction( legs.moveToAction(AUTO_MOVE_POWER, dropPose), legs)
-        );
+        //Action retractFromPickup = new ParallelAction(
+        //        new CompleteAction(retractArm, arm),
+        //        new CompleteAction( legs.moveToAction(AUTO_MOVE_POWER, dropPose), legs)
+        //);
 
-        Actions.runBlocking(retractFromPickup);
+        //Actions.runBlocking(retractFromPickup);
     }
 }
