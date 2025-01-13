@@ -17,7 +17,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
 
-    protected static int dropArmPosition = 100;
+    protected static int dropArmPosition = 270;
 
     protected boolean submersibleSearch = false;
     protected boolean partnerHasSpecimen = false;
@@ -57,15 +57,15 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         int dropArmPullin = 320;
         int searchArmPosition = 1070;
 
-        Pose2d dropPose = new Pose2d(new Vector2d(30.5 + X_OFFSET, Y_OFFSET), 0);
-        Pose2d searchPose = new Pose2d(new Vector2d(25.0 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(31 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.HIGH_BAR);
             return false;
         };
         Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(1.0, 250);
+            arm.setPosition(1.0, 270);
             hand.hangSample();
             return false;
         };
@@ -92,13 +92,16 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.5, dropPose), legs));
+                new CompleteAction(legs.moveToAction(0.35, dropPose), legs));
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
+        /*
         Action action = eye.safeHang();
         if(action != null)
             Actions.runBlocking(action);
+
+         */
 
         Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),

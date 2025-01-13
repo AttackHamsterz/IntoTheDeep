@@ -265,8 +265,11 @@ public class Eye extends BodyPart {
             }
             if (gamepad.b && !pressingB) {
                 pressingB = true;
-                //if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
-                    //hang = true;
+                /*
+                if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
+                    hang = true;
+
+                 */
             }
             else if(!gamepad.b){
                 if(pressingB) {

@@ -18,14 +18,15 @@ public class AutonomousRight extends AutonomousOpMode{
 
         // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
-        Pose2d avoidSub = new Pose2d(new Vector2d(25.5 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 7 + Y_OFFSET), Math.toRadians(0));
+        Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
         Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
-        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -48 + Y_OFFSET), Math.toRadians(180));
-        Pose2d push2 = new Pose2d(new Vector2d(8 + X_OFFSET, -53 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -45 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
+        Pose2d thirdHang = new Pose2d(new Vector2d(31 + X_OFFSET, 9 + Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
 
         // Common actions for the right side
@@ -107,35 +108,35 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(gotoSecondHang);
 
             // Extra alignment
+            /*
             Action action = eye.safeHang();
             if(action != null)
                 Actions.runBlocking(action);
 
-            Action releasePull = new ParallelAction(
-                    new CompleteAction(release, hand),
-                    new CompleteAction(armIn, arm)
-            );
+             */
 
             Action dropAndRelease = new SequentialAction(
                     new CompleteAction(drop, shoulder),
-                    releasePull
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(release, hand)
             );
             Actions.runBlocking(dropAndRelease);
         }
 
         Action avoidAndHover = new ParallelAction(
                 new CompleteAction(armIn, arm),
-                new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub, true), legs)
+                new CompleteAction(hoverShoulder, shoulder)
         );
 
         Action driveAction = new SequentialAction(
+                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub, true), legs),
                 avoidAndHover,
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
                 new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
+                new CompleteAction(legs.moveToAction(0.8, push2Backup, -1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
                 new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup), legs)
         );
@@ -155,17 +156,18 @@ public class AutonomousRight extends AutonomousOpMode{
         Actions.runBlocking(gotoThirdHang);
 
         // Extra alignment
+        /*
         Action action = eye.safeHang();
         if(action != null)
             Actions.runBlocking(action);
 
-        Action releasePull2 = new ParallelAction(
-                new CompleteAction(release, hand),
-                new CompleteAction(armIn, arm)
-        );
+         */
+
+
         Action dropAndRelease2 = new SequentialAction(
+                new CompleteAction(armIn, arm),
                 new CompleteAction(drop, shoulder),
-                releasePull2
+                new CompleteAction(release, hand)
         );
         Actions.runBlocking(dropAndRelease2);
 
@@ -192,17 +194,17 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(repeatSecondHang);
 
             // Extra alignment
+            /*
             Action action2 = eye.safeHang();
             if(action2 != null)
                 Actions.runBlocking(action2);
 
-            Action releasePull3 = new ParallelAction(
-                    new CompleteAction(release, hand),
-                    new CompleteAction(armIn, arm)
-            );
+             */
+
             Action dropAndRelease3 = new SequentialAction(
                     new CompleteAction(drop, shoulder),
-                    releasePull3
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(release, hand)
             );
             Actions.runBlocking(dropAndRelease3);
         }
