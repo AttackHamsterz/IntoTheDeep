@@ -20,10 +20,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 public class Eye extends BodyPart {
 
     private static final double OFF_POWER = 0.0;
@@ -327,15 +323,14 @@ public class Eye extends BodyPart {
 
      class Pipeline extends OpenCvPipeline {
 
-
         @Override
         public Mat processFrame(Mat input) {
             if(search){
                 search = false;
+                shoulder.setMode(Shoulder.Mode.NONE);
                 input = fp.matToDetection(input, color, favorYellow);
 
                 // Stats
-
                 telemetry.addData("Frame Count", webcam.getFrameCount());
                 telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
                 telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
