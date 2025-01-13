@@ -68,6 +68,8 @@ public class Shoulder extends BodyPart {
             369   // None is like ground
     ));
 
+    public static final int DROP_SHOULDER_POS = 1143;
+
     // Number of ticks to latch a sample onto a bar
     public static int SAMPLE_HOOK_DROP = 516;
 
@@ -327,7 +329,7 @@ public class Shoulder extends BodyPart {
                     arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
-                        setPosition(1.0, 1143);
+                        setPosition(1.0, DROP_SHOULDER_POS);
                     }
                     else {
                         mode = Mode.HIGH_BAR;

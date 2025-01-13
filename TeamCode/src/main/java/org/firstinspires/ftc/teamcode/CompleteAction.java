@@ -76,7 +76,7 @@ public class CompleteAction implements Action, Consumer<Boolean> {
         if(runAction)
             runAction = action.run(telemetryPacket);
 
-        // Once waiting is false and runAction is false we can report false
+        // Once waiting is false or runAction is false we can report false
         return waiting || runAction;
     }
 }

@@ -5,7 +5,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.qualcomm.hardware.dfrobot.HuskyLens;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -20,6 +19,10 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class Eye extends BodyPart {
 
@@ -81,6 +84,7 @@ public class Eye extends BodyPart {
     private int smallestDistIndex = 0;
     public double inchesLeft;
     public double inchesRight;
+    Action barAction;
 
 
     public Eye(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, boolean favorYellow, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, Telemetry telemetry) {
@@ -216,6 +220,7 @@ public class Eye extends BodyPart {
                 new CompleteAction(moveToBar, legs));
                 new CompleteAction(lowerShoulder, shoulder);
         //Actions.runBlocking(gotoBar);
+
         return gotoBar;
     }
 
@@ -295,8 +300,24 @@ public class Eye extends BodyPart {
 
     }
 
-    public void safeHang() {
+    /**
+     * Tell the camera to check the bar and return an action to align to it
+     * @return Action that aligns to the bar
+     */
+    public Action safeHang() {
+        // Tell the opencv thread to get an answer and then wait for result
         hang = true;
+
+        // Spin wait until we get a result
+        do {
+            // Give the pipeline a little time to build a result
+            try {
+                sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }while(barAction == null);
+
+        return barAction;
     }
 
     @Override
@@ -368,6 +389,7 @@ public class Eye extends BodyPart {
             }
             if(hang){
                 // Only check once
+                barAction = null;
                 hang = false;
                 input = fp.matToBar(input, color);
 
@@ -382,35 +404,45 @@ public class Eye extends BodyPart {
 
  */
 
-
-
                 // Act on the y positions
-                final int EXPECTED_LEFT_Y = 225;
-                final int EXPECTED_RIGHT_Y = 225;
-                final int TOO_CLOSE_LEFT_Y = 180;
-                final int TOO_CLOSE_RIGHT_Y = 180;
-                final int TOO_FAR_LEFT_Y = 305;
-                final int TOO_FAR_RIGHT_Y = 305;
+                final int EXPECTED_LEFT_Y = 290;
+                final int EXPECTED_RIGHT_Y = 290;
+                final int TOO_CLOSE_LEFT_Y = 270;
+                final int TOO_CLOSE_RIGHT_Y = 270;
+                final int TOO_FAR_LEFT_Y = 310;
+                final int TOO_FAR_RIGHT_Y = 310;
                 final double TOO_CLOSE_DISTANCE_IN = 1.0;
-                final double TOO_FAR_DISTANCE_IN = 5.0;
+                final double TOO_FAR_DISTANCE_IN = 1.0;
                 final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_RIGHT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_RIGHT_Y - EXPECTED_RIGHT_Y);
 
-                if(fp.bar_left_y > 0 && fp.bar_right_y > 0){
-                    int deltaLeft = fp.bar_left_y - EXPECTED_LEFT_Y;
-                    int deltaRight = fp.bar_right_y - EXPECTED_RIGHT_Y;
+                int deltaLeft = (fp.bar_left_y > 0) ? fp.bar_left_y - EXPECTED_LEFT_Y : -1;
+                int deltaRight = (fp.bar_right_y > 0) ? fp.bar_right_y - EXPECTED_RIGHT_Y : -1;
+                if(deltaLeft<0 && deltaRight >= 0) deltaLeft = deltaRight;
+                if(deltaRight<0 && deltaLeft >= 0) deltaRight = deltaLeft;
+
+                if(deltaLeft > 0 && deltaRight > 0){
 
                     inchesLeft = deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT);
                     inchesRight = deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT);
 
                     // Wiggle robot
-                    moveLegsToBar(inchesLeft, inchesRight);
+                    barAction = moveLegsToBar(inchesLeft, inchesRight);
 
                     // Debug
-                    //telemetry.addData("Inches left", inchesLeft);
-                    //telemetry.addData("Inches right", inchesRight);
+                    telemetry.addData("left bar y", fp.bar_left_y);
+                    telemetry.addData("right bar y", fp.bar_right_y);
+                    telemetry.addData("Inches left", inchesLeft);
+                    telemetry.addData("Inches right", inchesRight);
+                    telemetry.update();
+                }
+                else {
+                    Action noAction = telemetryPacket -> {
+                        return false;
+                    };
+                    barAction = noAction;
                 }
                 //telemetry.update();
             }

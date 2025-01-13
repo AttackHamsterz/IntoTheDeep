@@ -38,9 +38,9 @@ public abstract class BodyPart extends Thread{
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
                 safeHold(getCurrentPosition());
-                notifyOldestListener();
             } catch (InterruptedException e) {
             }
+            notifyOldestListener();
         }
     }
 
