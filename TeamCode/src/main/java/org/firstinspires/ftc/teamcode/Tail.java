@@ -141,7 +141,7 @@ public class Tail extends Thread{
                         return false;
                     };
                     Action armHangPosition = telemetryPacket -> {
-                        arm.setPosition(0.6, 550);
+                        arm.setPosition(1.0, 550);
                         return false;
                     };
                     Action firstPull = new SequentialAction(
