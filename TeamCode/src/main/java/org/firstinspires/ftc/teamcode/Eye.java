@@ -20,35 +20,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-class CalibrationPoint {
-    private double x;
-    private double y;
-    private double ticks;
-    private double legs;
 
-    CalibrationPoint(double x, double y, double ticks, double legs) {
-        this.x = x;
-        this.y = y;
-        this.ticks = ticks;
-        this.legs = legs;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public double getTicks() {
-        return ticks;
-    }
-
-    public double getLegs() {
-        return legs;
-    }
-}
 
 public class Eye extends BodyPart {
 
@@ -373,6 +345,16 @@ public class Eye extends BodyPart {
 
         @Override
         public Mat processFrame(Mat input) {
+            if (fp.centerXVal.size() > 0) {
+                if (colorId == RED_ID) {
+                    lights.setPosition(RED_POWER);
+                } else if (colorId == BLUE_ID) {
+                    lights.setPosition(BLUE_ID);
+                }
+            }else {
+                lights.setPosition(NONE_ID);
+            }
+
             if(search){
                 search = false;
                 shoulder.setMode(Shoulder.Mode.NONE);
@@ -409,8 +391,8 @@ public class Eye extends BodyPart {
                     }
 
                     double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
-                    hand.setWrist(wristPos);
-                    moveToColor();
+                    //hand.setWrist(wristPos);
+                   // moveToColor();
 
 
                     // Move arm for a good pickup
@@ -430,10 +412,13 @@ public class Eye extends BodyPart {
                     telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
                     telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
                     telemetry.addData("Wrist pos", wristPos);
+                    legs.debugTelemetry(telemetry);
+                    arm.debugTelemetry(telemetry);
+
 
 
                 }
-                //telemetry.update();
+                telemetry.update();
             }
             if(hang){
                 // Only check once
