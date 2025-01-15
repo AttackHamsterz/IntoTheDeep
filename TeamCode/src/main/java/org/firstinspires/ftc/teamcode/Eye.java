@@ -20,6 +20,36 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
+class CalibrationPoint {
+    private double x;
+    private double y;
+    private double ticks;
+    private double legs;
+
+    CalibrationPoint(double x, double y, double ticks, double legs) {
+        this.x = x;
+        this.y = y;
+        this.ticks = ticks;
+        this.legs = legs;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public double getTicks() {
+        return ticks;
+    }
+
+    public double getLegs() {
+        return legs;
+    }
+}
+
 public class Eye extends BodyPart {
 
     private static final double OFF_POWER = 0.0;
@@ -63,6 +93,14 @@ public class Eye extends BodyPart {
     // how much our slop is changing based on y
     protected static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
+
+    // values for the plane
+    CalibrationPoint[] calibrationPlane = {
+            new CalibrationPoint(124, 128, 982, 8),
+            new CalibrationPoint(162, 360, 0, 3.5),
+            new CalibrationPoint(527, 372, 0, -3.25),
+            new CalibrationPoint(551, 150, 783, -6.25)
+    };
 
     ColorCamera camera;
     OpenCvWebcam webcam;
@@ -142,8 +180,15 @@ public class Eye extends BodyPart {
             }
         }
         //if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
+        /*
             telemetry.addData("Inches left", inchesLeft);
             telemetry.addData("Inches right", inchesRight);
+            telemetry.addData("left bar y", fp.bar_left_y);
+            telemetry.addData("right bar y", fp.bar_right_y);
+            telemetry.addData("Inches left", inchesLeft);
+            telemetry.addData("Inches right", inchesRight);
+
+         */
 
         //}
     }
@@ -237,7 +282,7 @@ public class Eye extends BodyPart {
                 new CompleteAction(raiseShoulder, shoulder));
         Actions.runBlocking(snag);
     }
-    private boolean search = false;
+    public boolean search = false;
     private boolean hang = false;
 
     @Override
@@ -334,6 +379,7 @@ public class Eye extends BodyPart {
                 input = fp.matToDetection(input, color, favorYellow);
 
                 // Stats
+                /*
                 telemetry.addData("Frame Count", webcam.getFrameCount());
                 telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
                 telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -341,8 +387,11 @@ public class Eye extends BodyPart {
                 telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
                 telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
 
+
+                 */
                 // Find closest center and rotate to angle
                 if(fp.centerXVal.size() > 0){
+
                      smallestDist = 10000;
                      smallestDistIndex = 0;
                     // use pythagorean theorem to draw a line from the camera to each block's position
@@ -374,14 +423,15 @@ public class Eye extends BodyPart {
                     //plunge();
 
                     // Debug
-                    /*
+
+
                     telemetry.addData("Total num", fp.centerXVal.size());
                     telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
                     telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
                     telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
                     telemetry.addData("Wrist pos", wristPos);
 
-                     */
+
                 }
                 //telemetry.update();
             }
@@ -430,11 +480,14 @@ public class Eye extends BodyPart {
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
 
                     // Debug
+                    /*
                     telemetry.addData("left bar y", fp.bar_left_y);
                     telemetry.addData("right bar y", fp.bar_right_y);
                     telemetry.addData("Inches left", inchesLeft);
                     telemetry.addData("Inches right", inchesRight);
                     telemetry.update();
+
+                     */
                 }
                 else {
                     Action noAction = telemetryPacket -> {
@@ -445,7 +498,7 @@ public class Eye extends BodyPart {
                 //telemetry.update();
             }
 
-            Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
+            //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
             return input;
         }
     }

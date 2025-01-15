@@ -64,7 +64,7 @@ public class IntoTheDeepOpMode extends StandardSetupOpMode {
             //legs.debugTelemetry(telemetry);
             //shoulder.debugTelemetry(telemetry);
             //arm.debugTelemetry(telemetry);
-            //eye.debugTelemetry(telemetry);
+            eye.debugTelemetry(telemetry);
             //hand.debugTelemetry(telemetry);
             //telemetry.update();
 
