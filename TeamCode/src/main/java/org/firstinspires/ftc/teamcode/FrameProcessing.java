@@ -14,6 +14,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
+import org.openftc.easyopencv.OpenCvCamera;
 
 /**
  * A class to perform frame processing in opencv.  Also lets us easily unit test the algorithm
@@ -89,19 +90,46 @@ public class FrameProcessing {
     }
 
     public int grabColor(Mat input ){
-        Rect ROI = new Rect(300, 100, 40,40);
+        // 320 - 400 width 80
+        // 20 - 100
+        Rect ROI = new Rect(320, 20, 80,100);
+
         Imgproc.cvtColor(input.submat(ROI), grab_slice, Imgproc.COLOR_RGB2HSV);
+
+        Mat yellow = new Mat();
+        Core.inRange(grab_slice, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, yellow);
+
+        Mat redLow = new Mat();
+        Mat redHigh = new Mat();
+        Mat red = new Mat();
+        Core.inRange(grab_slice, HSV_RED1_LOW, HSV_RED1_HIGH, redLow);
+        Core.inRange(redLow, HSV_RED2_LOW, HSV_RED2_HIGH, redHigh);
+        Core.add(redLow, redHigh, red);
+
+        Mat blue = new Mat();
+        Core.inRange(grab_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, blue);
+
+        int yellowAmount = Core.countNonZero(yellow);
+        int redAmount = Core.countNonZero(red);
+        int blueAmount = Core.countNonZero(blue);
+
+        if (yellowAmount > redAmount && yellowAmount > blueAmount) {
+            return Eye.YELLOW_ID;
+        } else if (redAmount > blueAmount) {
+            return Eye.RED_ID;
+        } else {
+            return Eye.BLUE_ID;
+        }
+
+
 
         /*
         Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
-        Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
         Core.inRange(hsv, HSV_RED1_LOW, HSV_RED1_HIGH, maskLow);
         Core.inRange(hsv, HSV_RED2_LOW, HSV_RED2_HIGH, maskHi);
         Core.add(maskLow, maskHi, mask);
         Core.inRange(hsv, HSV_BLUE_LOW, HSV_BLUE_HIGH, mask);
 */
-        return Eye.YELLOW_ID;
     }
 
     public Mat matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)

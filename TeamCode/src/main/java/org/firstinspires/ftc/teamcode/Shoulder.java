@@ -330,7 +330,7 @@ public class Shoulder extends BodyPart {
                     arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
-                        //setPosition(1.0, DROP_SHOULDER_POS);
+                        setPosition(1.0, DROP_SHOULDER_POS);
                     }
                     else {
                         mode = Mode.HIGH_BAR;

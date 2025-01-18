@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -297,18 +298,7 @@ public class Eye extends BodyPart {
                 }
             }
 
-            /*
-            if(block == null)
-                lights.setPosition(OFF_POWER);
-            else if(block.id == YELLOW_ID)
-                lights.setPosition(YELLOW_POWER);
-            else if(block.id == RED_ID)
-                lights.setPosition(RED_POWER);
-            else if(block.id == BLUE_ID)
-                lights.setPosition(BLUE_POWER);
-            else
-                lights.setPosition(OFF_POWER);
-             */
+
 
             try {
                 sleep(BodyPart.LOOP_PAUSE_MS);
@@ -356,22 +346,25 @@ public class Eye extends BodyPart {
             // For every 100th frame, lets see what we're holding
             int frameCount = webcam.getFrameCount();
             if(frameCount % 100 == 0){
+                // 320 - 400 width 80
+                // 20 - 100
+                int color = fp.grabColor(input);
 
-            }
-
-            if (fp.centerXVal.size() > 0) {
-                if (colorId == RED_ID) {
+                 if(color == YELLOW_ID)
+                    lights.setPosition(YELLOW_POWER);
+                else if(color == RED_ID)
                     lights.setPosition(RED_POWER);
-                } else if (colorId == BLUE_ID) {
-                    lights.setPosition(BLUE_ID);
-                }
-            }else {
-                lights.setPosition(NONE_ID);
+                else if(color == BLUE_ID)
+                    lights.setPosition(BLUE_POWER);
+                else
+                    lights.setPosition(OFF_POWER);
             }
+
+
 
             if(search){
                 search = false;
-                shoulder.setMode(Shoulder.Mode.NONE);
+                shoulder.setMode(Shoulder.Mode.SEARCH);
                 input = fp.matToDetection(input, color, favorYellow);
 
                 // Stats
