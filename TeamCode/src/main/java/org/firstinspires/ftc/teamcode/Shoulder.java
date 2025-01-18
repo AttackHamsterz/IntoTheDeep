@@ -105,7 +105,6 @@ public class Shoulder extends BodyPart {
 
     // Mode for the shoulder
     private Mode mode = Mode.NONE;
-
     /**
      * Constructor for the shoulder
      *
@@ -128,6 +127,7 @@ public class Shoulder extends BodyPart {
         shoulderMotor.setTargetPosition(0);
         shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.mode = Mode.NONE;
+
     }
 
     /**
@@ -326,10 +326,11 @@ public class Shoulder extends BodyPart {
                 }
                 else if(gamepad.b && !pressing) {
                     pressing = true;
+
                     arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
-                        setPosition(1.0, DROP_SHOULDER_POS);
+                        //setPosition(1.0, DROP_SHOULDER_POS);
                     }
                     else {
                         mode = Mode.HIGH_BAR;

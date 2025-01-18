@@ -96,6 +96,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
+
         /*
         Action action = eye.safeHang();
         if(action != null)
@@ -103,14 +104,16 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
          */
 
+
+
         Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),
-                new CompleteAction(releaseAction, hand)
+                new CompleteAction(releaseAction, hand),
+                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, false), legs)
         );
 
         Action hangSampleToolAction = new SequentialAction(                 // Drive and extend
                 new CompleteAction(dropAction, shoulder),    // Run dropAction
-                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose), legs),
                 retractReleaseBackup);
         Actions.runBlocking(hangSampleToolAction);
 

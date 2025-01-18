@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -20,6 +21,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
+import java.util.Arrays;
 
 
 public class Eye extends BodyPart {
@@ -71,8 +73,11 @@ public class Eye extends BodyPart {
             new CalibrationPoint(124, 128, 982, 8),
             new CalibrationPoint(162, 360, 0, 3.5),
             new CalibrationPoint(527, 372, 0, -3.25),
-            new CalibrationPoint(551, 150, 783, -6.25)
+            new CalibrationPoint(551, 150, 783, -6.25),
+            new CalibrationPoint(347, 252, 205, 0)
     };
+
+    PlaneFit plane = new PlaneFit(Arrays.asList(calibrationPlane));
 
     ColorCamera camera;
     OpenCvWebcam webcam;
@@ -138,6 +143,7 @@ public class Eye extends BodyPart {
 
     public void debugTelemetry(Telemetry telemetry)
     {
+        /*
         if (fp.centerXVal.size() > 0) {
             telemetry.addData("Total num", fp.centerXVal.size());
             telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
@@ -151,16 +157,17 @@ public class Eye extends BodyPart {
                 telemetry.addData("Arm Pos", arm.getCurrentPosition());
             }
         }
+
+         */
         //if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
-        /*
+
             telemetry.addData("Inches left", inchesLeft);
             telemetry.addData("Inches right", inchesRight);
             telemetry.addData("left bar y", fp.bar_left_y);
             telemetry.addData("right bar y", fp.bar_right_y);
-            telemetry.addData("Inches left", inchesLeft);
-            telemetry.addData("Inches right", inchesRight);
 
-         */
+
+
 
         //}
     }
@@ -168,14 +175,14 @@ public class Eye extends BodyPart {
     public void moveToColor() {
             // Set new arm position!
         Action moveArm = telemetryPacket -> {
-            int ticks = (int) Math.round((M * fp.centerYVal.get(smallestDistIndex) + B));
+            int ticks = plane.getTicks(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
             arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
             //telemetry.addData("block1 ticks", ticks);
             return false;
         };
         Action strafeToBlock = telemetryPacket -> {
-            double ySlope = fp.centerYVal.get(smallestDistIndex) * SHIFT_M + SHIFT_B;
-            double shift = (fp.centerXVal.get(smallestDistIndex) - CENTER_X) * ySlope;
+            //double ySlope = fp.centerYVal.get(smallestDistIndex) * SHIFT_M + SHIFT_B;
+            double shift = plane.getShift(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
             legs.moveLeft(shift, false);
             return false;
         };
@@ -278,11 +285,11 @@ public class Eye extends BodyPart {
             }
             if (gamepad.b && !pressingB) {
                 pressingB = true;
-                /*
+
                 if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
                     hang = true;
 
-                 */
+
             }
             else if(!gamepad.b){
                 if(pressingB) {
@@ -345,6 +352,7 @@ public class Eye extends BodyPart {
 
         @Override
         public Mat processFrame(Mat input) {
+            /*
             if (fp.centerXVal.size() > 0) {
                 if (colorId == RED_ID) {
                     lights.setPosition(RED_POWER);
@@ -354,6 +362,8 @@ public class Eye extends BodyPart {
             }else {
                 lights.setPosition(NONE_ID);
             }
+
+             */
 
             if(search){
                 search = false;
@@ -391,8 +401,8 @@ public class Eye extends BodyPart {
                     }
 
                     double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
-                    //hand.setWrist(wristPos);
-                   // moveToColor();
+                    hand.setWrist(wristPos);
+                    moveToColor();
 
 
                     // Move arm for a good pickup
@@ -438,14 +448,14 @@ public class Eye extends BodyPart {
  */
 
                 // Act on the y positions
-                final int EXPECTED_LEFT_Y = 290;
-                final int EXPECTED_RIGHT_Y = 290;
-                final int TOO_CLOSE_LEFT_Y = 270;
-                final int TOO_CLOSE_RIGHT_Y = 270;
-                final int TOO_FAR_LEFT_Y = 310;
-                final int TOO_FAR_RIGHT_Y = 310;
+                final int EXPECTED_LEFT_Y = 215;
+                final int EXPECTED_RIGHT_Y = 215;
+                final int TOO_CLOSE_LEFT_Y = 170;
+                final int TOO_CLOSE_RIGHT_Y = 170;
+                final int TOO_FAR_LEFT_Y = 285;
+                final int TOO_FAR_RIGHT_Y = 285;
                 final double TOO_CLOSE_DISTANCE_IN = 1.0;
-                final double TOO_FAR_DISTANCE_IN = 1.0;
+                final double TOO_FAR_DISTANCE_IN = 4.0;
                 final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
@@ -458,21 +468,21 @@ public class Eye extends BodyPart {
 
                 if(deltaLeft > 0 && deltaRight > 0){
 
-                    inchesLeft = deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT);
-                    inchesRight = deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT);
+                    inchesLeft = Range.clip(deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -1, 1);
+                    inchesRight = Range.clip(deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -1, 1);
 
                     // Wiggle robot
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
 
                     // Debug
-                    /*
+
                     telemetry.addData("left bar y", fp.bar_left_y);
                     telemetry.addData("right bar y", fp.bar_right_y);
                     telemetry.addData("Inches left", inchesLeft);
                     telemetry.addData("Inches right", inchesRight);
                     telemetry.update();
 
-                     */
+
                 }
                 else {
                     Action noAction = telemetryPacket -> {

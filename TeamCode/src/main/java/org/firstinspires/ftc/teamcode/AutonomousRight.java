@@ -26,8 +26,10 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -45 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(31 + X_OFFSET, 9 + Y_OFFSET), Math.toRadians(0));
+        Pose2d thirdHang = new Pose2d(new Vector2d(32 + X_OFFSET, 9 + Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
+
+        Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
         // Common actions for the right side
         Action hoverShoulder = telemetryPacket -> {
@@ -41,7 +43,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action grab = telemetryPacket -> {
-            hand.grab(550);
+            hand.grab(500);
             return false;
         };
 
@@ -114,13 +116,20 @@ public class AutonomousRight extends AutonomousOpMode{
                 Actions.runBlocking(action);
 
              */
+            Action retractReleaseBackup = new ParallelAction(
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(release, hand),
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, false), legs)
+            );
+
 
             Action dropAndRelease = new SequentialAction(
                     new CompleteAction(drop, shoulder),
-                    new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand)
+                    retractReleaseBackup
             );
             Actions.runBlocking(dropAndRelease);
+
+
         }
 
         Action avoidAndHover = new ParallelAction(
@@ -163,12 +172,17 @@ public class AutonomousRight extends AutonomousOpMode{
 
          */
 
+        Action retractReleaseBackup2 = new ParallelAction(
+                new CompleteAction(armIn, arm),
+                new CompleteAction(release, hand),
+                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, false), legs)
+        );
 
         Action dropAndRelease2 = new SequentialAction(
-                new CompleteAction(armIn, arm),
                 new CompleteAction(drop, shoulder),
-                new CompleteAction(release, hand)
+                retractReleaseBackup2
         );
+
         Actions.runBlocking(dropAndRelease2);
 
         // If our partner used a specimen we have time for one more hang
@@ -201,10 +215,15 @@ public class AutonomousRight extends AutonomousOpMode{
 
              */
 
+            Action retractReleaseBackup3 = new ParallelAction(
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(release, hand),
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, false), legs)
+            );
+
             Action dropAndRelease3 = new SequentialAction(
                     new CompleteAction(drop, shoulder),
-                    new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand)
+                    retractReleaseBackup3
             );
             Actions.runBlocking(dropAndRelease3);
         }
