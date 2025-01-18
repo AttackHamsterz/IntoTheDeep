@@ -32,10 +32,10 @@ public class Eye extends BodyPart {
     private static final double BLUE_POWER = 0.611;
 
     // variable to store the color of alliance
-    private static final int NONE_ID = 0;
-    private static final int YELLOW_ID = 1;
-    private static final int RED_ID = 2;
-    private static final int BLUE_ID = 3;
+    public static final int NONE_ID = 0;
+    public static final int YELLOW_ID = 1;
+    public static final int RED_ID = 2;
+    public static final int BLUE_ID = 3;
     private final int colorId;
 
     protected static final int WEBCAM_WIDTH = 640; //800;//1920;//640;//1920;
@@ -285,11 +285,11 @@ public class Eye extends BodyPart {
             }
             if (gamepad.b && !pressingB) {
                 pressingB = true;
-
+                /*
                 if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
                     hang = true;
 
-
+                 */
             }
             else if(!gamepad.b){
                 if(pressingB) {
@@ -352,7 +352,13 @@ public class Eye extends BodyPart {
 
         @Override
         public Mat processFrame(Mat input) {
-            /*
+
+            // For every 100th frame, lets see what we're holding
+            int frameCount = webcam.getFrameCount();
+            if(frameCount % 100 == 0){
+
+            }
+
             if (fp.centerXVal.size() > 0) {
                 if (colorId == RED_ID) {
                     lights.setPosition(RED_POWER);
@@ -362,8 +368,6 @@ public class Eye extends BodyPart {
             }else {
                 lights.setPosition(NONE_ID);
             }
-
-             */
 
             if(search){
                 search = false;

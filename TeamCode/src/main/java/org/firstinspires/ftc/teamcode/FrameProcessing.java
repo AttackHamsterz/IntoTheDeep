@@ -34,6 +34,9 @@ public class FrameProcessing {
     private static final boolean DRAW = true;
     private final int MIN_AREA;
 
+    private final Mat grab_slice;
+    private final Mat grab_mask;
+
     private final Mat bar_left_slice;
     private final Mat bar_right_slice;
     private final Mat bar_left_mask;
@@ -72,15 +75,33 @@ public class FrameProcessing {
             image = new Mat(height, width, CvType.CV_8U);
         MIN_AREA = (int)Math.round((double)(width * height) * 0.005);
 
+        grab_slice = new Mat(40, 40, CvType.CV_8U);
         bar_left_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
         bar_right_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
+
+        grab_mask = new Mat(40, 40, CvType.CV_8UC1);
         bar_left_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_right_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_low_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_high_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
 
         this.telemetry = telemetry;
+    }
 
+    public int grabColor(Mat input ){
+        Rect ROI = new Rect(300, 100, 40,40);
+        Imgproc.cvtColor(input.submat(ROI), grab_slice, Imgproc.COLOR_RGB2HSV);
+
+        /*
+        Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
+        Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+        Core.inRange(hsv, HSV_RED1_LOW, HSV_RED1_HIGH, maskLow);
+        Core.inRange(hsv, HSV_RED2_LOW, HSV_RED2_HIGH, maskHi);
+        Core.add(maskLow, maskHi, mask);
+        Core.inRange(hsv, HSV_BLUE_LOW, HSV_BLUE_HIGH, mask);
+*/
+        return Eye.YELLOW_ID;
     }
 
     public Mat matToDetection(Mat input, StandardSetupOpMode.COLOR alliance, boolean favorYellow)
