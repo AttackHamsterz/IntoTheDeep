@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -19,21 +18,21 @@ public class StandardSetupOpMode extends LinearOpMode {
         LEFT,
         RIGHT
     }
-    protected COLOR color = COLOR.BLUE;
-    protected SIDE side = SIDE.RIGHT;
+    public COLOR color = COLOR.BLUE;
+    public SIDE side = SIDE.RIGHT;
 
     // Declare OpMode members.
     protected final ElapsedTime runtime = new ElapsedTime();
 
-    protected Legs legs;
-    protected Arm arm;
-    protected Shoulder shoulder;
-    protected Hand hand;
-    protected Tail tail;
-    protected Eye eye;
+    public Legs legs;
+    public Arm arm;
+    public Shoulder shoulder;
+    public Hand hand;
+    public Tail tail;
+    public Eye eye;
 
-    protected boolean ignoreGamepad = false;
-    protected boolean favorYellow = false;
+    public boolean ignoreGamepad = false;
+    public boolean favorYellow = false;
 
     // @Override
     public void runOpMode() throws InterruptedException {

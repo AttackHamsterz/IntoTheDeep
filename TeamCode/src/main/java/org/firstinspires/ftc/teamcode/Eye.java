@@ -78,7 +78,6 @@ public class Eye extends BodyPart {
     PlaneFit plane = new PlaneFit(Arrays.asList(calibrationPlane));
 
     OpenCvWebcam webcam;
-    StandardSetupOpMode ssom;
 
     StandardSetupOpMode.COLOR color;
     boolean favorYellow;
@@ -200,7 +199,7 @@ public class Eye extends BodyPart {
                 return false;
             };
             Action grab = telemetryPacket -> {
-                ssom.shoulder.setMode(Shoulder.Mode.GROUND);
+                ssom.shoulder.setPositionForMode(Shoulder.Mode.GROUND, 1.0, ssom.arm.getCurrentPosition());
                 ssom.hand.grab(1000);
                 return false;
             };
@@ -265,7 +264,7 @@ public class Eye extends BodyPart {
 
     public void plunge() {
         Action grab = telemetryPacket -> {
-            ssom.shoulder.setMode(Shoulder.Mode.GROUND);
+            ssom.shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.8, ssom.arm.getCurrentPosition());
             ssom.hand.grab(1000);
             return false;
         };

@@ -205,6 +205,10 @@ public class Tail extends Thread{
                         lifting++;
                 }
 
+                // Reset
+                if(lifting >= 9)
+                    lifting = 0;
+
                 // Short sleep to keep this loop from saturating
                 try {
                     sleep(BodyPart.LOOP_PAUSE_MS);

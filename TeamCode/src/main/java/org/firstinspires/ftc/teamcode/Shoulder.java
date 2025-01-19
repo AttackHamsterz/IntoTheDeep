@@ -314,7 +314,7 @@ public class Shoulder extends BodyPart {
                 }
                 // Move the shoulder
                 else if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    shoulderMotor.setPower(HOLD_POWER);
+                    shoulderMotor.setPower(0);
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException ignore) {
