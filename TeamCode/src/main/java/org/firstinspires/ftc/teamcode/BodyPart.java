@@ -25,10 +25,10 @@ public abstract class BodyPart extends Thread{
     protected static final long LOOP_PAUSE_MS = 50;
 
     // Consumer pattern objects
-    private LinkedList<Consumer<Boolean>> listeners = new LinkedList<>();
+    private final LinkedList<Consumer<Boolean>> listeners = new LinkedList<>();
 
     private class TimeoutThread extends Thread{
-        private int position;
+        private final int position;
 
         public TimeoutThread(int position){
             this.position = position;
@@ -41,7 +41,7 @@ public abstract class BodyPart extends Thread{
                     sleep(MOTOR_CHECK_PERIOD_MS);
                 }
                 safeHold(getCurrentPosition());
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
             notifyOldestListener();
         }
@@ -95,7 +95,7 @@ public abstract class BodyPart extends Thread{
     protected void notifyOldestListener()
     {
         // We are done, notify oldest consumer
-        if(listeners.size()>0)
+        if(!listeners.isEmpty())
             listeners.removeFirst().accept(Boolean.FALSE);
     }
 

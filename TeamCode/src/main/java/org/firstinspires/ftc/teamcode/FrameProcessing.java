@@ -66,6 +66,16 @@ public class FrameProcessing {
 
     private Telemetry telemetry;
 
+    // 320 - 400 width 80
+    // 20 - 100
+    private static final Rect GRAB_ROI = new Rect(320, 20, 80,100);
+    private final Mat grab_yellow;
+    private final Mat grab_redLow;
+    private final Mat grab_redHigh;
+    private final Mat grab_red;
+    private final Mat grab_blue;
+
+
     public FrameProcessing(int width, int height, Telemetry telemetry){
         hsv = new Mat(height, width * 3, CvType.CV_8U);
         mask = new Mat(height, width, CvType.CV_8UC1);
@@ -87,33 +97,30 @@ public class FrameProcessing {
         bar_high_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
 
         this.telemetry = telemetry;
+
+        grab_yellow = new Mat(height, width, CvType.CV_8UC1);
+        grab_redHigh = new Mat(height, width, CvType.CV_8UC1);
+        grab_redLow = new Mat(height, width, CvType.CV_8UC1);
+        grab_red = new Mat(height, width, CvType.CV_8UC1);
+        grab_blue = new Mat(height, width, CvType.CV_8UC1);
+
     }
 
     private static final int MIN_NUM_FOR_GRAB = 40;
     public int grabColor(Mat input ){
-        // 320 - 400 width 80
-        // 20 - 100
-        Rect ROI = new Rect(320, 20, 80,100);
 
-        Imgproc.cvtColor(input.submat(ROI), grab_slice, Imgproc.COLOR_RGB2HSV);
+        Imgproc.cvtColor(input.submat(GRAB_ROI), grab_slice, Imgproc.COLOR_RGB2HSV);
 
-        Mat yellow = new Mat();
-        Core.inRange(grab_slice, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, yellow);
-
-        Mat redLow = new Mat();
-        Mat redHigh = new Mat();
-        Mat red = new Mat();
-        Core.inRange(grab_slice, HSV_RED1_LOW, HSV_RED1_HIGH, redLow);
-        Core.inRange(redLow, HSV_RED2_LOW, HSV_RED2_HIGH, redHigh);
-        Core.add(redLow, redHigh, red);
-
-        Mat blue = new Mat();
-        Core.inRange(grab_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, blue);
+        Core.inRange(grab_slice, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, grab_yellow);
+        Core.inRange(grab_slice, HSV_RED1_LOW, HSV_RED1_HIGH, grab_redLow);
+        Core.inRange(grab_redLow, HSV_RED2_LOW, HSV_RED2_HIGH, grab_redHigh);
+        Core.add(grab_redLow, grab_redHigh, grab_red);
+        Core.inRange(grab_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, grab_blue);
 
         // Counts for each color
-        int yellowAmount = Core.countNonZero(yellow);
-        int redAmount = Core.countNonZero(red);
-        int blueAmount = Core.countNonZero(blue);
+        int yellowAmount = Core.countNonZero(grab_yellow);
+        int redAmount = Core.countNonZero(grab_red);
+        int blueAmount = Core.countNonZero(grab_blue);
 
         // Ensure we have enough and it's not just parts of the tool
         if(yellowAmount<MIN_NUM_FOR_GRAB)
@@ -358,20 +365,12 @@ public class FrameProcessing {
         Imgproc.findContours(bar_right_mask, bar_right_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         bar_left_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
         bar_right_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
-       // telemetry.addData("Left Bar Contours", bar_left_contours.size());
-        //telemetry.addData("Right Bar Contours", bar_right_contours.size());
-
-
 
         // Find the largest contour (the one with the max area)
         bar_left_y = getHighestContourY(bar_left_contours);
         bar_right_y = getHighestContourY(bar_right_contours);
 
-        telemetry.addData("Left High", bar_left_y);
-        telemetry.addData("Right High", bar_right_y);
-        telemetry.update();
-
         // Just give them the original frame
-
-        return input;    }
+        return input;
+    }
 }

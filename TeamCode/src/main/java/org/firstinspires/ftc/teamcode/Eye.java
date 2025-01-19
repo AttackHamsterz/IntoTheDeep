@@ -140,33 +140,29 @@ public class Eye extends BodyPart {
 
     public void debugTelemetry(Telemetry telemetry)
     {
-        /*
+        // Webcam debug
+        telemetry.addData("Frame Count", webcam.getFrameCount());
+        telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
+        //telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
+        //telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
+        //telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
+        //telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
+
+        // Contour detection debug
         if (fp.centerXVal.size() > 0) {
-            telemetry.addData("Total num", fp.centerXVal.size());
+            telemetry.addData("Total samples", fp.centerXVal.size());
             telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
             telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
             telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
-            telemetry.addData("Wrist pos", fp.angleVal.get(smallestDistIndex) / Math.PI);
-            telemetry.addData("Arm pos", arm.getCurrentPosition());
-            if (smallestDistIndex >= 0 && smallestDist < fp.centerYVal.size()) {
-                telemetry.addData("blockCenterY", fp.centerYVal.get(smallestDistIndex));
-                telemetry.addData("deltaTicks", (int) Math.round((M * fp.centerYVal.get(smallestDistIndex) + B)));
-                telemetry.addData("Arm Pos", arm.getCurrentPosition());
-            }
         }
 
-         */
-        //if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
-
+        // Bar detection debug
+        if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
             telemetry.addData("Inches left", inchesLeft);
             telemetry.addData("Inches right", inchesRight);
             telemetry.addData("left bar y", fp.bar_left_y);
             telemetry.addData("right bar y", fp.bar_right_y);
-
-
-
-
-        //}
+        }
     }
 
     public Action moveToColor() {
@@ -223,16 +219,6 @@ public class Eye extends BodyPart {
                     premove,
                     new CompleteAction(grab, ssom.hand),
                     new CompleteAction(raiseShoulder, ssom.shoulder));
-
-            // Debug
-            ssom.telemetry.addData("Total num", fp.centerXVal.size());
-            ssom.telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
-            ssom.telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
-            ssom.telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
-            ssom.telemetry.addData("Wrist pos", wristPos);
-            if(ssom.legs != null) ssom.legs.debugTelemetry(ssom.telemetry);
-            if(ssom.arm != null) ssom.arm.debugTelemetry(ssom.telemetry);
-            ssom.telemetry.update();
         }
         else {
             moveAction = telemetryPacket -> {
@@ -406,17 +392,6 @@ public class Eye extends BodyPart {
                 hang = false;
                 input = fp.matToBar(input, color);
 
-                // Stats
-/*
-                telemetry.addData("Frame Count", webcam.getFrameCount());
-                telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
-                telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
-                telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
-                telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
-                telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
-
- */
-
                 // Act on the y positions
                 final int EXPECTED_LEFT_Y = 215;
                 final int EXPECTED_RIGHT_Y = 215;
@@ -443,13 +418,6 @@ public class Eye extends BodyPart {
 
                     // Wiggle robot
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
-
-                    // Debug
-                    ssom.telemetry.addData("left bar y", fp.bar_left_y);
-                    ssom.telemetry.addData("right bar y", fp.bar_right_y);
-                    ssom.telemetry.addData("Inches left", inchesLeft);
-                    ssom.telemetry.addData("Inches right", inchesRight);
-                    ssom.telemetry.update();
                 }
                 else {
                     barAction = telemetryPacket -> {

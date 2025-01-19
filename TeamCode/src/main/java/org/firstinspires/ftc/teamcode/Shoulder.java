@@ -189,18 +189,6 @@ public class Shoulder extends BodyPart {
     }
 
     /**
-     * Gets the ratio of shoulder position 0.0 is floor, 1.0 is straight up
-     * Ratio will change based on MIN_POS set in while loop
-     *
-     * @return double between 0.0-1.0
-     */
-    public double getShoulderRatio() {
-        //Sets a position variable of the robot's current position
-        double pos = shoulderMotor.getCurrentPosition();
-        return Range.clip( (pos - (double)MIN_POS) / (double)(MAX_POS - MIN_POS), 0.0, 1.0);
-    }
-
-    /**
      * Sets the position of the shoulder
      *
      * @param power    power of the shoulder motor
@@ -290,6 +278,7 @@ public class Shoulder extends BodyPart {
                 if(gamepad.x && !pressing) {
                     pressing = true;
                     ssom.hand.hangSample();
+                    // Wait for shoulder mode and to hit search position
                     if (mode == Shoulder.Mode.SEARCH && !protectionThread.isAlive()){
                         Action safeSearch = ssom.eye.safeSearch();
                         mode = Mode.NONE;
@@ -305,7 +294,6 @@ public class Shoulder extends BodyPart {
                 }
                 else if(gamepad.b && !pressing) {
                     pressing = true;
-
                     ssom.arm.setPosition(1.0, 250);
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
