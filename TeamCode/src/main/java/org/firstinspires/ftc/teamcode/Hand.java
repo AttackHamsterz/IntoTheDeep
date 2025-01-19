@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -17,7 +15,7 @@ public class Hand extends BodyPart{
     private static final double MAX_POWER = 1.0;  // Full forward power
     private static final double GRAB_POWER = 1.0;
     private static final double SPIN_POWER = 0.8; // Amount to add or remove from no-power
-    private static final double NO_POWER = 0.0; // Continous servo stop
+    private static final double NO_POWER = 0.0; // Continuous servo stop
     private static final double RELEASE_POWER = 0.5;
 
     private static final double MIN_TRIGGER = 0.1;
@@ -26,25 +24,22 @@ public class Hand extends BodyPart{
     private static final long RELEASE_MS = 500;
     private static final long SPIN_MS = 200;
 
-    private CRServo left;
-    private CRServo right;
-    private Servo wrist;
-    private boolean ignoreGamepad;
-    private final Gamepad gamepad;
+    private final CRServo left;
+    private final CRServo right;
+    private final Servo wrist;
     private Thread stopThread;
 
     /**
      * Construct the hand with 3 servos and a gamepad
-     * @param hardwareMap map including hand parts
-     * @param gamepad Tool gamepad
+     * @param ssom OpMode with everything we need
      */
-    public Hand(HardwareMap hardwareMap, Gamepad gamepad)
-    {
+    public Hand(StandardSetupOpMode ssom){
+        super.setStandardSetupOpMode(ssom);
         // Initial assignments
-        this.wrist = hardwareMap.get(Servo.class, "wristServo"); //ch0 expansion hub Servo
-        this.left = hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Continuous Servo
-        this.right = hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Continuous Servo
-        this.gamepad = gamepad;
+        this.wrist = ssom.hardwareMap.get(Servo.class, "wristServo"); //ch0 expansion hub Servo
+        this.left = ssom.hardwareMap.get(CRServo.class, "leftHandServo"); //ch1 expansion hub Continuous Servo
+        this.right = ssom.hardwareMap.get(CRServo.class, "rightHandServo"); //ch2 expansion hub Continuous Servo
+        this.gamepad = ssom.gamepad2;
 
         // Initial setup
         this.wrist.setDirection(Servo.Direction.FORWARD);
@@ -57,7 +52,7 @@ public class Hand extends BodyPart{
 
     /**
      * Method adds important things to telemetry
-     * @param telemetry
+     * @param telemetry debug
      */
     public void debugTelemetry(Telemetry telemetry)
     {
@@ -68,7 +63,7 @@ public class Hand extends BodyPart{
 
     /**
      * Method that toggles if we are ignoring gamepad input (true for autonomous)
-     * @param ignoreGamepad
+     * @param ignoreGamepad don't allow gamepad input
      */
     public void setIgnoreGamepad(boolean ignoreGamepad)
     {
@@ -90,7 +85,7 @@ public class Hand extends BodyPart{
                 sleep(duration_ms);
                 left.setPower(NO_POWER);
                 right.setPower(NO_POWER);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
             notifyOldestListener();
         });
@@ -153,7 +148,7 @@ public class Hand extends BodyPart{
             Thread thread = new Thread(() -> {
                 try {
                     sleep(ms);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
                 }
                 hangSample();
             });
@@ -255,8 +250,6 @@ public class Hand extends BodyPart{
                     bucket();
                 else if(gamepad.a)
                     grab(800);
-                //else if (gamepad.x)
-                    //hangSample();
             }
 
             // Short sleep to keep this loop from saturating
@@ -270,7 +263,7 @@ public class Hand extends BodyPart{
 
     @Override
     public void safeHold(int position) {
-        //TODO
+        // Servo will hold without anything special
     }
 
     @Override

@@ -1,10 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -70,17 +70,12 @@ public class Shoulder extends BodyPart {
 
     public static final int DROP_SHOULDER_POS = 1143;
 
-    // Number of ticks to latch a sample onto a bar
-    public static int SAMPLE_HOOK_DROP = 516;
-
     //Variables for shoulder speed
-    private static double MIN_SHOULDER_POWER = -0.9;
-    private static double MAX_SHOULDER_POWER = 0.9;
+    private static final double MIN_SHOULDER_POWER = -1.0;
+    private static final double MAX_SHOULDER_POWER = 1.0;
     private static final double TRIM_POWER = 0.15;
     private static final double HOLD_POWER = 0.25;
     private static final double MODE_POWER = 1.0;
-    private static final double DROP_POWER = -0.9;
-    private static final double NO_POWER = 0.0;
 
     // Pre-set min and max pos based on if the arm is in or out
     // TODO - phase these out for mode values
@@ -90,7 +85,6 @@ public class Shoulder extends BodyPart {
     //Setting up vars of threading
     private final DigitalChannel shoulderSwitch;
     private final DcMotor shoulderMotor;
-    private final Arm arm;
 
     // Var for motor counts
     private boolean hold = false;
@@ -98,26 +92,27 @@ public class Shoulder extends BodyPart {
     // Values for arm ratio and floor protection
     private boolean homed = false;
     private double armRatio;
-    private static int ABSOLUTE_MIN = -250;
-    private static int ABSOLUTE_MAX = Mode.HANG.armInPos();
+    private static final int ABSOLUTE_MIN = -250;
+    private static final int ABSOLUTE_MAX = Mode.HANG.armInPos();
     private int MIN_POS = Mode.NONE.armInPos();
     public static int MAX_POS = Mode.HANG.armInPos();
 
     // Mode for the shoulder
-    private Mode mode = Mode.NONE;
+    private Mode mode;
+
     /**
      * Constructor for the shoulder
      *
-     * @param hardwareMap map with shoulder parts
-     * @param gamepad       the gamepad used for controlling the shoulder
+     * @param ssom OpMode with everything we need
      */
-    public Shoulder(HardwareMap hardwareMap, Arm arm, Gamepad gamepad, Gamepad extraGamepad) {
+    public Shoulder(StandardSetupOpMode ssom){
+    //HardwareMap hardwareMap, Arm arm, Hand hand, Eye eye, Gamepad gamepad, Gamepad extraGamepad) {
+        super.setStandardSetupOpMode(ssom);
         // Assignments
-        shoulderSwitch = hardwareMap.get(DigitalChannel.class, "shoulderSwitch"); //digital 2 control hub
-        shoulderMotor = hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor;
-        this.arm = arm;
-        this.gamepad = gamepad;
-        this.extraGamepad = extraGamepad;
+        shoulderSwitch = ssom.hardwareMap.get(DigitalChannel.class, "shoulderSwitch"); //digital 2 control hub
+        shoulderMotor = ssom.hardwareMap.get(DcMotor.class, "shoulderMotor"); //ch0 expansion hub Motor;
+        gamepad = ssom.gamepad2;
+        extraGamepad = ssom.gamepad1;
 
         // Setup
         shoulderSwitch.setMode(DigitalChannel.Mode.INPUT);
@@ -127,7 +122,6 @@ public class Shoulder extends BodyPart {
         shoulderMotor.setTargetPosition(0);
         shoulderMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         this.mode = Mode.NONE;
-
     }
 
     /**
@@ -248,13 +242,13 @@ public class Shoulder extends BodyPart {
 
     public int getPositionForMode(Mode mode, int targetArmPosition)
     {
-        return (int)Math.round(arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
+        return (int)Math.round(ssom.arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();
     }
 
     /**
      * Method lets you just set the ideal shoulder position given target arm position
-     * @param mode
-     * @param targetArmPosition
+     * @param mode mode to get position for arm length
+     * @param targetArmPosition arm length to get should position of
      */
     public void setPositionForMode(Mode mode, double power, int targetArmPosition)
     {
@@ -262,7 +256,7 @@ public class Shoulder extends BodyPart {
     }
 
     public boolean modeReady(Mode mode){
-        return (this.mode == mode) && Math.abs(getCurrentPosition() - getPositionForMode(mode, arm.getCurrentPosition())) < (BodyPart.CLOSE_ENOUGH_TICKS * 2);
+        return (this.mode == mode) && Math.abs(getCurrentPosition() - getPositionForMode(mode, ssom.arm.getCurrentPosition())) < (BodyPart.CLOSE_ENOUGH_TICKS * 2);
     }
 
     @Override
@@ -280,7 +274,7 @@ public class Shoulder extends BodyPart {
             }
 
             // Always get the current arm ratio (use this to maintain heights given arm reach)
-            armRatio = arm.getArmRatio();
+            armRatio = ssom.arm.getArmRatio();
 
             // Ground protection, sets min shoulder value based on how far the arm is out
             MIN_POS = (int) Math.round(armRatio * DELTA_MIN_POS_ARM) + MIN_POS_ARM_IN;
@@ -292,9 +286,47 @@ public class Shoulder extends BodyPart {
                 if(shoulderMotor.getCurrentPosition() > Mode.HIGH_BUCKET.armInPos())
                     power *= 0.5f;
 
+                // Satisfy mode buttons first (avoids holding stick and pressing mode buttons)
+                if(gamepad.x && !pressing) {
+                    pressing = true;
+                    ssom.hand.hangSample();
+                    if (mode == Shoulder.Mode.SEARCH && !protectionThread.isAlive()){
+                        Action safeSearch = ssom.eye.safeSearch();
+                        mode = Mode.NONE;
+                        Actions.runBlocking(safeSearch);
+                    }
+                    else {
+                        mode = Mode.SEARCH;
+                    }
+                }
+                else if(gamepad.a && !pressing) {
+                    pressing = true;
+                    mode = Mode.GROUND;
+                }
+                else if(gamepad.b && !pressing) {
+                    pressing = true;
+
+                    ssom.arm.setPosition(1.0, 250);
+                    if(mode == Mode.HIGH_BAR) {
+                        mode = Mode.NONE;
+                        setPosition(1.0, DROP_SHOULDER_POS);
+                    }
+                    else {
+                        mode = Mode.HIGH_BAR;
+                    }
+                }
+                else if(gamepad.y && !pressing){
+                    pressing = true;
+                    if(mode == Mode.HIGH_BUCKET) {
+                        ssom.arm.setPosition(1.0, 800);
+                        mode = Mode.LOW_BUCKET;
+                    }
+                    else
+                        mode = Mode.HIGH_BUCKET;
+                }
                 // Move the shoulder
-                if (!hold && Math.abs(power) <= TRIM_POWER) {
-                    shoulderMotor.setPower(0);
+                else if (!hold && Math.abs(power) <= TRIM_POWER) {
+                    shoulderMotor.setPower(HOLD_POWER);
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException ignore) {
@@ -316,39 +348,9 @@ public class Shoulder extends BodyPart {
                     mode = Mode.NONE;
                 }
 
-                if(gamepad.x && !pressing) {
-                    pressing = true;
-                    mode = Mode.SEARCH;
-                }
-                else if(gamepad.a && !pressing) {
-                    pressing = true;
-                    mode = Mode.GROUND;
-                }
-                else if(gamepad.b && !pressing) {
-                    pressing = true;
-
-                    arm.setPosition(1.0, 250);
-                    if(mode == Mode.HIGH_BAR) {
-                        mode = Mode.NONE;
-                        setPosition(1.0, DROP_SHOULDER_POS);
-                    }
-                    else {
-                        mode = Mode.HIGH_BAR;
-                    }
-                }
-                else if(gamepad.y && !pressing){
-                    pressing = true;
-                    if(mode == Mode.HIGH_BUCKET) {
-                        arm.setPosition(1.0, 800);
-                        mode = Mode.LOW_BUCKET;
-                    }
-                    else
-                        mode = Mode.HIGH_BUCKET;
-                }
-                else {
-                    if (!(gamepad.x || gamepad.y || gamepad.a || gamepad.b))
+                // Reset pressing once buttons are all released
+                if (!(gamepad.x || gamepad.y || gamepad.a || gamepad.b))
                         pressing = false;
-                }
             }
 
             // Always satisfy the mode if no buttons were pressed

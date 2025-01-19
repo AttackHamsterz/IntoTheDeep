@@ -8,6 +8,9 @@ import java.util.LinkedList;
 import java.util.function.Consumer;
 
 public abstract class BodyPart extends Thread{
+    // Opmode reference
+    protected StandardSetupOpMode ssom;
+
     // Gamepad variables
     protected Gamepad gamepad;
     protected Gamepad extraGamepad;
@@ -96,6 +99,7 @@ public abstract class BodyPart extends Thread{
             listeners.removeFirst().accept(Boolean.FALSE);
     }
 
+    public void setStandardSetupOpMode(StandardSetupOpMode ssom) { this.ssom = ssom; }
     public void addListener(Consumer<Boolean> listener)
     {
         listeners.addLast(listener);

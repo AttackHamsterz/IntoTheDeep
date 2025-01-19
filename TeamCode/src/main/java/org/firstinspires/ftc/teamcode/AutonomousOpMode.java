@@ -41,7 +41,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         super.runOpMode();
 
         // Remove the floor protection (causing some position override issues in autonomous)
-        arm.setShoulder(null);
+        //arm.setShoulder(null);
 
         // Flip offsets if red (asymmetric field)
         if(color == COLOR.RED){
@@ -54,7 +54,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        int dropArmPullin = 320;
         int searchArmPosition = 1070;
 
         Pose2d dropPose = new Pose2d(new Vector2d(31 + X_OFFSET, Y_OFFSET), 0);
@@ -109,7 +108,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),
                 new CompleteAction(releaseAction, hand),
-                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, false), legs)
+                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
         );
 
         Action hangSampleToolAction = new SequentialAction(                 // Drive and extend
@@ -133,23 +132,9 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                     new CompleteAction(extendAction, arm));
             Actions.runBlocking(setupSearch);
 
-            // Was old fake search
-            //Action pickupAction = telemetryPacket -> {
-            //    hand.grab(GRAB_MS);
-            //    shoulder.setPositionForMode(Shoulder.Mode.GROUND, AUTO_POWER, searchArmPosition);
-            //    return false;
-            //};
-            //Action liftShoulder = telemetryPacket -> {
-            //    shoulder.setPosition(AUTO_POWER, 406);
-            //    return false;
-            //};
-            //Action fakeSearch = new SequentialAction(
-            //        new CompleteAction(pickupAction, hand), // Search height
-            //        new CompleteAction(liftShoulder, shoulder));          // Retract arm
-            //Actions.runBlocking(fakeSearch);
-
             // Real Search (should block until complete)
-            camera.autoGrab();
+            Action safeSearch = eye.safeSearch();
+            Actions.runBlocking(safeSearch);
 
             // Safe height for shoulder
             Action liftShoulder = telemetryPacket -> {
@@ -157,14 +142,13 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 return false;
             };
             Actions.runBlocking(new CompleteAction(liftShoulder, shoulder));
+
+            Action retractBackup = new ParallelAction(
+                    new CompleteAction(retractArmAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
+            );
+
+            Actions.runBlocking(retractBackup);
         }
-
-        // Get into a safe travel position
-        //Action retractFromPickup = new ParallelAction(
-        //        new CompleteAction(retractArm, arm),
-        //        new CompleteAction( legs.moveToAction(AUTO_MOVE_POWER, dropPose), legs)
-        //);
-
-        //Actions.runBlocking(retractFromPickup);
     }
 }

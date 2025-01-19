@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -31,22 +29,20 @@ public class Arm extends BodyPart {
     private final DcMotor armMotorRight;
 
     // Var for the shoulder
-    private Shoulder shoulder;
     private boolean hold = false;
 
     /**
      * Constructor for the arm
-     * @param hardwareMap map with arm parts
-     * @param gamepad the gamepad used to control the arm
+     * @param ssom op mode with everything we could ever need
      */
-    public Arm(HardwareMap hardwareMap, Gamepad gamepad, Gamepad extraGamepad, Shoulder shoulder) {
+    public Arm(StandardSetupOpMode ssom){
+        super.setStandardSetupOpMode(ssom);
         // Assignments
-        armSwitch = hardwareMap.get(DigitalChannel.class, "armSwitch"); //digital 0 control hub
-        armMotorLeft = hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
-        armMotorRight = hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
-        this.gamepad = gamepad;
-        this.extraGamepad = extraGamepad;
-        this.shoulder = shoulder;
+        armSwitch = ssom.hardwareMap.get(DigitalChannel.class, "armSwitch"); //digital 0 control hub
+        armMotorLeft = ssom.hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
+        armMotorRight = ssom.hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
+        this.gamepad = ssom.gamepad2;
+        this.extraGamepad = ssom.gamepad1;
 
         // Setup
         armSwitch.setMode(DigitalChannel.Mode.INPUT);
@@ -78,14 +74,6 @@ public class Arm extends BodyPart {
     @Override
     public int getCurrentPosition() {
         return (armMotorLeft.getCurrentPosition() + armMotorRight.getCurrentPosition()) / 2;
-    }
-
-    /**
-     * Sets the value of the shoulder for initialization
-     * @param shoulder the shoulder object used
-     */
-    public void setShoulder(Shoulder shoulder) {
-        this.shoulder = shoulder;
     }
 
     /**
@@ -134,8 +122,8 @@ public class Arm extends BodyPart {
 
         // If our shoulder is low enough, then decrease our max extension distance
         // this is just in case we don't pass inspection
-        if (shoulder != null && SHORTEN_MAX > 0) {
-            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+        if (ssom.shoulder != null && SHORTEN_MAX > 0) {
+            if (ssom.shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
                 if(position > MAX_POS - SHORTEN_MAX)
                     position = Range.clip(position, MIN_POS, MAX_POS - SHORTEN_MAX);
             }
@@ -160,21 +148,13 @@ public class Arm extends BodyPart {
         protectMotors(position);
 
         // Tell the shoulder to update if it's in a mode
-        if (shoulder != null && shoulder.getMode() != Shoulder.Mode.NONE)  {
-            if (shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
-                shoulder.targetArmRatio((double) (position - MIN_POS) / (double) ((MAX_POS-SHORTEN_MAX) - MIN_POS));
+        if (ssom.shoulder != null && ssom.shoulder.getMode() != Shoulder.Mode.NONE)  {
+            if (ssom.shoulder.getCurrentPosition() < Shoulder.Mode.LOW_BAR.armOutPos()) {
+                ssom.shoulder.targetArmRatio((double) (position - MIN_POS) / (double) ((MAX_POS-SHORTEN_MAX) - MIN_POS));
             } else {
-                shoulder.targetArmRatio((double) (position - MIN_POS) / (double) (MAX_POS - MIN_POS));
+                ssom.shoulder.targetArmRatio((double) (position - MIN_POS) / (double) (MAX_POS - MIN_POS));
             }
         }
-    }
-
-    /**
-     * This sets hold externally (forces a new hold if false)
-     * @param hold if true we implement a hold call
-     */
-    public void setHold(boolean hold) {
-        this.hold = hold;
     }
 
     @Override
@@ -201,7 +181,7 @@ public class Arm extends BodyPart {
         }
 
         // I've stopped moving, tell the shoulder to recheck mode one last time
-        if (shoulder != null && shoulder.getMode() != Shoulder.Mode.NONE) shoulder.setHold(false);
+        if (ssom.shoulder != null && ssom.shoulder.getMode() != Shoulder.Mode.NONE) ssom.shoulder.setHold(false);
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();

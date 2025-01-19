@@ -24,29 +24,26 @@ public class StandardSetupOpMode extends LinearOpMode {
 
     // Declare OpMode members.
     protected final ElapsedTime runtime = new ElapsedTime();
-    protected MecanumDrive legs;
+
+    protected Legs legs;
     protected Arm arm;
     protected Shoulder shoulder;
-
     protected Hand hand;
     protected Tail tail;
-    protected ColorCamera camera;
     protected Eye eye;
+
     protected boolean ignoreGamepad = false;
     protected boolean favorYellow = false;
-    protected final Pose2d startPose = new Pose2d(0,0,0);
 
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
-        legs = new MecanumDrive(hardwareMap, startPose, gamepad1, telemetry);
-        arm = new Arm(hardwareMap, gamepad2, gamepad1, null);
-        shoulder = new Shoulder(hardwareMap, arm, gamepad2, gamepad1);
-        arm.setShoulder(shoulder);
-        hand = new Hand(hardwareMap, gamepad2);
-        tail = new Tail(hardwareMap, gamepad2, shoulder, arm, gamepad1);
-        //camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
-        eye = new Eye(hardwareMap, color, favorYellow, legs, arm, shoulder, hand, gamepad2, telemetry);
+        legs = new Legs(this);
+        arm = new Arm(this);
+        hand = new Hand(this);
+        shoulder = new Shoulder(this);
+        tail = new Tail(this);
+        eye = new Eye(this);
         setIgnoreGamepad(ignoreGamepad);
 
         // A little bit of init to not drag the tool (auto)
@@ -66,7 +63,6 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.start();
         hand.start();
         tail.start();
-        //camera.start();
         eye.start();
     }
 
@@ -99,8 +95,8 @@ public class StandardSetupOpMode extends LinearOpMode {
         if(shoulder != null) shoulder.setIgnoreGamepad(ignoreGamepad);
         if(arm != null) arm.setIgnoreGamepad(ignoreGamepad);
         if(hand != null) hand.setIgnoreGamepad(ignoreGamepad);
-        if (tail != null) tail.setIgnoreGamepad(ignoreGamepad);
-        //if (camera != null) camera.setIgnoreGamepad(ignoreGamepad);
+        if(tail != null) tail.setIgnoreGamepad(ignoreGamepad);
+        if(eye != null) eye.setIgnoreGamepad(ignoreGamepad);
     }
 
     /**
@@ -114,7 +110,6 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.interrupt();
         hand.interrupt();
         tail.interrupt();
-        //camera.interrupt();
         eye.interrupt();
 
         legs.join();
@@ -122,7 +117,6 @@ public class StandardSetupOpMode extends LinearOpMode {
         arm.join();
         hand.join();
         tail.join();
-        //camera.join();
         eye.join();
     }
 }

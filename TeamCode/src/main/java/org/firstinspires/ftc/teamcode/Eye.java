@@ -6,16 +6,12 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Mat;
-import org.opencv.core.Rect;
-import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -37,7 +33,8 @@ public class Eye extends BodyPart {
     public static final int YELLOW_ID = 1;
     public static final int RED_ID = 2;
     public static final int BLUE_ID = 3;
-    private final int colorId;
+    private int grabColor;
+    private int searchColor;
 
     protected static final int WEBCAM_WIDTH = 640; //800;//1920;//640;//1920;
     protected static final int WEBCAM_HEIGHT = 480; //600;//1080;//480;//1080;
@@ -80,48 +77,47 @@ public class Eye extends BodyPart {
 
     PlaneFit plane = new PlaneFit(Arrays.asList(calibrationPlane));
 
-    ColorCamera camera;
     OpenCvWebcam webcam;
-    MecanumDrive legs;
-    Shoulder shoulder;
-    Arm arm;
-    Hand hand;
-    Gamepad gamepad;
+    StandardSetupOpMode ssom;
+
     StandardSetupOpMode.COLOR color;
     boolean favorYellow;
-    Telemetry telemetry;
-    public Servo lights;
-    private FrameProcessing fp;
-    private double smallestDist = 10000;
+    public Servo grabLight;
+    public Servo searchLight;
+    private final FrameProcessing fp;
     private int smallestDistIndex = 0;
     public double inchesLeft;
     public double inchesRight;
-    Action barAction;
+    public Action barAction;
+    public Action searchAction;
+    public boolean searching;
 
 
-    public Eye(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, boolean favorYellow, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, Telemetry telemetry) {
-        this.legs = legs;
-        this.arm = arm;
-        this.shoulder = shoulder;
-        this.hand = hand;
-        this.color = color;
-        this.favorYellow = favorYellow;
-        this.gamepad = gamepad;
-        this.telemetry = telemetry;
+    public Eye(StandardSetupOpMode ssom){
+        super.setStandardSetupOpMode(ssom);
+        this.color = ssom.color;
+        this.favorYellow = ssom.favorYellow;
+        this.gamepad = ssom.gamepad2;
+        this.searching = false;
 
-        fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT, telemetry);
+        fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT, ssom.telemetry);
 
-        this.lights = hardwareMap.get(Servo.class, "lights"); // Expansion hub ch3
         // LED setup
-        colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+        this.grabLight = ssom.hardwareMap.get(Servo.class, "grabLight"); // Expansion hub ch3
+        this.searchLight = ssom.hardwareMap.get(Servo.class, "searchLight"); // Expansion hub ch3
+        grabColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+        searchColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
+        if(grabColor == BLUE_ID) {
+            grabLight.setPosition(BLUE_POWER);
+            searchLight.setPosition(BLUE_POWER);
+        }
+        else {
+            grabLight.setPosition(RED_POWER);
+            searchLight.setPosition(RED_POWER);
+        }
 
-        if(colorId == BLUE_ID)
-            lights.setPosition(BLUE_POWER);
-        else
-            lights.setPosition(RED_POWER);
-
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        int cameraMonitorViewId = ssom.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", ssom.hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(ssom.hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         webcam.setPipeline(new Pipeline());
         webcam.setMillisecondsPermissionTimeout(5000);
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
@@ -134,9 +130,9 @@ public class Eye extends BodyPart {
 
             @Override
             public void onError(int errorCode) {
-                if(telemetry != null) {
-                    telemetry.addLine("Camera failed to init");
-                    telemetry.update();
+                if(ssom.telemetry != null) {
+                    ssom.telemetry.addLine("Camera failed to init");
+                    ssom.telemetry.update();
                 }
             }
         });
@@ -173,73 +169,109 @@ public class Eye extends BodyPart {
         //}
     }
 
-    public void moveToColor() {
+    public Action moveToColor() {
+        Action moveAction;
+
+        if(!fp.centerXVal.isEmpty()) {
+            double smallestDist = 10000;
+            smallestDistIndex = 0;
+            // use pythagorean theorem to draw a line from the camera to each block's position
+            // whichever block has the shortest distance is the block we are closest to
+            for (int i = 0; i < fp.centerXVal.size(); i++) {
+                // get the distance of the block from the center of the screen
+                int xDiff = Math.abs(TARGET_X - fp.centerXVal.get(i));
+                int yDiff = Math.abs(TARGET_Y - fp.centerYVal.get(i));
+
+                double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+                if (dist < smallestDist) {
+                    smallestDist = dist;
+                    smallestDistIndex = i;
+                }
+            }
+
+            double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
+            ssom.hand.setWrist(wristPos);
+
             // Set new arm position!
-        Action moveArm = telemetryPacket -> {
-            int ticks = plane.getTicks(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
-            arm.setPosition(1.0, arm.getCurrentPosition() + ticks);
-            //telemetry.addData("block1 ticks", ticks);
-            return false;
-        };
-        Action strafeToBlock = telemetryPacket -> {
-            //double ySlope = fp.centerYVal.get(smallestDistIndex) * SHIFT_M + SHIFT_B;
-            double shift = plane.getShift(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
-            legs.moveLeft(shift, false);
-            return false;
-        };
-        Action grab = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.GROUND);
-            hand.grab(1000);
-            return false;
-        };
-        Action raiseShoulder = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.NONE);
-            shoulder.setPosition(0.8, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
-            //hand.hangSample();
-            return false;
-        };
+            Action moveArm = telemetryPacket -> {
+                int ticks = plane.getTicks(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
+                ssom.arm.setPosition(1.0, ssom.arm.getCurrentPosition() + ticks);
+                return false;
+            };
+            Action strafeToBlock = telemetryPacket -> {
+                double shift = plane.getShift(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
+                ssom.legs.moveLeft(shift, false);
+                return false;
+            };
+            Action grab = telemetryPacket -> {
+                ssom.shoulder.setMode(Shoulder.Mode.GROUND);
+                ssom.hand.grab(1000);
+                return false;
+            };
+            Action raiseShoulder = telemetryPacket -> {
+                ssom.shoulder.setMode(Shoulder.Mode.NONE);
+                ssom.shoulder.setPosition(0.8, ssom.shoulder.getPositionForMode(Shoulder.Mode.SEARCH, ssom.arm.getCurrentPosition()) * 3 / 4);
+                //hand.hangSample();
+                return false;
+            };
 
+            ParallelAction premove = new ParallelAction(
+                    new CompleteAction(moveArm, ssom.arm),
+                    new CompleteAction(strafeToBlock, ssom.legs)
+            );
+            moveAction = new SequentialAction(
+                    premove,
+                    new CompleteAction(grab, ssom.hand),
+                    new CompleteAction(raiseShoulder, ssom.shoulder));
 
-        //hand.setWrist(wristPos);
+            // Debug
+            ssom.telemetry.addData("Total num", fp.centerXVal.size());
+            ssom.telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
+            ssom.telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
+            ssom.telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
+            ssom.telemetry.addData("Wrist pos", wristPos);
+            if(ssom.legs != null) ssom.legs.debugTelemetry(ssom.telemetry);
+            if(ssom.arm != null) ssom.arm.debugTelemetry(ssom.telemetry);
+            ssom.telemetry.update();
+        }
+        else {
+            moveAction = telemetryPacket -> {
+                return false;
+            };
+        }
+        return moveAction;
+    }
 
-        ParallelAction premove = new ParallelAction(
-                new CompleteAction(moveArm, arm),
-                new CompleteAction(strafeToBlock, legs)
-        );
-        SequentialAction moveArmToBlock = new SequentialAction(
-                premove,
-                new CompleteAction(grab, hand),
-                new CompleteAction(raiseShoulder, shoulder));
-        Actions.runBlocking(moveArmToBlock);
-        shoulder.setMode(Shoulder.Mode.NONE);
+    public int getGrabColor(){
+        return grabColor;
     }
 
     public void moveLegsToColor() {
         Action strafeToBlock = telemetryPacket -> {
             double ySlope = fp.centerYVal.get(smallestDistIndex) * SHIFT_M + SHIFT_B;
             double shift = (fp.centerXVal.get(smallestDistIndex) - CENTER_X) * ySlope;
-            legs.moveLeft(shift, false);
+            ssom.legs.moveLeft(shift, false);
             return false;
         };
         SequentialAction centerBlockAction = new SequentialAction(
-                new CompleteAction(strafeToBlock, legs));
+                new CompleteAction(strafeToBlock, ssom.legs));
         Actions.runBlocking(centerBlockAction);
     }
 
     public SequentialAction moveLegsToBar(double leftInches, double rightInches){
-        shoulder.setMode(Shoulder.Mode.NONE);
+        ssom.shoulder.setMode(Shoulder.Mode.NONE);
         Action moveToBar = telemetryPacket -> {
             double averageInches = (leftInches + rightInches) / 2.0;
-            legs.moveForward(averageInches, false);
+            ssom.legs.moveForward(averageInches, false);
             return false;
         };
         Action lowerShoulder = telemetryPacket -> {
-            shoulder.setPosition(1.0, 1143);
+            ssom.shoulder.setPosition(1.0, 1143);
             return false;
         };
         SequentialAction gotoBar = new SequentialAction(
-                new CompleteAction(moveToBar, legs));
-                new CompleteAction(lowerShoulder, shoulder);
+                new CompleteAction(moveToBar, ssom.legs));
+                new CompleteAction(lowerShoulder, ssom.shoulder);
         //Actions.runBlocking(gotoBar);
 
         return gotoBar;
@@ -247,19 +279,19 @@ public class Eye extends BodyPart {
 
     public void plunge() {
         Action grab = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.GROUND);
-            hand.grab(1000);
+            ssom.shoulder.setMode(Shoulder.Mode.GROUND);
+            ssom.hand.grab(1000);
             return false;
         };
         Action raiseShoulder = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.NONE);
-            shoulder.setPosition(1.0, shoulder.getPositionForMode(Shoulder.Mode.SEARCH , arm.getCurrentPosition()) * 3 / 4);
-            hand.hangSample();
+            ssom.shoulder.setMode(Shoulder.Mode.NONE);
+            ssom.shoulder.setPosition(1.0, ssom.shoulder.getPositionForMode(Shoulder.Mode.SEARCH , ssom.arm.getCurrentPosition()) * 3 / 4);
+            ssom.hand.hangSample();
             return false;
         };
         Action snag = new SequentialAction(
-                new CompleteAction(grab, hand),
-                new CompleteAction(raiseShoulder, shoulder));
+                new CompleteAction(grab, ssom.hand),
+                new CompleteAction(raiseShoulder, ssom.shoulder));
         Actions.runBlocking(snag);
     }
     public boolean search = false;
@@ -268,37 +300,12 @@ public class Eye extends BodyPart {
     @Override
     public void run() {
 
-        boolean pressingX = false;
-        boolean pressingB = false;
-
+        /* MOVED the search method to the shoulder to avoid threading conflicts
         while (!isInterrupted()) {
 
-            if (gamepad.x && !pressingX) {
-                hand.hangSample();
-                pressingX = true;
-                if(shoulder.getMode() == Shoulder.Mode.SEARCH)
-                    search = true;
-            }
-            else if(!gamepad.x){
-                if(pressingX) {
-                    pressingX = false;
-                }
-            }
-            if (gamepad.b && !pressingB) {
-                pressingB = true;
-                /*
-                if(shoulder.getMode() == Shoulder.Mode.HIGH_BAR)
-                    hang = true;
+            if(!ignoreGamepad) {
 
-                 */
             }
-            else if(!gamepad.b){
-                if(pressingB) {
-                    pressingB = false;
-                }
-            }
-
-
 
             try {
                 sleep(BodyPart.LOOP_PAUSE_MS);
@@ -306,6 +313,7 @@ public class Eye extends BodyPart {
                 interrupt();
             }
         }
+        */
     }
 
     @Override
@@ -326,11 +334,31 @@ public class Eye extends BodyPart {
             // Give the pipeline a little time to build a result
             try {
                 sleep(100);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
         }while(barAction == null);
 
         return barAction;
+    }
+
+    /**
+     * Tell the camera to check the bar and return an action to align to it
+     * @return Action that aligns to the bar
+     */
+    public Action safeSearch() {
+        // Tell the opencv thread to get an answer and then wait for result
+        search = true;
+
+        // Spin wait until we get a result
+        do {
+            // Give the pipeline a little time to build a result
+            try {
+                sleep(100);
+            } catch (InterruptedException ignored) {
+            }
+        }while(searchAction == null);
+
+        return searchAction;
     }
 
     @Override
@@ -338,94 +366,39 @@ public class Eye extends BodyPart {
         return 0;
     }
 
+    static final int EVERY_NTH_FRAME = 25;
+
      class Pipeline extends OpenCvPipeline {
 
         @Override
         public Mat processFrame(Mat input) {
 
-            // For every 100th frame, lets see what we're holding
+            // For every nth frame, lets see what we're holding
             int frameCount = webcam.getFrameCount();
-            if(frameCount % 100 == 0){
-                // 320 - 400 width 80
-                // 20 - 100
-                int color = fp.grabColor(input);
 
-                 if(color == YELLOW_ID)
-                    lights.setPosition(YELLOW_POWER);
-                else if(color == RED_ID)
-                    lights.setPosition(RED_POWER);
-                else if(color == BLUE_ID)
-                    lights.setPosition(BLUE_POWER);
+            if(frameCount % EVERY_NTH_FRAME == 0){
+                grabColor = fp.grabColor(input);
+
+                if(grabColor == YELLOW_ID)
+                    grabLight.setPosition(YELLOW_POWER);
+                else if(grabColor == RED_ID)
+                    grabLight.setPosition(RED_POWER);
+                else if(grabColor == BLUE_ID)
+                    grabLight.setPosition(BLUE_POWER);
                 else
-                    lights.setPosition(OFF_POWER);
+                    grabLight.setPosition(OFF_POWER);
             }
 
-
-
             if(search){
+                searching = true;
+                searchAction = null;
                 search = false;
-                shoulder.setMode(Shoulder.Mode.SEARCH);
+                ssom.shoulder.setMode(Shoulder.Mode.SEARCH);
                 input = fp.matToDetection(input, color, favorYellow);
 
-                // Stats
-                /*
-                telemetry.addData("Frame Count", webcam.getFrameCount());
-                telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
-                telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
-                telemetry.addData("Pipeline time ms", webcam.getPipelineTimeMs());
-                telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
-                telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
-
-
-                 */
-                // Find closest center and rotate to angle
-                if(fp.centerXVal.size() > 0){
-
-                     smallestDist = 10000;
-                     smallestDistIndex = 0;
-                    // use pythagorean theorem to draw a line from the camera to each block's position
-                    // whichever block has the shortest distance is the block we are closest to
-                    for (int i = 0; i < fp.centerXVal.size(); i++) {
-                        // get the distance of the block from the center of the screen
-                        int xDiff = Math.abs(TARGET_X - fp.centerXVal.get(i));
-                        int yDiff = Math.abs(TARGET_Y - fp.centerYVal.get(i));
-
-                        double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-                        if (dist < smallestDist) {
-                            smallestDist = dist;
-                            smallestDistIndex = i;
-                        }
-                    }
-
-                    double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
-                    hand.setWrist(wristPos);
-                    moveToColor();
-
-
-                    // Move arm for a good pickup
-                    //moveArmToColor();
-                    //moveLegsToColor();
-                    // Move wrist with a good average
-                    //double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
-                    //hand.setWrist(wristPos);
-
-                    //plunge();
-
-                    // Debug
-
-
-                    telemetry.addData("Total num", fp.centerXVal.size());
-                    telemetry.addData("Winner x", fp.centerXVal.get(smallestDistIndex));
-                    telemetry.addData("Winner y", fp.centerYVal.get(smallestDistIndex));
-                    telemetry.addData("Winner a", Math.toDegrees(fp.angleVal.get(smallestDistIndex)));
-                    telemetry.addData("Wrist pos", wristPos);
-                    legs.debugTelemetry(telemetry);
-                    arm.debugTelemetry(telemetry);
-
-
-
-                }
-                telemetry.update();
+                // Build search action (blocking)
+                searchAction = moveToColor();
+                searching = false;
             }
             if(hang){
                 // Only check once
@@ -463,7 +436,7 @@ public class Eye extends BodyPart {
                 if(deltaLeft<0 && deltaRight >= 0) deltaLeft = deltaRight;
                 if(deltaRight<0 && deltaLeft >= 0) deltaRight = deltaLeft;
 
-                if(deltaLeft > 0 && deltaRight > 0){
+                if(deltaLeft != 0 || deltaRight != 0){
 
                     inchesLeft = Range.clip(deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -1, 1);
                     inchesRight = Range.clip(deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -1, 1);
@@ -472,22 +445,17 @@ public class Eye extends BodyPart {
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
 
                     // Debug
-
-                    telemetry.addData("left bar y", fp.bar_left_y);
-                    telemetry.addData("right bar y", fp.bar_right_y);
-                    telemetry.addData("Inches left", inchesLeft);
-                    telemetry.addData("Inches right", inchesRight);
-                    telemetry.update();
-
-
+                    ssom.telemetry.addData("left bar y", fp.bar_left_y);
+                    ssom.telemetry.addData("right bar y", fp.bar_right_y);
+                    ssom.telemetry.addData("Inches left", inchesLeft);
+                    ssom.telemetry.addData("Inches right", inchesRight);
+                    ssom.telemetry.update();
                 }
                 else {
-                    Action noAction = telemetryPacket -> {
+                    barAction = telemetryPacket -> {
                         return false;
                     };
-                    barAction = noAction;
                 }
-                //telemetry.update();
             }
 
             //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);

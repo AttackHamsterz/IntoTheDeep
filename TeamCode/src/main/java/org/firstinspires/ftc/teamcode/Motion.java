@@ -26,7 +26,7 @@ public class Motion extends Thread {
     private final DcMotor rearRightDrive;
     private final Gamepad gamepad;
 
-    protected MecanumDrive legs;
+    protected Legs legs;
 
     public enum Direction {
         FORWARD,
@@ -35,7 +35,7 @@ public class Motion extends Thread {
         LEFT
     }
 
-    public Motion(DcMotor frontLeftDrive, DcMotor frontRightDrive, DcMotor rearLeftDrive, DcMotor rearRightDrive, Gamepad gamepad, MecanumDrive legs) {
+    public Motion(DcMotor frontLeftDrive, DcMotor frontRightDrive, DcMotor rearLeftDrive, DcMotor rearRightDrive, Gamepad gamepad, Legs legs) {
         this.frontLeftDrive = frontLeftDrive;
         this.frontRightDrive = frontRightDrive;
         this.rearLeftDrive = rearLeftDrive;

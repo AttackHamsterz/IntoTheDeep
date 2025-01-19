@@ -39,10 +39,13 @@ public class CameraCalibrationOpMode_Linear extends StandardSetupOpMode {
     private static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     private static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
+    private ColorCamera camera;
+
     @Override
     public void runOpMode() throws InterruptedException {
         // Call your parents!
         super.runOpMode();
+        camera = new ColorCamera(hardwareMap, color, legs, arm, shoulder, hand, gamepad2, favorYellow);
 
         // check to see if the device is working
         if (!camera.huskyLens.knock()) {

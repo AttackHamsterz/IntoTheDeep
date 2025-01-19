@@ -32,7 +32,8 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1, true), legs));
 
-        boolean haveBlock = camera.blockCaptured();
+        // Check if we have a block
+        boolean haveBlock = eye.getGrabColor() != Eye.NONE_ID;
 
         if(haveBlock) {
             Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);

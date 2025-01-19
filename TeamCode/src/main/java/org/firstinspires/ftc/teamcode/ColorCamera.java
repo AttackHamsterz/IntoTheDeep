@@ -72,7 +72,7 @@ public class ColorCamera extends Thread {
 
     public Servo lights;
 
-    protected MecanumDrive legs;
+    protected Legs legs;
     protected Arm arm;
     protected Shoulder shoulder;
     protected Hand hand;
@@ -82,7 +82,7 @@ public class ColorCamera extends Thread {
     protected boolean favorYellow = false;
     protected final Pose2d startPose = new Pose2d(0,0,0);
 
-    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, MecanumDrive legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, boolean favorYellow) {
+    public ColorCamera(HardwareMap hardwareMap, StandardSetupOpMode.COLOR color, Legs legs, Arm arm, Shoulder shoulder, Hand hand, Gamepad gamepad, boolean favorYellow) {
         // Camera setup
         this.huskyLens =  hardwareMap.get(HuskyLens.class, "huskylens");
         colorId = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;

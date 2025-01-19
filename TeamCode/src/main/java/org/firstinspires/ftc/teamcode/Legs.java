@@ -39,7 +39,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -53,7 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive extends BodyPart{
+public final class Legs extends BodyPart{
     public static class Params {
         // Mecanum kinematics parameters
         public double trackWidthInches = 16.55;
@@ -107,8 +106,6 @@ public final class MecanumDrive extends BodyPart{
     private final Gamepad gamepad;
     private boolean ignoreGamepad;
 
-    private Telemetry telemetry;
-
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
@@ -116,24 +113,25 @@ public final class MecanumDrive extends BodyPart{
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
     private final DownsampledWriter mecanumCommandWriter = new DownsampledWriter("MECANUM_COMMAND", 50_000_000);
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, Gamepad gamepad, Telemetry telemetry) {
-        this.pose = pose;
-        this.gamepad = gamepad;
+    public Legs(StandardSetupOpMode ssom){
+        super.setStandardSetupOpMode(ssom);
+
+        this.pose = new Pose2d(0,0,0);
+        this.gamepad = ssom.gamepad1;
         this.ignoreGamepad = false;
-        this.telemetry = telemetry;
 
-        LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
+        LynxFirmware.throwIfModulesAreOutdated(ssom.hardwareMap);
 
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+        for (LynxModule module : ssom.hardwareMap.getAll(LynxModule.class)) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "frontLeftDrive"); //ch3
-        leftBack = hardwareMap.get(DcMotorEx.class, "rearLeftDrive"); //ch1
-        rightBack = hardwareMap.get(DcMotorEx.class, "rearRightDrive"); //ch0
-        rightFront = hardwareMap.get(DcMotorEx.class, "frontRightDrive"); //ch2
+        leftFront = ssom.hardwareMap.get(DcMotorEx.class, "frontLeftDrive"); //ch3
+        leftBack = ssom.hardwareMap.get(DcMotorEx.class, "rearLeftDrive"); //ch1
+        rightBack = ssom.hardwareMap.get(DcMotorEx.class, "rearRightDrive"); //ch0
+        rightFront = ssom.hardwareMap.get(DcMotorEx.class, "frontRightDrive"); //ch2
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -144,8 +142,8 @@ public final class MecanumDrive extends BodyPart{
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        voltageSensor = hardwareMap.voltageSensor.iterator().next();
-        localizer = new GoBildaPinpointLocalizer(hardwareMap);
+        voltageSensor = ssom.hardwareMap.voltageSensor.iterator().next();
+        localizer = new GoBildaPinpointLocalizer(ssom.hardwareMap);
         ((GoBildaPinpointLocalizer)localizer).reset();
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
@@ -757,7 +755,7 @@ public final class MecanumDrive extends BodyPart{
      * @param waypoint a less accurate pose along the path
      * @param timeout_ms number of milliseconds before we cancel our motion
      */
-    protected void moveToPose(double power, Pose2d expectedPose, int spinDirection, boolean waypoint, long timeout_ms)
+    private void moveToPose(double power, Pose2d expectedPose, int spinDirection, boolean waypoint, long timeout_ms)
     {
         // Start a new thread that keeps setting drive powers until we hit our spot
         if(expectedPose != null) {
@@ -775,7 +773,7 @@ public final class MecanumDrive extends BodyPart{
      * @param power max power for motors
      * @param expectedPose final pose
      */
-    protected void moveToPose(double power, Pose2d expectedPose, boolean waypoint)
+    private void moveToPose(double power, Pose2d expectedPose, boolean waypoint)
     {
         moveToPose(power, expectedPose, DEFAULT_SPIN_DIRECTION, waypoint, DEFAULT_TIMEOUT_MS);
     }
