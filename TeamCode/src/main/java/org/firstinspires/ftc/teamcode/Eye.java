@@ -243,23 +243,22 @@ public class Eye extends BodyPart {
         Actions.runBlocking(centerBlockAction);
     }
 
-    public SequentialAction moveLegsToBar(double leftInches, double rightInches){
+    public Action moveLegsToBar(double leftInches, double rightInches){
         ssom.shoulder.setMode(Shoulder.Mode.NONE);
         Action moveToBar = telemetryPacket -> {
             double averageInches = (leftInches + rightInches) / 2.0;
             ssom.legs.moveForward(averageInches, false);
             return false;
         };
-        Action lowerShoulder = telemetryPacket -> {
-            ssom.shoulder.setPosition(1.0, 1143);
-            return false;
-        };
-        SequentialAction gotoBar = new SequentialAction(
-                new CompleteAction(moveToBar, ssom.legs));
-                new CompleteAction(lowerShoulder, ssom.shoulder);
-        //Actions.runBlocking(gotoBar);
+        //Action lowerShoulder = telemetryPacket -> {
+        //    ssom.shoulder.setPosition(1.0, 1143);
+        //    return false;
+        //};
+        //SequentialAction gotoBar = new SequentialAction(
+        //        new CompleteAction(moveToBar, ssom.legs, 700));
+        //        new CompleteAction(lowerShoulder, ssom.shoulder, 700);
 
-        return gotoBar;
+        return new CompleteAction(moveToBar, ssom.legs, 700);
     }
 
     public void plunge() {

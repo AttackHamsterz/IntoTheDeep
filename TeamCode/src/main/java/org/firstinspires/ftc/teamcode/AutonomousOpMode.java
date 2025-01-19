@@ -82,11 +82,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             hand.release(600);
             return false;
         };
-        // Get into safe travel position
-        Action retractArm = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 100);
-            return false;
-        };
 
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
@@ -95,15 +90,9 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
-
-        /*
         Action action = eye.safeHang();
         if(action != null)
             Actions.runBlocking(action);
-
-         */
-
-
 
         Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),
