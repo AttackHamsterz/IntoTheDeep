@@ -86,7 +86,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Action liftExtendDrive = new ParallelAction(
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.35, dropPose), legs));
+                new CompleteAction(legs.moveToAction(0.45, dropPose), legs));
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
@@ -113,6 +113,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 return false;
             };
             Action extendAction = telemetryPacket -> {
+                shoulder.setMode(Shoulder.Mode.SEARCH);
                 arm.setPosition(AUTO_POWER, searchArmPosition);
                 return false;
             };
