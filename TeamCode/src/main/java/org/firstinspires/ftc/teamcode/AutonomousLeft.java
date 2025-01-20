@@ -30,9 +30,22 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1, true), legs));
+        Action handReset = telemetryPacket -> {
+            hand.hangSample();
+            return false;
+        };
+
+
+        Action checkAndSpin = new ParallelAction(
+                new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1, true), legs),
+                handReset
+        );
+        Actions.runBlocking(checkAndSpin);
+
+
 
         // Check if we have a block
+        /*
         boolean haveBlock = eye.getGrabColor() != Eye.NONE_ID;
 
         if(haveBlock) {
@@ -54,6 +67,8 @@ public class AutonomousLeft extends AutonomousOpMode{
             Actions.runBlocking(binDrop);
         }
 
+         */
+
         Action raiseAction = telemetryPacket -> {
             shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
             return false;
@@ -72,6 +87,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
             // Cycle from bucket to floor samples
             Action lowerAction = telemetryPacket -> {
+                shoulder.setMode(Shoulder.Mode.SEARCH);
                 shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, searchPosition);
                 return false;
             };
@@ -89,7 +105,8 @@ public class AutonomousLeft extends AutonomousOpMode{
             // Turn to ground samples, pick one up
             double turnAngle = 1 + ((i==2) ? 32 : (i==1) ? 2 : -29);
             Pose2d pickupPose = new Pose2d(new Vector2d(20.87 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
-            int direction = (i==0 && !haveBlock) ? -1 : 1;
+            //int direction = (i==0 && !haveBlock) ? -1 : 1;
+            int direction = (i==0) ? -1 : 1;
             Action turnToPickup = legs.moveToAction(AUTO_POWER, pickupPose, direction);
 
             Action lower = new ParallelAction(
@@ -105,15 +122,34 @@ public class AutonomousLeft extends AutonomousOpMode{
                     new CompleteAction(turnToPickup, legs),
                     pauseAndLower
             );
-            Action grabAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, searchPosition);
-                hand.grab(GRAB_MS);
-                return false;
-            };
-            Action pickupAction = new SequentialAction(
-                    turnAndLower,
-                    new CompleteAction(grabAction, hand));
-            Actions.runBlocking(pickupAction);
+
+
+
+
+
+            if (i==0) {
+                Action pickupAction = new SequentialAction(
+                        turnAndLower
+                );
+
+                Actions.runBlocking(pickupAction);
+
+                Action safeSearch = eye.safeSearch();
+                shoulder.setMode(Shoulder.Mode.NONE);
+                Actions.runBlocking(safeSearch);
+                shoulder.setMode(Shoulder.Mode.NONE);
+            } else {
+                Action grabAction = telemetryPacket -> {
+                    shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, searchPosition);
+                    hand.grab(GRAB_MS);
+                    return false;
+                };
+
+                Action pickupAction = new SequentialAction(
+                        turnAndLower,
+                        new CompleteAction(grabAction, hand));
+                Actions.runBlocking(pickupAction);
+            }
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
             Action turnToBucket = legs.moveToAction(0.7, lowBucketDropPose, -1);
@@ -131,7 +167,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         // TODO - Park in climb 1 area touching the bar
         // We are facing the buckets and we just dropped a sample
         Action resetShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 0);
+            shoulder.setPosition(0.7, Shoulder.MAX_POS-50);
             return false;
         };
         Action resetArm = telemetryPacket -> {
@@ -140,11 +176,22 @@ public class AutonomousLeft extends AutonomousOpMode{
             return false;
         };
 
-        Pose2d parkPose = new Pose2d(new Vector2d(21 + X_OFFSET, 45 + Y_OFFSET), Math.toRadians(-45));
+        //Pose2d parkPose = new Pose2d(new Vector2d(21 + X_OFFSET, 45 + Y_OFFSET), Math.toRadians(-45));
+        Pose2d parkPose1 = new Pose2d(new Vector2d(32.5+X_OFFSET, 30+Y_OFFSET), Math.toRadians(90));
+        Pose2d parkPose2 = new Pose2d(new Vector2d(56+X_OFFSET, 32+Y_OFFSET), Math.toRadians(90));
+        Pose2d parkPose3 = new Pose2d(new Vector2d(56+X_OFFSET, 12.5+Y_OFFSET), Math.toRadians(90));
+
         Action resetAction = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, 1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose1, 1, true), legs),
                 new CompleteAction(resetShoulder, shoulder),
                 new CompleteAction(resetArm, arm));
-        Actions.runBlocking(resetAction);
+        Action moveToPark = new SequentialAction(
+                resetAction,
+                new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose2, 1, true), legs),
+                new CompleteAction(legs.moveToAction(0.7, parkPose3, 1, true), legs)
+        );
+        Actions.runBlocking(moveToPark);
+
+        sleep(1500);
     }
 }

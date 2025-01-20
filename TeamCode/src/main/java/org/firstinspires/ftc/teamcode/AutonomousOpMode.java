@@ -33,7 +33,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     }
 
     public void searchSubmersible(){
-        this.submersibleSearch = true;
+        this.submersibleSearch = false;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // extended the shoulder is dropped slightly until the sample
         // is latched onto the sample bar.  Then the arms are retracted
         // while the fingers release the sample.
-        int searchArmPosition = 1070;
+        int searchArmPosition = 1250;
 
         Pose2d dropPose = new Pose2d(new Vector2d(31 + X_OFFSET, Y_OFFSET), 0);
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
@@ -124,6 +124,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
             // Real Search (should block until complete)
             Action safeSearch = eye.safeSearch();
+            shoulder.setMode(Shoulder.Mode.NONE);
             Actions.runBlocking(safeSearch);
 
             // Safe height for shoulder

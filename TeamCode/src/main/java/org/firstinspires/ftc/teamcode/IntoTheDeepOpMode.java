@@ -61,11 +61,11 @@ public class IntoTheDeepOpMode extends StandardSetupOpMode {
             //telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad1.right_stick_x, gamepad1.right_stick_y);
             //telemetry.addData("Left Stick", "x (%.2f), y (%.2f)", gamepad2.left_stick_x, gamepad2.left_stick_y);
             //telemetry.addData("Right Stick", "x (%.2f), y (%.2f)", gamepad2.right_stick_x, gamepad2.right_stick_y);
-            //legs.debugTelemetry(telemetry);
-            shoulder.debugTelemetry(telemetry);
-            arm.debugTelemetry(telemetry);
-            eye.debugTelemetry(telemetry);
-            hand.debugTelemetry(telemetry);
+            legs.debugTelemetry(telemetry);
+            //shoulder.debugTelemetry(telemetry);
+            //arm.debugTelemetry(telemetry);
+            //eye.debugTelemetry(telemetry);
+            //hand.debugTelemetry(telemetry);
             telemetry.update();
 
             // Short sleep to keep this loop from saturating
