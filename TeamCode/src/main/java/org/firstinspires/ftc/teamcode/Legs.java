@@ -38,7 +38,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -103,8 +102,8 @@ public final class Legs extends BodyPart{
 
     public final Localizer localizer;
     private Pose2d pose;
-    private final Gamepad gamepad;
-    private boolean ignoreGamepad;
+    private Thread moveThread = new Thread();
+
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -429,9 +428,9 @@ public final class Legs extends BodyPart{
                 if (!moveThread.isAlive()) moveForward(-10.0, true);
                 // Change later to lower shoulder speed
             } else if (gamepad.left_bumper) {
-                if (!moveThread.isAlive()) rotate(90.0, true);
+                if (!moveThread.isAlive()) rotate(90.0, false);
             } else if (gamepad.right_bumper) {
-                if (!moveThread.isAlive()) rotate(-90.0, true);
+                if (!moveThread.isAlive()) rotate(-90.0, false);
             } else if (gamepad.x) {
                 leftPose = getPose();
             } else if (gamepad.a) {
@@ -726,13 +725,10 @@ public final class Legs extends BodyPart{
             // Stop the drive motors and notify listeners that we have arrived
             setDrivePowers(new PoseVelocity2d(new Vector2d(0,0),0));
 
-            // If we are interrupted then they will handle notify
-            if(!isInterrupted())
-              notifyOldestListener();
+            // Notify if someone was waiting
+            notifyOldestListener();
         }
     }
-
-    private Thread moveThread = new Thread();
 
     @Override
     public int getCurrentPosition()

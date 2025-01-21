@@ -156,6 +156,9 @@ public class Shoulder extends BodyPart {
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();
+
+        // Notify listeners
+        notifyOldestListener();
     }
 
     /**

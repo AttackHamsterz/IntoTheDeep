@@ -185,6 +185,9 @@ public class Arm extends BodyPart {
 
         // Cancel any pending safeHolds
         protectionThread.interrupt();
+
+        // Notify listeners
+        notifyOldestListener();
     }
 
     @Override

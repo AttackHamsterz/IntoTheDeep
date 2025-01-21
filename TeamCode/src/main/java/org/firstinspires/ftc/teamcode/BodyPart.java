@@ -38,12 +38,11 @@ public abstract class BodyPart extends Thread{
         public void run(){
             try{
                 while(Math.abs(getCurrentPosition()-position) > CLOSE_ENOUGH_TICKS) {
-                    sleep(MOTOR_CHECK_PERIOD_MS);
+                    sleep(LOOP_PAUSE_MS);
                 }
                 safeHold(getCurrentPosition());
             } catch (InterruptedException ignored) {
             }
-            notifyOldestListener();
         }
     }
 
