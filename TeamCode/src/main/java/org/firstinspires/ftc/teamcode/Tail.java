@@ -73,17 +73,52 @@ public class Tail extends Thread{
 
     @Override public void run()
     {
+        // Always start with the tail up
         tailUp();
+
+        // Actions we use for lifting
+        Action shoulderUpAction = telemetryPacket -> {
+            ssom.shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
+            return false;
+        };
+        Action armUpAction = telemetryPacket -> {
+            ssom.arm.setPosition(1.0,550);
+            return false;
+        };
+        Action armDownAction = telemetryPacket -> {
+            ssom.arm.setPosition(1.0, -20);
+            return false;
+        };
+        Action upAction = telemetryPacket -> {
+            ssom.arm.setPosition(1.0, Arm.MAX_POS);
+            ssom.shoulder.setMode(Shoulder.Mode.NONE);
+            ssom.shoulder.setPosition(1.0, 2213);
+            return false;
+        };
+        Action armHangPosition = telemetryPacket -> {
+            ssom.arm.setPosition(1.0, 150);
+            return false;
+        };
+        Action shoulderHangPosition = telemetryPacket -> {
+            ssom.shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
+            return false;
+        };
+        Action bendAction = telemetryPacket -> {
+            ssom.shoulder.setPosition(0.8, 50);
+            return false;
+        };
 
         if(!ignoreGamepad)
         {
             int lifting = 0;
             while (!isInterrupted())
             {
+                // If driver hits start, force tail to MIN_POS and reset lifting FSM
                 if (otherGamepad.start) {
                     setTail(MIN_POS);
                     lifting = 0;
                 }
+
                 // The following implements the lifting finite state machine.  The procedure
                 // starts after listening for back and start pressed at the same time.
                 // The lift runs in four parts:
@@ -99,22 +134,27 @@ public class Tail extends Thread{
                     if (gamepad.back && gamepad.start) {
                         ssom.shoulder.setMode(Shoulder.Mode.NONE);
                         lifting = 1;
-                    } else if (gamepad.start && !gamepad.back) {
-                        setTail(MIN_POS);
                     }
                 }
+
+                // Progress or repeat state
+                if(lifting > 1 && (lifting % 2 == 0)) {
+                    // Repeat last state
+                    if (gamepad.back)
+                        lifting--;
+
+                    // Onto next state
+                    if (gamepad.start)
+                        lifting++;
+                }
+
+                // If FSM is done, reset
+                if(lifting >= 8)
+                    lifting = 0;
 
                 // Get ready for the lift
                 if(lifting == 1)
                 {
-                    Action shoulderUpAction = telemetryPacket -> {
-                        ssom.shoulder.setPosition(1.0, Shoulder.Mode.HANG.armOutPos());
-                        return false;
-                    };
-                    Action armUpAction = telemetryPacket -> {
-                        ssom.arm.setPosition(1.0,550);
-                        return false;
-                    };
                     Action readyLiftAction = new ParallelAction(
                             new CompleteAction(shoulderUpAction, ssom.shoulder),
                             new CompleteAction(armUpAction, ssom.arm)
@@ -129,18 +169,9 @@ public class Tail extends Thread{
                 // Shoulder all the way up
                 if(lifting == 3) {
                     tailDown();
-                    Action armDownAction = telemetryPacket -> {
-                        ssom.arm.setPosition(1.0, -20);
-                        return false;
-                    };
-                    Action armHangPosition = telemetryPacket -> {
-                        ssom.arm.setPosition(1.0, 550);
-                        return false;
-                    };
                     Action firstPull = new SequentialAction(
                             new CompleteAction(armDownAction, ssom.arm),
-                            new SleepAction(0.2),
-                            armHangPosition
+                            armUpAction
                     );
                     Actions.runBlocking(firstPull);
                     lifting++;
@@ -150,28 +181,11 @@ public class Tail extends Thread{
                 // Robot needs to be hanging on static arms
                 if(lifting == 5)
                 {
-                    Action armUpAction = telemetryPacket -> {
-                        ssom.arm.setPosition(1.0, Arm.MAX_POS);
-                        ssom.shoulder.setMode(Shoulder.Mode.NONE);
-                        ssom.shoulder.setPosition(1.0, 2213);
-                        return false;
-                    };
-                    Action prePull = new SequentialAction(
-                            new CompleteAction(armUpAction, ssom.arm)
-                    );
-                    Actions.runBlocking(prePull);
-
-                    Action armDownAction = telemetryPacket -> {
-                        ssom.arm.gotoMin(1.0);
-                        return false;
-                    };
-                    Action armHangPosition = telemetryPacket -> {
-                        ssom.arm.setPosition(1.0, 150);
-                        return false;
-                    };
-                    ssom.shoulder.setMode(Shoulder.Mode.HANG);
+                    Actions.runBlocking(new CompleteAction(upAction, ssom.arm));
+                    //ssom.shoulder.setMode(Shoulder.Mode.HANG);
                     Action secondPull = new SequentialAction(
-                            new SleepAction(0.5),
+                            //new SleepAction(0.5),
+                            new CompleteAction(shoulderHangPosition, ssom.shoulder),
                             new CompleteAction(armDownAction, ssom.arm),
                             new CompleteAction(armHangPosition, ssom.arm)
                     );
@@ -183,31 +197,9 @@ public class Tail extends Thread{
                 if(lifting == 7) {
                     ssom.shoulder.setMode(Shoulder.Mode.NONE);
                     tailUp();
-                    Action bendAction = telemetryPacket -> {
-                        ssom.shoulder.setPosition(0.8, 50);
-                        return false;
-                    };
-                    Action finalAction = new SequentialAction(
-                            new CompleteAction(bendAction, ssom.shoulder)
-                    );
-                    Actions.runBlocking(finalAction);
+                    Actions.runBlocking(new CompleteAction(bendAction, ssom.shoulder));
                     lifting++;
                 }
-
-                // Progress or repeat state
-                if(lifting > 1 && (lifting % 2 == 0)) {
-                    // Repeat last state
-                    if (gamepad.back)
-                        lifting--;
-
-                    // Onto next state
-                    if (gamepad.start)
-                        lifting++;
-                }
-
-                // Reset
-                if(lifting >= 9)
-                    lifting = 0;
 
                 // Short sleep to keep this loop from saturating
                 try {

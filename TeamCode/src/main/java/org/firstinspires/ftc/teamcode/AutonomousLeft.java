@@ -16,7 +16,7 @@ public class AutonomousLeft extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(164));
-        Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(90));
+        Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(0));
         int bucketDropArmPosition = 1730;
 
         Action extendArmAction = telemetryPacket -> {
@@ -34,7 +34,6 @@ public class AutonomousLeft extends AutonomousOpMode{
             hand.hangSample();
             return false;
         };
-
 
         Action checkAndSpin = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, colorCheckPose, 1, true), legs),
