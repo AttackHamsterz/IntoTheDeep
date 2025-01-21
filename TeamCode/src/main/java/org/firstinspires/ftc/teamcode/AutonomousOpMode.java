@@ -32,8 +32,9 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         this.partnerHasSpecimen = true;
     }
 
+    // TODO - never search
     public void searchSubmersible(){
-        this.submersibleSearch = false;
+        //this.submersibleSearch = true;
     }
 
     @Override

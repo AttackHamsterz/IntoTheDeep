@@ -18,7 +18,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
         // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8 + X_OFFSET, -31.9 + Y_OFFSET), Math.toRadians(-135));
+        Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 7 + Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
@@ -91,7 +91,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Action gotoPickup = new ParallelAction(
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup, -1), legs));
             Actions.runBlocking(gotoPickup);
 
             Action grabAction = new SequentialAction(
@@ -181,8 +181,8 @@ public class AutonomousRight extends AutonomousOpMode{
             Action finalPickup = new ParallelAction(
                     new CompleteAction(resetArm, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, 1, true), legs),
-                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, 1), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, -1), legs),
+                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
             Actions.runBlocking(finalPickup);
 
             Action grab3Action = new SequentialAction(
@@ -219,12 +219,12 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(dropAndRelease3);
         }
 
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, 1, true), legs));
+        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, -1, false), legs));
 
         Action resetAction = new ParallelAction(
                 new CompleteAction(resetArm, arm),
                 new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, park, 1), legs));
+                new CompleteAction(legs.moveToAction(APPROACH_POWER, park, -1), legs));
         Actions.runBlocking(resetAction);
 
         Action extraResetAction = new ParallelAction(
