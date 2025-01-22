@@ -15,7 +15,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(164));
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(0));
         int bucketDropArmPosition = 1730;
 
@@ -69,6 +69,7 @@ public class AutonomousLeft extends AutonomousOpMode{
          */
 
         Action raiseAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.LOW_BUCKET);
             shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
             return false;
         };
@@ -126,7 +127,8 @@ public class AutonomousLeft extends AutonomousOpMode{
 
 
 
-            if (i==0) {
+            //if (i==0) {
+                /*
                 Action pickupAction = new SequentialAction(
                         turnAndLower
                 );
@@ -137,8 +139,12 @@ public class AutonomousLeft extends AutonomousOpMode{
                 shoulder.setMode(Shoulder.Mode.NONE);
                 Actions.runBlocking(safeSearch);
                 shoulder.setMode(Shoulder.Mode.NONE);
-            } else {
+
+                 */
+            //} else {
+
                 Action grabAction = telemetryPacket -> {
+                    shoulder.setMode(Shoulder.Mode.GROUND);
                     shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, searchPosition);
                     hand.grab(GRAB_MS);
                     return false;
@@ -148,7 +154,7 @@ public class AutonomousLeft extends AutonomousOpMode{
                         turnAndLower,
                         new CompleteAction(grabAction, hand));
                 Actions.runBlocking(pickupAction);
-            }
+            //}
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
             Action turnToBucket = legs.moveToAction(0.7, lowBucketDropPose, -1);
@@ -163,9 +169,10 @@ public class AutonomousLeft extends AutonomousOpMode{
             Actions.runBlocking(dropAction);
         }
 
-        // TODO - Park in climb 1 area touching the bar
+
         // We are facing the buckets and we just dropped a sample
         Action resetShoulder = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.NONE);
             shoulder.setPosition(0.7, Shoulder.MAX_POS-50);
             return false;
         };

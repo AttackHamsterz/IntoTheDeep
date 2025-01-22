@@ -90,7 +90,7 @@ public class Tail extends Thread{
             return false;
         };
         Action upAction = telemetryPacket -> {
-            ssom.arm.setPosition(1.0, Arm.MAX_POS);
+            ssom.arm.setPosition(1.0, 2200);
             ssom.shoulder.setMode(Shoulder.Mode.NONE);
             ssom.shoulder.setPosition(1.0, 2213);
             return false;
