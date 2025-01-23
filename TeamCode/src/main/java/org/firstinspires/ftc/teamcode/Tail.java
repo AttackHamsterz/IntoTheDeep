@@ -119,6 +119,29 @@ public class Tail extends Thread{
                     lifting = 0;
                 }
 
+                // If driver hits back, run calibration
+                if (otherGamepad.back) {
+                    switch(ssom.shoulder.getMode()){
+                        case SEARCH:
+                            ssom.eye.safeSearch();
+                            ssom.eye.debugTelemetry(ssom.telemetry);
+                            ssom.telemetry.update();
+                            break;
+                        case HIGH_BAR:
+                            ssom.eye.safeHang();
+                            ssom.eye.debugTelemetry(ssom.telemetry);
+                            ssom.telemetry.update();
+                            break;
+                        default:
+                            ssom.legs.debugTelemetry(ssom.telemetry);
+                            ssom.shoulder.debugTelemetry(ssom.telemetry);
+                            ssom.arm.debugTelemetry(ssom.telemetry);
+                            ssom.hand.debugTelemetry(ssom.telemetry);
+                            ssom.telemetry.update();
+                            break;
+                    };
+                }
+
                 // The following implements the lifting finite state machine.  The procedure
                 // starts after listening for back and start pressed at the same time.
                 // The lift runs in four parts:
