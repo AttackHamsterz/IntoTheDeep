@@ -36,6 +36,7 @@ public class Eye extends BodyPart {
     public static final int BLUE_ID = 3;
     private int grabColor;
     private int searchColor;
+    private boolean fullMove = false;
 
     protected static final int WEBCAM_WIDTH = 640; //800;//1920;//640;//1920;
     protected static final int WEBCAM_HEIGHT = 480; //600;//1080;//480;//1080;
@@ -108,6 +109,7 @@ public class Eye extends BodyPart {
         this.color = ssom.color;
         this.favorYellow = ssom.favorYellow;
         this.gamepad = ssom.gamepad2;
+        this.extraGamepad = ssom.gamepad1;
         this.searching = false;
 
         fp = new FrameProcessing(WEBCAM_WIDTH, WEBCAM_HEIGHT, ssom.telemetry);
@@ -199,37 +201,44 @@ public class Eye extends BodyPart {
             double wristPos = fp.angleVal.get(smallestDistIndex) / Math.PI;
             ssom.hand.setWrist(wristPos);
 
-            // Set new arm position!
-            Action moveArm = telemetryPacket -> {
-                int ticks = plane.getTicks(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
-                ssom.arm.setPosition(1.0, ssom.arm.getCurrentPosition() + ticks);
-                return false;
-            };
-            Action strafeToBlock = telemetryPacket -> {
-                double shift = plane.getShift(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
-                ssom.legs.moveLeft(shift, false);
-                return false;
-            };
-            Action grab = telemetryPacket -> {
-                ssom.shoulder.setPositionForMode(Shoulder.Mode.GROUND, 1.0, ssom.arm.getCurrentPosition());
-                ssom.hand.grab(1000);
-                return false;
-            };
-            Action raiseShoulder = telemetryPacket -> {
-                ssom.shoulder.setMode(Shoulder.Mode.NONE);
-                ssom.shoulder.setPosition(0.8, ssom.shoulder.getPositionForMode(Shoulder.Mode.SEARCH, ssom.arm.getCurrentPosition()) * 3 / 4);
-                //hand.hangSample();
-                return false;
-            };
+            if(fullMove) {
+                // Set new arm position!
+                Action moveArm = telemetryPacket -> {
+                    int ticks = plane.getTicks(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
+                    ssom.arm.setPosition(1.0, ssom.arm.getCurrentPosition() + ticks);
+                    return false;
+                };
+                Action strafeToBlock = telemetryPacket -> {
+                    double shift = plane.getShift(fp.centerXVal.get(smallestDistIndex), fp.centerYVal.get(smallestDistIndex));
+                    ssom.legs.moveLeft(shift, false);
+                    return false;
+                };
+                Action grab = telemetryPacket -> {
+                    ssom.shoulder.setPositionForMode(Shoulder.Mode.GROUND, 1.0, ssom.arm.getCurrentPosition());
+                    ssom.hand.grab(1000);
+                    return false;
+                };
+                Action raiseShoulder = telemetryPacket -> {
+                    ssom.shoulder.setMode(Shoulder.Mode.NONE);
+                    ssom.shoulder.setPosition(0.8, ssom.shoulder.getPositionForMode(Shoulder.Mode.SEARCH, ssom.arm.getCurrentPosition()) * 3 / 4);
+                    //hand.hangSample();
+                    return false;
+                };
 
-            ParallelAction premove = new ParallelAction(
-                    new CompleteAction(moveArm, ssom.arm),
-                    new CompleteAction(strafeToBlock, ssom.legs)
-            );
-            moveAction = new SequentialAction(
-                    premove,
-                    new CompleteAction(grab, ssom.hand),
-                    new CompleteAction(raiseShoulder, ssom.shoulder));
+                ParallelAction premove = new ParallelAction(
+                        new CompleteAction(moveArm, ssom.arm),
+                        new CompleteAction(strafeToBlock, ssom.legs)
+                );
+                moveAction = new SequentialAction(
+                        premove,
+                        new CompleteAction(grab, ssom.hand),
+                        new CompleteAction(raiseShoulder, ssom.shoulder));
+            }
+            else{
+                moveAction = telemetryPacket -> {
+                    return false;
+                };
+            }
         }
         else {
             moveAction = telemetryPacket -> {
@@ -295,12 +304,16 @@ public class Eye extends BodyPart {
 
     @Override
     public void run() {
-
-        /* MOVED the search method to the shoulder to avoid threading conflicts
+        boolean pressing = false;
         while (!isInterrupted()) {
 
             if(!ignoreGamepad) {
-
+                if(!pressing && extraGamepad.back){
+                    pressing = true;
+                    fullMove = !fullMove;
+                }
+                if(!extraGamepad.back)
+                    pressing = false;
             }
 
             try {
@@ -309,7 +322,6 @@ public class Eye extends BodyPart {
                 interrupt();
             }
         }
-        */
     }
 
     @Override

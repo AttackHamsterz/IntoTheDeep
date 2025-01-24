@@ -111,6 +111,7 @@ public class Tail extends Thread{
         if(!ignoreGamepad)
         {
             int lifting = 0;
+            boolean pressing = false;
             while (!isInterrupted())
             {
                 // If driver hits start, force tail to MIN_POS and reset lifting FSM
@@ -120,7 +121,8 @@ public class Tail extends Thread{
                 }
 
                 // If driver hits back, run calibration
-                if (otherGamepad.back) {
+                if (!pressing && otherGamepad.back) {
+                    pressing = true;
                     switch(ssom.shoulder.getMode()){
                         case SEARCH:
                             ssom.eye.safeSearch();
@@ -141,6 +143,8 @@ public class Tail extends Thread{
                             break;
                     };
                 }
+                if ( !otherGamepad.back)
+                    pressing = false;
 
                 // The following implements the lifting finite state machine.  The procedure
                 // starts after listening for back and start pressed at the same time.
