@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 public class Eye extends BodyPart {
 
+    private static final boolean ENABLE_DASHBOARD_CAMERA = false;
     private static final double OFF_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
@@ -65,6 +66,16 @@ public class Eye extends BodyPart {
     // how much our slop is changing based on y
     protected static final double SHIFT_M = (SHIFT_FAR_M - SHIFT_NEAR_M) / (double) (SHIFT_FAR_Y - SHIFT_NEAR_Y);
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
+
+    // Bar calibration values
+    protected static final int EXPECTED_LEFT_Y = 215;
+    protected static final int EXPECTED_RIGHT_Y = 215;
+    protected static final int TOO_CLOSE_LEFT_Y = 170;
+    protected static final int TOO_CLOSE_RIGHT_Y = 170;
+    protected static final int TOO_FAR_LEFT_Y = 285;
+    protected static final int TOO_FAR_RIGHT_Y = 285;
+    protected static final double TOO_CLOSE_DISTANCE_IN = 1.0;
+    protected static final double TOO_FAR_DISTANCE_IN = 4.0;
 
     // values for the plane
     CalibrationPoint[] calibrationPlane = {
@@ -123,7 +134,8 @@ public class Eye extends BodyPart {
             @Override
             public void onOpened() {
                 //webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
-                FtcDashboard.getInstance().startCameraStream(webcam, 60);
+                if(ENABLE_DASHBOARD_CAMERA)
+                    FtcDashboard.getInstance().startCameraStream(webcam, 60);
                 webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
             }
 
@@ -361,16 +373,36 @@ public class Eye extends BodyPart {
             int frameCount = webcam.getFrameCount();
 
             if(frameCount % EVERY_NTH_FRAME == 0){
-                grabColor = fp.grabColor(input);
-
-                if(grabColor == YELLOW_ID)
-                    grabLight.setPosition(YELLOW_POWER);
-                else if(grabColor == RED_ID)
-                    grabLight.setPosition(RED_POWER);
-                else if(grabColor == BLUE_ID)
-                    grabLight.setPosition(BLUE_POWER);
+                // What color did I grab (only check if hand position is close to centered)
+                double wp = ssom.hand.getWristPosition();
+                if(wp > Hand.CTR_POS - 0.1 && wp < Hand.CTR_POS + 0.1) {
+                    grabColor = fp.grabColor(input);
+                    if (grabColor == YELLOW_ID)
+                        grabLight.setPosition(YELLOW_POWER);
+                    else if (grabColor == RED_ID)
+                        grabLight.setPosition(RED_POWER);
+                    else if (grabColor == BLUE_ID)
+                        grabLight.setPosition(BLUE_POWER);
+                    else
+                        grabLight.setPosition(OFF_POWER);
+                }
                 else
                     grabLight.setPosition(OFF_POWER);
+
+                // What color did I search and find
+                switch (fp.colorID){
+                    case YELLOW_ID:
+                        searchLight.setPosition(YELLOW_POWER);
+                        break;
+                    case BLUE_ID:
+                        searchLight.setPosition(BLUE_POWER);
+                        break;
+                    case RED_ID:
+                        searchLight.setPosition(RED_POWER);
+                        break;
+                    default:
+                        searchLight.setPosition(OFF_POWER);
+                };
             }
 
             if(search){
@@ -391,14 +423,6 @@ public class Eye extends BodyPart {
                 input = fp.matToBar(input, color);
 
                 // Act on the y positions
-                final int EXPECTED_LEFT_Y = 215;
-                final int EXPECTED_RIGHT_Y = 215;
-                final int TOO_CLOSE_LEFT_Y = 170;
-                final int TOO_CLOSE_RIGHT_Y = 170;
-                final int TOO_FAR_LEFT_Y = 285;
-                final int TOO_FAR_RIGHT_Y = 285;
-                final double TOO_CLOSE_DISTANCE_IN = 1.0;
-                final double TOO_FAR_DISTANCE_IN = 4.0;
                 final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
                 final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
@@ -424,7 +448,7 @@ public class Eye extends BodyPart {
                 }
             }
 
-            //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
+            // Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
             return input;
         }
     }

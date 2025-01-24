@@ -14,7 +14,6 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
-import org.openftc.easyopencv.OpenCvCamera;
 
 /**
  * A class to perform frame processing in opencv.  Also lets us easily unit test the algorithm
@@ -31,6 +30,7 @@ public class FrameProcessing {
     public List<Integer> centerXVal = new ArrayList<>();
     public List<Integer> centerYVal = new ArrayList<>();
     public List<Double> angleVal = new ArrayList<>();
+    public int colorID = Eye.NONE_ID;
 
     private static final boolean DRAW = true;
     private final int MIN_AREA;
@@ -84,7 +84,7 @@ public class FrameProcessing {
         hierarchy = new Mat();
         if(DRAW)
             image = new Mat(height, width, CvType.CV_8U);
-        MIN_AREA = (int)Math.round((double)(width * height) * 0.005);
+        MIN_AREA = (int)Math.round((double)(width * height) * 0.0025);
 
         grab_slice = new Mat(40, 40, CvType.CV_8U);
         bar_left_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
@@ -153,6 +153,7 @@ public class FrameProcessing {
         centerXVal.clear();
         centerYVal.clear();
         angleVal.clear();
+        colorID = Eye.NONE_ID;
         //if(DRAW)
         //    image.setTo(new Scalar(0));
 
@@ -161,10 +162,12 @@ public class FrameProcessing {
             Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+            if(!contours.isEmpty())
+                colorID = Eye.YELLOW_ID;
         }
 
         // Only process alliance if we didn't want or find any yellow
-        if(contours.size() == 0){
+        if(contours.isEmpty()){
             if(alliance == StandardSetupOpMode.COLOR.RED){
                 Core.inRange(hsv, HSV_RED1_LOW, HSV_RED1_HIGH, maskLow);
                 Core.inRange(hsv, HSV_RED2_LOW, HSV_RED2_HIGH, maskHi);
@@ -175,13 +178,17 @@ public class FrameProcessing {
             }
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+            if(!contours.isEmpty())
+                colorID = (alliance == StandardSetupOpMode.COLOR.RED) ? Eye.RED_ID : Eye.BLUE_ID;
         }
 
         // Detect final yellow if no alliance color found and not favor yellow
-        if(!favorYellow && contours.size() == 0){
+        if(!favorYellow && contours.isEmpty()){
             Core.inRange(hsv, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, mask);
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
             contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+            if(!contours.isEmpty())
+                colorID = Eye.YELLOW_ID;
         }
 
         // Process the contours

@@ -7,9 +7,9 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class Hand extends BodyPart{
-    private static final double MIN_POS = 0.0; // -90 degrees
-    private static final double MAX_POS = 1.0; // +90 degrees
-    private static final double CTR_POS = 0.5; // 0 degrees
+    public static final double MIN_POS = 0.0; // -90 degrees
+    public static final double MAX_POS = 1.0; // +90 degrees
+    public static final double CTR_POS = 0.5; // 0 degrees
 
     private static final double MIN_POWER = 0.0;  // Full reverse power
     private static final double MAX_POWER = 1.0;  // Full forward power
@@ -272,5 +272,9 @@ public class Hand extends BodyPart{
     public int getCurrentPosition() {
         //TODO
         return 0;
+    }
+
+    public double getWristPosition(){
+        return wrist.getPosition();
     }
 }
