@@ -52,7 +52,7 @@ public class Shoulder extends BodyPart {
             2006, // High Bar
             1756, // Low Bucket
             2226, // High Bucket
-            2480, // Hang
+            2450, // Hang
             105   // None is like ground
     ));
 
@@ -64,7 +64,7 @@ public class Shoulder extends BodyPart {
             1314, // High Bar
             1402, // Low Bucket
             2226, // High Bucket
-            2480, // Hang
+            2450, // Hang
             369   // None is like ground
     ));
 
