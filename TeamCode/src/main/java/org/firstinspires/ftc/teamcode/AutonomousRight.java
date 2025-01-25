@@ -199,12 +199,12 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(repeatSecondHang);
 
             // Extra alignment
-            /*
+
             Action action2 = eye.safeHang();
             if(action2 != null)
                 Actions.runBlocking(action2);
 
-             */
+
 
             Action retractReleaseBackup3 = new ParallelAction(
                     new CompleteAction(armIn, arm),

@@ -26,7 +26,8 @@ public class AutonomousLeft extends AutonomousOpMode{
         };
 
         Action releaseSample = telemetryPacket -> {
-            hand.release(RELEASE_MS);
+
+            hand.halfRelease(RELEASE_MS, false);
             return false;
         };
 

@@ -69,12 +69,12 @@ public class Eye extends BodyPart {
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     // Bar calibration values
-    protected static final int EXPECTED_LEFT_Y = 215;
-    protected static final int EXPECTED_RIGHT_Y = 215;
-    protected static final int TOO_CLOSE_LEFT_Y = 170;
-    protected static final int TOO_CLOSE_RIGHT_Y = 170;
-    protected static final int TOO_FAR_LEFT_Y = 285;
-    protected static final int TOO_FAR_RIGHT_Y = 285;
+    protected static final int EXPECTED_LEFT_Y = 245;
+    protected static final int EXPECTED_RIGHT_Y = 245;
+    protected static final int TOO_CLOSE_LEFT_Y = 225;
+    protected static final int TOO_CLOSE_RIGHT_Y = 225;
+    protected static final int TOO_FAR_LEFT_Y = 320;
+    protected static final int TOO_FAR_RIGHT_Y = 320;
     protected static final double TOO_CLOSE_DISTANCE_IN = 1.0;
     protected static final double TOO_FAR_DISTANCE_IN = 4.0;
 
@@ -116,7 +116,7 @@ public class Eye extends BodyPart {
 
         // LED setup
         this.grabLight = ssom.hardwareMap.get(Servo.class, "grabLight"); // Expansion hub ch3
-        this.searchLight = ssom.hardwareMap.get(Servo.class, "searchLight"); // Expansion hub ch3
+        this.searchLight = ssom.hardwareMap.get(Servo.class, "searchLight"); // Control hub ch3
         grabColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
         searchColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
         if(grabColor == BLUE_ID) {
@@ -418,15 +418,18 @@ public class Eye extends BodyPart {
             }
 
             if(search){
+
                 searching = true;
                 searchAction = null;
                 search = false;
-                ssom.shoulder.setMode(Shoulder.Mode.SEARCH);
+                //ssom.shoulder.setMode(Shoulder.Mode.SEARCH);
                 input = fp.matToDetection(input, color, favorYellow);
 
                 // Build search action (blocking)
                 searchAction = moveToColor();
                 searching = false;
+
+
             }
             if(hang){
                 // Only check once
