@@ -20,7 +20,7 @@ public class Arm extends BodyPart {
 
     // Min and max pos of the arm
     public static final int MIN_POS = 0;
-    public static final int MAX_POS = 2150;
+    public static final int MAX_POS = 2200;
     public static final int RESET_POS = -MAX_POS - 100;
 
     // Vars for the arm motors

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -84,7 +85,16 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
+        /*
+        Action waitAction = new SequentialAction(
+          new SleepAction(0.1),
+                new CompleteAction(liftShoulderAction, shoulder) // Shoulder to bar drop position
+        );
+
+         */
+
         Action liftExtendDrive = new ParallelAction(
+                //waitAction,
                 new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
                 new CompleteAction(legs.moveToAction(0.45, dropPose), legs));

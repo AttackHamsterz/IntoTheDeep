@@ -240,7 +240,11 @@ public class Hand extends BodyPart{
                 }
                 // Left trigger runs sample intake
                 else if (gamepad.left_trigger > MIN_TRIGGER) {
-                    release(RELEASE_MS, true);
+                    if (ssom.shoulder.getMode() == Shoulder.Mode.HIGH_BUCKET) {
+                        halfRelease(RELEASE_MS, true);
+                    } else {
+                        release(RELEASE_MS, true);
+                    }
                 }
                 // Right trigger runs sample release
                 else if (gamepad.right_trigger > MIN_TRIGGER) {

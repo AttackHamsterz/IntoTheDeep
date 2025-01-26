@@ -92,7 +92,7 @@ public class Tail extends Thread{
         Action upAction = telemetryPacket -> {
             ssom.arm.setPosition(1.0, 2200);
             ssom.shoulder.setMode(Shoulder.Mode.NONE);
-            ssom.shoulder.setPosition(1.0, 2213);
+            ssom.shoulder.setPosition(1.0, 2175);
             return false;
         };
         Action armHangPosition = telemetryPacket -> {
@@ -211,7 +211,7 @@ public class Tail extends Thread{
                     Actions.runBlocking(new CompleteAction(upAction, ssom.arm));
                     //ssom.shoulder.setMode(Shoulder.Mode.HANG);
                     Action secondPull = new SequentialAction(
-                            //new SleepAction(0.5),
+                            //new SleepAction(0.2),
                             new CompleteAction(shoulderHangPosition, ssom.shoulder),
                             new CompleteAction(armDownAction, ssom.arm),
                             new CompleteAction(armHangPosition, ssom.arm)
