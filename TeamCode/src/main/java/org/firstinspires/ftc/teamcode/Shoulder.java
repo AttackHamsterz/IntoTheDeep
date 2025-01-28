@@ -284,9 +284,9 @@ public class Shoulder extends BodyPart {
                     // Wait for shoulder mode and to hit search position
                     if (mode == Shoulder.Mode.SEARCH && !protectionThread.isAlive()){
 
-                        Action safeSearch = ssom.eye.safeSearch();
+                        //Action safeSearch = ssom.eye.safeSearch();
                         mode = Mode.NONE;
-                        Actions.runBlocking(safeSearch);
+                        //Actions.runBlocking(safeSearch);
                     }
                     else {
                         mode = Mode.SEARCH;
