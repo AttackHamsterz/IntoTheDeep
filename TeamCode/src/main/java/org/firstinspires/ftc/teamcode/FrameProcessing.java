@@ -75,6 +75,12 @@ public class FrameProcessing {
     private final Mat grab_red;
     private final Mat grab_blue;
 
+    public List<MatOfPoint> floor_contours = new ArrayList<>();
+    private final Mat hsv_floor;
+    private final Mat floor_low_mask;
+    private final Mat floor_high_mask;
+    private final Mat floor_mask;
+
 
     public FrameProcessing(int width, int height, Telemetry telemetry){
         hsv = new Mat(height, width * 3, CvType.CV_8U);
@@ -104,6 +110,10 @@ public class FrameProcessing {
         grab_red = new Mat(height, width, CvType.CV_8UC1);
         grab_blue = new Mat(height, width, CvType.CV_8UC1);
 
+        hsv_floor = new Mat(height, width * 3, CvType.CV_8U);
+        floor_low_mask = new Mat(height, width, CvType.CV_8UC1);
+        floor_high_mask = new Mat(height, width, CvType.CV_8UC1);
+        floor_mask = new Mat(height, width, CvType.CV_8UC1);
     }
 
     private static final int MIN_NUM_FOR_GRAB = 40;
@@ -338,6 +348,34 @@ public class FrameProcessing {
             }
         }
         return minY;
+    }
+
+    public Mat matToFloor(Mat input, StandardSetupOpMode.COLOR alliance)
+    {
+        // Reset
+        floor_contours.clear();
+
+        // Convert slices form RGB to HSV
+        Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
+
+        // Mask based on color
+        // Detect bar
+        if (alliance == StandardSetupOpMode.COLOR.BLUE) {
+            Core.inRange(hsv_floor, HSV_BLUE_LOW, HSV_BLUE_HIGH, floor_mask);
+        }else{
+            Core.inRange(hsv_floor, HSV_RED1_LOW, HSV_RED1_HIGH, floor_low_mask);
+            Core.inRange(hsv_floor, HSV_RED2_LOW, HSV_RED2_HIGH, floor_high_mask);
+            Core.add(floor_low_mask, floor_high_mask, floor_mask);
+        }
+
+        // Contour mask
+        Imgproc.findContours(floor_mask, floor_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+
+        // Locate contour closest to our target point
+
+        // Just return the original input Mat
+        return input;
     }
 
     public Mat matToBar(Mat input, StandardSetupOpMode.COLOR alliance)

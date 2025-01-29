@@ -509,6 +509,23 @@ public final class Legs extends BodyPart{
     }
 
     /**
+     * Amount to move forward and left in inches
+     * @param forward inches
+     * @param left inches
+     * @param waypoint false is more accurate
+     */
+    public void moveForwardAndLeft(double forward, double left, boolean waypoint){
+        Pose2d currentPose = getPose();
+        double currentHeading = currentPose.heading.toDouble();
+        Vector2d forwardUnit = new Vector2d(Math.cos(currentHeading), Math.sin(currentHeading));
+        Vector2d leftUnit = new Vector2d(-Math.sin(currentHeading), Math.cos(currentHeading));
+        Vector2d forwardVector = forwardUnit.times(forward);
+        Vector2d leftVector = leftUnit.times(left);
+        Pose2d newPose = new Pose2d(currentPose.position.plus(forwardVector).plus(leftVector), currentPose.heading);
+        moveToPose(AUTO_MOVE_POWER, newPose, waypoint);
+    }
+
+    /**
      * Gives the actual current pose estimate of the robot
      * @return the current pose from the pinpoint computer
      */
