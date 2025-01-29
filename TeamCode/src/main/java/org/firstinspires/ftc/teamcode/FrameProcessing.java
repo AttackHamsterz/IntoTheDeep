@@ -64,6 +64,18 @@ public class FrameProcessing {
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
 
+    private static final int FLOOR_ALIGNED_X = 363;
+    private static final int FLOOR_ALIGNED_Y = 292;
+    private static final int FLOOR_TOO_FAR_RIGHT_X = 424;
+    private static final int FLOOR_TOO_FAR_RIGHT_Y = 281;
+    private static final int FLOOR_TOO_FAR_LEFT_X = 290;
+    private static final int FLOOR_TOO_FAR_LEFT_Y = 277;
+    private static final int FLOOR_TOO_FAR_FORWARD_X = 345;
+    private static final int FLOOR_TOO_FAR_FORWARD_Y = 326;
+    private static final int FLOOR_TOO_FAR_BACK_X = 342;
+    private static final int FLOOR_TOO_FAR_BACK_Y = 244;
+
+
     private Telemetry telemetry;
 
     // 320 - 400 width 80
