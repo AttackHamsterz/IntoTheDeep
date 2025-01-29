@@ -101,6 +101,10 @@ public class Eye extends BodyPart {
     public double inchesRight;
     public Action barAction;
     public Action searchAction;
+    public Action floorAction;
+    public boolean search = false;
+    private boolean hang = false;
+    private boolean floor = false;
     public boolean searching;
 
 
@@ -279,7 +283,7 @@ public class Eye extends BodyPart {
         //        new CompleteAction(moveToBar, ssom.legs, 700));
         //        new CompleteAction(lowerShoulder, ssom.shoulder, 700);
 
-        return new CompleteAction(moveToBar, ssom.legs, 700);
+        return new CompleteAction(moveToBar, ssom.legs, 750);
     }
 
     public void plunge() {
@@ -299,8 +303,6 @@ public class Eye extends BodyPart {
                 new CompleteAction(raiseShoulder, ssom.shoulder));
         Actions.runBlocking(snag);
     }
-    public boolean search = false;
-    private boolean hang = false;
 
     @Override
     public void run() {
@@ -341,7 +343,7 @@ public class Eye extends BodyPart {
         do {
             // Give the pipeline a little time to build a result
             try {
-                sleep(100);
+                sleep(BodyPart.LOOP_PAUSE_MS);
             } catch (InterruptedException ignored) {
             }
         }while(barAction == null);
@@ -361,12 +363,32 @@ public class Eye extends BodyPart {
         do {
             // Give the pipeline a little time to build a result
             try {
-                sleep(100);
+                sleep(BodyPart.LOOP_PAUSE_MS);
             } catch (InterruptedException ignored) {
             }
         }while(searchAction == null);
 
         return searchAction;
+    }
+
+    /**
+     * Tell the camera to check the floor and return an action to align to specimen
+     * @return Action that aligns to the specimen
+     */
+    public Action safeFloor(){
+        // Tell the opencv thread to get an answer and then wait for the result
+        floor = true;
+
+        // Spin wait until we get a result
+        do {
+            // Give the pipeline a little time to build a result
+            try {
+                sleep(BodyPart.LOOP_PAUSE_MS);
+            } catch (InterruptedException ignored) {
+            }
+        }while(floorAction == null);
+
+        return floorAction;
     }
 
     @Override
@@ -443,17 +465,17 @@ public class Eye extends BodyPart {
                 final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
                 final double IN_PER_PIXEL_TOO_FAR_RIGHT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_RIGHT_Y - EXPECTED_RIGHT_Y);
 
-                int deltaLeft = (fp.bar_left_y > 0) ? fp.bar_left_y - EXPECTED_LEFT_Y : -1;
-                int deltaRight = (fp.bar_right_y > 0) ? fp.bar_right_y - EXPECTED_RIGHT_Y : -1;
-                if(deltaLeft<0 && deltaRight >= 0) deltaLeft = deltaRight;
-                if(deltaRight<0 && deltaLeft >= 0) deltaRight = deltaLeft;
+                int deltaLeft = (fp.bar_left_y > 0) ? fp.bar_left_y - EXPECTED_LEFT_Y : 0;
+                int deltaRight = (fp.bar_right_y > 0) ? fp.bar_right_y - EXPECTED_RIGHT_Y : 0;
 
-                if(deltaLeft != 0 || deltaRight != 0){
+                if(fp.bar_left_y < 0) deltaLeft = deltaRight;
+                if(fp.bar_right_y < 0) deltaRight = deltaLeft;
 
-                    inchesLeft = Range.clip(deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -1, 1);
-                    inchesRight = Range.clip(deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -1, 1);
+                if(Math.abs(deltaLeft) > 0.1 || Math.abs(deltaRight) > 0.1){
 
                     // Wiggle robot
+                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -1.0, 1.0);
+                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -1.0, 1.0);
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
                 }
                 else {
@@ -461,6 +483,31 @@ public class Eye extends BodyPart {
                         return false;
                     };
                 }
+            }
+            if(floor){
+                // Check only once
+                floorAction = null;
+                floor = false;
+                input = fp.matToFloor(input, color);
+
+                // Act on the positions
+                if(Math.abs(fp.floor_left) > 0.1 || Math.abs(fp.floor_forward) > 0.1){
+
+                    // Wiggle robot
+                    double inches_left = Range.clip(fp.floor_left,-1.5, 1.5);
+                    double inches_forward = Range.clip(fp.floor_forward,-1.5, 1.5);
+                    Action moveToSpecimen = telemetryPacket -> {
+                        ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
+                        return false;
+                    };
+                    floorAction = new CompleteAction(moveToSpecimen, ssom.legs, 750);
+                }
+                else {
+                    floorAction = telemetryPacket -> {
+                        return false;
+                    };
+                }
+
             }
 
             // Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);

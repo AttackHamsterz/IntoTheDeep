@@ -64,18 +64,6 @@ public class FrameProcessing {
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
 
-    private static final int FLOOR_ALIGNED_X = 363;
-    private static final int FLOOR_ALIGNED_Y = 292;
-    private static final int FLOOR_TOO_FAR_RIGHT_X = 424;
-    private static final int FLOOR_TOO_FAR_RIGHT_Y = 281;
-    private static final int FLOOR_TOO_FAR_LEFT_X = 290;
-    private static final int FLOOR_TOO_FAR_LEFT_Y = 277;
-    private static final int FLOOR_TOO_FAR_FORWARD_X = 345;
-    private static final int FLOOR_TOO_FAR_FORWARD_Y = 326;
-    private static final int FLOOR_TOO_FAR_BACK_X = 342;
-    private static final int FLOOR_TOO_FAR_BACK_Y = 244;
-
-
     private Telemetry telemetry;
 
     // 320 - 400 width 80
@@ -87,11 +75,30 @@ public class FrameProcessing {
     private final Mat grab_red;
     private final Mat grab_blue;
 
+
+    // Floor calibration values
+    private static final int FLOOR_ALIGNED_X = 363;
+    private static final int FLOOR_ALIGNED_Y = 292;
+    private static final int FLOOR_TOO_FAR_RIGHT_X = 424;
+    private static final int FLOOR_TOO_FAR_RIGHT_Y = 281;
+    private static final int FLOOR_TOO_FAR_LEFT_X = 290;
+    private static final int FLOOR_TOO_FAR_LEFT_Y = 277;
+    private static final int FLOOR_TOO_FAR_FORWARD_X = 345;
+    private static final int FLOOR_TOO_FAR_FORWARD_Y = 326;
+    private static final int FLOOR_TOO_FAR_BACK_X = 342;
+    private static final int FLOOR_TOO_FAR_BACK_Y = 244;
+
+    private static final double IN_PER_PIXEL_LR = 0.0187;
+    private static final double IN_PER_PIXEL_FB = 0.0244;
+
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
     private final Mat floor_low_mask;
     private final Mat floor_high_mask;
     private final Mat floor_mask;
+
+    public double floor_left;
+    public double floor_forward;
 
 
     public FrameProcessing(int width, int height, Telemetry telemetry){
@@ -364,8 +371,10 @@ public class FrameProcessing {
 
     public Mat matToFloor(Mat input, StandardSetupOpMode.COLOR alliance)
     {
-        // Reset
+        // Reset (no movement if nothing is found)
         floor_contours.clear();
+        floor_left = 0;
+        floor_forward = 0;
 
         // Convert slices form RGB to HSV
         Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
@@ -385,6 +394,21 @@ public class FrameProcessing {
         floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
 
         // Locate contour closest to our target point
+        int wd = image.width() * image.width() + image.height() * image.height();
+        for (MatOfPoint contour : contours) {
+            Moments moments = Imgproc.moments(contour);
+            int cx = (int)Math.round(moments.get_m10() / moments.get_m00());
+            int cy = (int)Math.round(moments.get_m01() / moments.get_m00());
+            int dx = FLOOR_ALIGNED_X - cx;
+            int dy = cy - FLOOR_ALIGNED_Y;
+            int dd = dx * dx + dy * dy;
+            // If closest so far, convert to shift amounts
+            if (dd < wd) {
+                floor_left = (double)dx * IN_PER_PIXEL_LR;
+                floor_forward = (double)dy * IN_PER_PIXEL_FB;
+                wd = dd;
+            }
+        }
 
         // Just return the original input Mat
         return input;

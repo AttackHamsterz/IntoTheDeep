@@ -94,6 +94,11 @@ public class AutonomousRight extends AutonomousOpMode{
                     new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup, -1), legs));
             Actions.runBlocking(gotoPickup);
 
+            // Extra floor alignment
+            Action adjust = eye.safeFloor();
+            if(adjust != null)
+                Actions.runBlocking(adjust);
+
             Action grabAction = new SequentialAction(
                     ground,
                     new CompleteAction(grab, hand)
@@ -107,7 +112,7 @@ public class AutonomousRight extends AutonomousOpMode{
             );
             Actions.runBlocking(gotoSecondHang);
 
-            // Extra alignment
+            // Extra bar alignment
             Action action = eye.safeHang();
             if(action != null)
                 Actions.runBlocking(action);
@@ -145,6 +150,11 @@ public class AutonomousRight extends AutonomousOpMode{
         );
         Actions.runBlocking(driveAction);
 
+        // Extra floor alignment
+        Action adjust2 = eye.safeFloor();
+        if(adjust2 != null)
+            Actions.runBlocking(adjust2);
+
         Action grab2Action = new SequentialAction(
                 ground,
                 new CompleteAction(grab, hand)
@@ -158,7 +168,7 @@ public class AutonomousRight extends AutonomousOpMode{
         );
         Actions.runBlocking(gotoThirdHang);
 
-        // Extra alignment
+        // Extra bar alignment
         Action action = eye.safeHang();
         if(action != null)
             Actions.runBlocking(action);
@@ -185,6 +195,11 @@ public class AutonomousRight extends AutonomousOpMode{
                     new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
             Actions.runBlocking(finalPickup);
 
+            // Extra floor alignment
+            Action adjust3 = eye.safeFloor();
+            if(adjust3 != null)
+                Actions.runBlocking(adjust3);
+
             Action grab3Action = new SequentialAction(
                     ground,
                     new CompleteAction(grab, hand)
@@ -198,13 +213,10 @@ public class AutonomousRight extends AutonomousOpMode{
             );
             Actions.runBlocking(repeatSecondHang);
 
-            // Extra alignment
-
+            // Extra bar alignment
             Action action2 = eye.safeHang();
             if(action2 != null)
                 Actions.runBlocking(action2);
-
-
 
             Action retractReleaseBackup3 = new ParallelAction(
                     new CompleteAction(armIn, arm),
