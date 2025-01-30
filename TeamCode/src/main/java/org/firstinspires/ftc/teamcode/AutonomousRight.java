@@ -39,7 +39,7 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         Action armIn = telemetryPacket -> {
-            arm.gotoMin(AUTO_POWER);
+            arm.setPosition(AUTO_POWER, -15);
             return false;
         };
 
@@ -98,6 +98,8 @@ public class AutonomousRight extends AutonomousOpMode{
             Action adjust = eye.safeFloor();
             if(adjust != null)
                 Actions.runBlocking(adjust);
+            //eye.debugTelemetry(telemetry);
+            //telemetry.update();
 
             Action grabAction = new SequentialAction(
                     ground,
@@ -154,6 +156,8 @@ public class AutonomousRight extends AutonomousOpMode{
         Action adjust2 = eye.safeFloor();
         if(adjust2 != null)
             Actions.runBlocking(adjust2);
+        //eye.debugTelemetry(telemetry);
+        //telemetry.update();
 
         Action grab2Action = new SequentialAction(
                 ground,
@@ -199,6 +203,8 @@ public class AutonomousRight extends AutonomousOpMode{
             Action adjust3 = eye.safeFloor();
             if(adjust3 != null)
                 Actions.runBlocking(adjust3);
+            //eye.debugTelemetry(telemetry);
+            //telemetry.update();
 
             Action grab3Action = new SequentialAction(
                     ground,
@@ -236,8 +242,15 @@ public class AutonomousRight extends AutonomousOpMode{
         Action resetAction = new ParallelAction(
                 new CompleteAction(resetArm, arm),
                 new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(legs.moveToAction(APPROACH_POWER, park, -1), legs));
+                new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
         Actions.runBlocking(resetAction);
+
+        // Extra floor alignment
+        Action adjust4 = eye.safeFloor();
+        if(adjust4 != null)
+            Actions.runBlocking(adjust4);
+        //eye.debugTelemetry(telemetry);
+        //telemetry.update();
 
         Action extraResetAction = new ParallelAction(
                 new CompleteAction(resetShoulder, shoulder),

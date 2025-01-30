@@ -180,6 +180,11 @@ public class Eye extends BodyPart {
             telemetry.addData("left bar y", fp.bar_left_y);
             telemetry.addData("right bar y", fp.bar_right_y);
         }
+
+        if(fp.floor_left != 0 || fp.floor_forward != 0){
+            telemetry.addData("Floor left", fp.floor_left);
+            telemetry.addData("Floor forward", fp.floor_forward);
+        }
     }
 
     public Action moveToColor() {

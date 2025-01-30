@@ -410,6 +410,11 @@ public class FrameProcessing {
             }
         }
 
+        telemetry.addData("Num Contours", contours.size());
+        telemetry.addData("Floor Left", floor_left);
+        telemetry.addData("Floor Forward", floor_forward);
+        telemetry.update();
+
         // Just return the original input Mat
         return input;
     }
