@@ -416,7 +416,7 @@ public class FrameProcessing {
         telemetry.update();
 
         // Just return the original input Mat
-        return input;
+        return floor_mask;
     }
 
     public Mat matToBar(Mat input, StandardSetupOpMode.COLOR alliance)

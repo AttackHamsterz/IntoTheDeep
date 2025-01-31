@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class Eye extends BodyPart {
 
-    private static final boolean ENABLE_DASHBOARD_CAMERA = false;
+    private static final boolean ENABLE_DASHBOARD_CAMERA = true;
     private static final double OFF_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
@@ -139,7 +139,6 @@ public class Eye extends BodyPart {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                //webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
                 if(ENABLE_DASHBOARD_CAMERA)
                     FtcDashboard.getInstance().startCameraStream(webcam, 60);
                 webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
@@ -489,6 +488,7 @@ public class Eye extends BodyPart {
                     };
                 }
             }
+            floor = true;
             if(floor){
                 // Check only once
                 floorAction = null;
