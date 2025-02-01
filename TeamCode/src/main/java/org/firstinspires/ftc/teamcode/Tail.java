@@ -125,7 +125,7 @@ public class Tail extends Thread{
                     pressing = true;
                     switch(ssom.shoulder.getMode()){
                         case SEARCH:
-                            ssom.eye.safeSearch();
+                            ssom.eye.safeFloor();
                             ssom.eye.debugTelemetry(ssom.telemetry);
                             ssom.telemetry.update();
                             break;

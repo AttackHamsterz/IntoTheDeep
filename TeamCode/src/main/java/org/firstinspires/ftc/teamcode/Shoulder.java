@@ -25,7 +25,8 @@ public class Shoulder extends BodyPart {
         LOW_BUCKET(4),     // Tool will place sample in the low bucket in this mode
         HIGH_BUCKET(5),    // Tool will place sample in high bucket
         HANG(6),           // Straight Up
-        NONE(7);           // Tool can do whatever it wants in this mode
+        NONE(7),           // Tool can do whatever it wants in this mode
+        HOVER(8);
 
         private final int value;
 
@@ -53,7 +54,8 @@ public class Shoulder extends BodyPart {
             1756, // Low Bucket
             2226, // High Bucket
             2450, // Hang
-            105   // None is like ground
+            105,   // None is like ground
+            200
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
@@ -65,7 +67,8 @@ public class Shoulder extends BodyPart {
             1402, // Low Bucket
             2226, // High Bucket
             2450, // Hang
-            369   // None is like ground
+            369,   // None is like ground
+            400
     ));
 
     public static final int DROP_SHOULDER_POS = 1143;
@@ -295,6 +298,15 @@ public class Shoulder extends BodyPart {
                 else if(gamepad.a && !pressing) {
                     pressing = true;
                     mode = Mode.GROUND;
+                    /*
+                    if (mode == Mode.GROUND) {
+                        mode = Mode.HOVER;
+                    } else {
+                        mode = Mode.GROUND;
+                    }
+
+                     */
+
                 }
                 else if(gamepad.b && !pressing) {
                     pressing = true;

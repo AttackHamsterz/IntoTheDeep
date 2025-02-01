@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.util.Range;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,8 +80,8 @@ public class FrameProcessing {
 
 
     // Floor calibration values
-    private static final int FLOOR_ALIGNED_X = 363;
-    private static final int FLOOR_ALIGNED_Y = 292;
+    private static final int FLOOR_ALIGNED_X = 366;//363;
+    private static final int FLOOR_ALIGNED_Y = 317;//292;
     private static final int FLOOR_TOO_FAR_RIGHT_X = 424;
     private static final int FLOOR_TOO_FAR_RIGHT_Y = 281;
     private static final int FLOOR_TOO_FAR_LEFT_X = 290;
@@ -100,6 +102,9 @@ public class FrameProcessing {
 
     public double floor_left;
     public double floor_forward;
+
+    public int cx;
+    public int cy;
 
 
     public FrameProcessing(int width, int height, Telemetry telemetry){
@@ -398,10 +403,10 @@ public class FrameProcessing {
         int wd = image.width() * image.width() + image.height() * image.height();
         for (MatOfPoint contour : floor_contours) {
             Moments moments = Imgproc.moments(contour);
-            int cx = (int)Math.round(moments.get_m10() / moments.get_m00());
-            int cy = (int)Math.round(moments.get_m01() / moments.get_m00());
+            cx = (int)Math.round(moments.get_m10() / moments.get_m00());
+            cy = (int)Math.round(moments.get_m01() / moments.get_m00());
             int dx = FLOOR_ALIGNED_X - cx;
-            int dy = cy - FLOOR_ALIGNED_Y;
+            int dy = FLOOR_ALIGNED_Y - cy;
             int dd = dx * dx + dy * dy;
             // If closest so far, convert to shift amounts
             if (dd < wd) {
@@ -411,13 +416,16 @@ public class FrameProcessing {
             }
         }
 
-        /*
+
+
         telemetry.addData("Num Contours", floor_contours.size());
         telemetry.addData("Floor Left", floor_left);
-        telemetry.addData("Floor Forward", floor_forward);
+        telemetry.addData("Floor Forward",floor_forward);
         telemetry.addData("Sum of All Points", Core.sumElems(floor_mask));
         telemetry.update();
-         */
+
+
+
 
         // Just return the original input Mat
         return floor_mask;

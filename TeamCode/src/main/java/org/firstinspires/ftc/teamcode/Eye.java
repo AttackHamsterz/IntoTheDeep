@@ -184,6 +184,8 @@ public class Eye extends BodyPart {
         if(fp.floor_left != 0 || fp.floor_forward != 0){
             telemetry.addData("Floor left", fp.floor_left);
             telemetry.addData("Floor forward", fp.floor_forward);
+            telemetry.addData("Cx", fp.cx);
+            telemetry.addData("Cy", fp.cy);
         }
     }
 
@@ -501,8 +503,8 @@ public class Eye extends BodyPart {
                 if(Math.abs(fp.floor_left) > 0.1 || Math.abs(fp.floor_forward) > 0.1){
 
                     // Wiggle robot
-                    double inches_left = Range.clip(fp.floor_left,-0.5, 0.5);
-                    double inches_forward = Range.clip(fp.floor_forward,-0.5, 0.5);
+                    double inches_left = Range.clip(fp.floor_left,-1, 1);
+                    double inches_forward = Range.clip(fp.floor_forward,-1, 1);
                     Action moveToSpecimen = telemetryPacket -> {
                         ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
                         return false;

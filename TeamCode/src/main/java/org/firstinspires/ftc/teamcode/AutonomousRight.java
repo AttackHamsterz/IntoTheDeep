@@ -19,7 +19,7 @@ public class AutonomousRight extends AutonomousOpMode{
         // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 7 + Y_OFFSET), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
         Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
@@ -95,9 +95,12 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(gotoPickup);
 
             // Extra floor alignment
+
             Action adjust = eye.safeFloor();
             if(adjust != null)
                 Actions.runBlocking(adjust);
+
+
             //eye.debugTelemetry(telemetry);
             //telemetry.update();
 

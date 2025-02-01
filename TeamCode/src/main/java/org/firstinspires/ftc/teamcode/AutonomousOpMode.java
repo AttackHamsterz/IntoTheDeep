@@ -85,17 +85,17 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
-        /*
+
         Action waitAction = new SequentialAction(
           new SleepAction(0.1),
                 new CompleteAction(liftShoulderAction, shoulder) // Shoulder to bar drop position
         );
 
-         */
+
 
         Action liftExtendDrive = new ParallelAction(
-                //waitAction,
-                new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
+                waitAction,
+                //new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
                 new CompleteAction(legs.moveToAction(0.45, dropPose), legs));
         Actions.runBlocking(liftExtendDrive);
