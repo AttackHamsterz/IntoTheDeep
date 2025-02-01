@@ -47,6 +47,7 @@ public class StandardSetupOpMode extends LinearOpMode {
 
         // A little bit of init to not drag the tool (auto)
         if (ignoreGamepad) {
+            hand.setWrist(Hand.CTR_POS);
             hand.grab(300);
             shoulder.setPosition(0.2, 111);
         }

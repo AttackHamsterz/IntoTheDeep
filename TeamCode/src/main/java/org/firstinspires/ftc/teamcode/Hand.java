@@ -45,7 +45,6 @@ public class Hand extends BodyPart{
         this.wrist.setDirection(Servo.Direction.FORWARD);
         this.left.setDirection(CRServo.Direction.FORWARD);
         this.right.setDirection(CRServo.Direction.FORWARD);
-        this.wrist.setPosition(CTR_POS);
         this.ignoreGamepad = false;
         this.stopThread = new Thread();
     }
