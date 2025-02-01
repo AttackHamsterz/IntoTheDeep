@@ -417,14 +417,14 @@ public class FrameProcessing {
         }
 
 
-
+        // Debug
+        /*
         telemetry.addData("Num Contours", floor_contours.size());
         telemetry.addData("Floor Left", floor_left);
         telemetry.addData("Floor Forward",floor_forward);
         telemetry.addData("Sum of All Points", Core.sumElems(floor_mask));
         telemetry.update();
-
-
+        */
 
 
         // Just return the original input Mat
