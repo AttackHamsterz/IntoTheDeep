@@ -481,8 +481,8 @@ public class Eye extends BodyPart {
                 if(Math.abs(deltaLeft) > 0.1 || Math.abs(deltaRight) > 0.1){
 
                     // Wiggle robot
-                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -1.0, 1.0);
-                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -1.0, 1.0);
+                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -0.5, 1.0);
+                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -0.5, 1.0);
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
                 }
                 else {

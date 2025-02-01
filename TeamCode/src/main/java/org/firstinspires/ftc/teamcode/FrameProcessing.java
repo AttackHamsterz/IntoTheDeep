@@ -79,20 +79,14 @@ public class FrameProcessing {
     private final Mat grab_blue;
 
 
-    // Floor calibration values
+    // Floor calibration values (start with specimen, search height, arm in,
+    // place specimen in ideal location, then back on motion controller to get centroid
     private static final int FLOOR_ALIGNED_X = 366;//363;
     private static final int FLOOR_ALIGNED_Y = 317;//292;
-    private static final int FLOOR_TOO_FAR_RIGHT_X = 424;
-    private static final int FLOOR_TOO_FAR_RIGHT_Y = 281;
-    private static final int FLOOR_TOO_FAR_LEFT_X = 290;
-    private static final int FLOOR_TOO_FAR_LEFT_Y = 277;
-    private static final int FLOOR_TOO_FAR_FORWARD_X = 345;
-    private static final int FLOOR_TOO_FAR_FORWARD_Y = 326;
-    private static final int FLOOR_TOO_FAR_BACK_X = 342;
-    private static final int FLOOR_TOO_FAR_BACK_Y = 244;
 
+    // Shrinking these will cause smaller motion on detections
     private static final double IN_PER_PIXEL_LR = 0.0187;
-    private static final double IN_PER_PIXEL_FB = 0.0244;
+    private static final double IN_PER_PIXEL_FB = 0.019;//0.0244;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
