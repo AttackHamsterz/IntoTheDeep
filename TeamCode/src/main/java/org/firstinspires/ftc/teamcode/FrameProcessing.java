@@ -24,6 +24,7 @@ public class FrameProcessing {
     private final Mat maskLow;
     private final Mat maskHi;
     private final Mat hierarchy;
+    private final Mat floorHierarchy;
     private final Mat image;
 
     public List<MatOfPoint> contours = new ArrayList<>();
@@ -107,6 +108,7 @@ public class FrameProcessing {
         maskLow = new Mat(height, width, CvType.CV_8UC1);
         maskHi = new Mat(height, width, CvType.CV_8UC1);
         hierarchy = new Mat();
+        floorHierarchy = new Mat();
         if(DRAW)
             image = new Mat(height, width, CvType.CV_8U);
         MIN_AREA = (int)Math.round((double)(width * height) * 0.0025);
@@ -390,12 +392,11 @@ public class FrameProcessing {
         }
 
         // Contour mask
-        Imgproc.findContours(floor_mask, floor_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(floor_mask, floor_contours, floorHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
-
         // Locate contour closest to our target point
         int wd = image.width() * image.width() + image.height() * image.height();
-        for (MatOfPoint contour : contours) {
+        for (MatOfPoint contour : floor_contours) {
             Moments moments = Imgproc.moments(contour);
             int cx = (int)Math.round(moments.get_m10() / moments.get_m00());
             int cy = (int)Math.round(moments.get_m01() / moments.get_m00());
@@ -410,10 +411,13 @@ public class FrameProcessing {
             }
         }
 
-        telemetry.addData("Num Contours", contours.size());
+        /*
+        telemetry.addData("Num Contours", floor_contours.size());
         telemetry.addData("Floor Left", floor_left);
         telemetry.addData("Floor Forward", floor_forward);
+        telemetry.addData("Sum of All Points", Core.sumElems(floor_mask));
         telemetry.update();
+         */
 
         // Just return the original input Mat
         return floor_mask;

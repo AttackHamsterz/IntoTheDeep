@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class Eye extends BodyPart {
 
-    private static final boolean ENABLE_DASHBOARD_CAMERA = true;
+    private static final boolean ENABLE_DASHBOARD_CAMERA = false;
     private static final double OFF_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
@@ -179,6 +179,7 @@ public class Eye extends BodyPart {
             telemetry.addData("left bar y", fp.bar_left_y);
             telemetry.addData("right bar y", fp.bar_right_y);
         }
+
 
         if(fp.floor_left != 0 || fp.floor_forward != 0){
             telemetry.addData("Floor left", fp.floor_left);
@@ -488,8 +489,9 @@ public class Eye extends BodyPart {
                     };
                 }
             }
-            floor = true;
+
             if(floor){
+
                 // Check only once
                 floorAction = null;
                 floor = false;
@@ -499,8 +501,8 @@ public class Eye extends BodyPart {
                 if(Math.abs(fp.floor_left) > 0.1 || Math.abs(fp.floor_forward) > 0.1){
 
                     // Wiggle robot
-                    double inches_left = Range.clip(fp.floor_left,-1.5, 1.5);
-                    double inches_forward = Range.clip(fp.floor_forward,-1.5, 1.5);
+                    double inches_left = Range.clip(fp.floor_left,-0.5, 0.5);
+                    double inches_forward = Range.clip(fp.floor_forward,-0.5, 0.5);
                     Action moveToSpecimen = telemetryPacket -> {
                         ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
                         return false;
@@ -512,6 +514,8 @@ public class Eye extends BodyPart {
                         return false;
                     };
                 }
+
+
 
             }
 
