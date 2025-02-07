@@ -295,19 +295,6 @@ public class Shoulder extends BodyPart {
                         mode = Mode.SEARCH;
                     }
                 }
-                else if(gamepad.a && !pressing) {
-                    pressing = true;
-                    mode = Mode.GROUND;
-                    /*
-                    if (mode == Mode.GROUND) {
-                        mode = Mode.HOVER;
-                    } else {
-                        mode = Mode.GROUND;
-                    }
-
-                     */
-
-                }
                 else if(gamepad.b && !pressing) {
                     pressing = true;
                     ssom.arm.setPosition(1.0, 250);
@@ -350,6 +337,17 @@ public class Shoulder extends BodyPart {
                     setPosition(power, finalPosition);
                     hold = false;
                     mode = Mode.NONE;
+                }
+
+                // Always recognize a ground press (overrides everything)
+                if(gamepad.a) {
+                    // If we're on the ground and hand has stopped, hover to allow retraction
+                    if (mode == Mode.GROUND && !ssom.hand.isRunning()) {
+                        mode = Mode.HOVER;
+                    } else {
+                        mode = Mode.GROUND;
+                        ssom.hand.grab(600);
+                    }
                 }
 
                 // Reset pressing once buttons are all released

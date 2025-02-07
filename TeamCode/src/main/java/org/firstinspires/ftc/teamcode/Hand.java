@@ -70,6 +70,14 @@ public class Hand extends BodyPart{
     }
 
     /**
+     * This will return true if the hand is currently running,
+     * @return
+     */
+    public boolean isRunning(){
+        return left.getPower() != NO_POWER || right.getPower() != NO_POWER;
+    }
+
+    /**
      * Method to reset the stop continuous servos thread
      * @param duration_ms how long before turning off the servos in milliseconds
      */
@@ -272,8 +280,6 @@ public class Hand extends BodyPart{
                     hangSample();
                 else if(gamepad.y)
                     bucket();
-                else if(gamepad.a)
-                    grab(800);
             }
 
             // Short sleep to keep this loop from saturating
