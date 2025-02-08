@@ -39,8 +39,8 @@ public class Arm extends BodyPart {
         super.setStandardSetupOpMode(ssom);
         // Assignments
         armSwitch = ssom.hardwareMap.get(DigitalChannel.class, "armSwitch"); //digital 0 control hub
-        armMotorLeft = ssom.hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch1 expansion hub Motor;
-        armMotorRight = ssom.hardwareMap.get(DcMotor.class, "armMotorRight"); //ch2 expansion hub Motor;
+        armMotorLeft = ssom.hardwareMap.get(DcMotor.class, "armMotorLeft"); //ch2 expansion hub Motor;
+        armMotorRight = ssom.hardwareMap.get(DcMotor.class, "armMotorRight"); //ch1 expansion hub Motor;
         this.gamepad = ssom.gamepad2;
         this.extraGamepad = ssom.gamepad1;
 

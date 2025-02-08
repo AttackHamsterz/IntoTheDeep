@@ -148,6 +148,10 @@ public final class Legs extends BodyPart{
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
 
+    public void resetLocalizer() {
+        ((GoBildaPinpointLocalizer)localizer).reset();
+    }
+
     /**
      * Method adds important things to telemetry
      * @param telemetry place to store telemetry

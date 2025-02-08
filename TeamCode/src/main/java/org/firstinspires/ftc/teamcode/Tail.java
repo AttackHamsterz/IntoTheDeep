@@ -27,7 +27,7 @@ public class Tail extends Thread{
 
     public Tail(StandardSetupOpMode ssom){
         this.ssom = ssom;
-        this.tail = ssom.hardwareMap.get(Servo.class, "tailServo"); //ch4 Servo
+        this.tail = ssom.hardwareMap.get(Servo.class, "tailServo"); //expansion hub 4 Servo
         this.gamepad = ssom.gamepad2;
         this.otherGamepad = ssom.gamepad1;
         this.ignoreGamepad = false;

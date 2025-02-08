@@ -37,6 +37,14 @@ public class StandardSetupOpMode extends LinearOpMode {
     // @Override
     public void runOpMode() throws InterruptedException {
         // Setup body parts
+        /*
+        CONFIGURATION
+            LEGS
+                ch0
+                ch1
+                ch2
+
+         */
         legs = new Legs(this);
         arm = new Arm(this);
         hand = new Hand(this);

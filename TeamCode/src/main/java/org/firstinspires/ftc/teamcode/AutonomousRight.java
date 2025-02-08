@@ -18,6 +18,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
         // All the poses for the right side
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
+        Pose2d dropAndPickup2 = new Pose2d(new Vector2d(8.0 + X_OFFSET, -32.5 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
@@ -28,6 +29,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d thirdHang = new Pose2d(new Vector2d(32 + X_OFFSET, 9 + Y_OFFSET), Math.toRadians(0));
+        Pose2d repeatSecondHangPose = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
 
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
@@ -91,7 +93,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Action gotoPickup = new ParallelAction(
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup, -1), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup2, -1), legs));
             Actions.runBlocking(gotoPickup);
 
             // Extra floor alignment
@@ -218,7 +220,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Action repeatSecondHang = new ParallelAction(
                     new CompleteAction(liftShoulderAction, shoulder),
                     new CompleteAction(extendArmAction, arm),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, repeatSecondHangPose, 1), legs)
             );
             Actions.runBlocking(repeatSecondHang);
 

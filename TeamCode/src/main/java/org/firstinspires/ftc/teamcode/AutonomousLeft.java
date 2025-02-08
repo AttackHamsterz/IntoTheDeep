@@ -15,7 +15,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
+        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(161));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(0));
         int bucketDropArmPosition = 1730;
 
@@ -195,7 +195,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         Action moveToPark = new SequentialAction(
                 resetAction,
                 new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose2, 1, true), legs),
-                new CompleteAction(legs.moveToAction(0.7, parkPose3, 1, true), legs)
+                new CompleteAction(legs.moveToAction(0.5, parkPose3, 1, true), legs)
         );
         Actions.runBlocking(moveToPark);
 

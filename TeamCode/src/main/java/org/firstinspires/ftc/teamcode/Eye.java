@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class Eye extends BodyPart {
 
-    private static final boolean ENABLE_DASHBOARD_CAMERA = false;
+    private static final boolean ENABLE_DASHBOARD_CAMERA = true;
     private static final double OFF_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
@@ -106,6 +106,7 @@ public class Eye extends BodyPart {
     private boolean hang = false;
     private boolean floor = false;
     public boolean searching;
+    private boolean testGrey = false;
 
 
     public Eye(StandardSetupOpMode ssom){
@@ -323,6 +324,10 @@ public class Eye extends BodyPart {
                 }
                 if(!extraGamepad.back)
                     pressing = false;
+
+                if (gamepad.b) {
+                    testGrey = true;
+                }
             }
 
             try {
@@ -520,6 +525,11 @@ public class Eye extends BodyPart {
 
 
             }
+
+            if (testGrey) {
+                input = fp.greyTesting(input);
+            }
+
 
             // Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
             return input;

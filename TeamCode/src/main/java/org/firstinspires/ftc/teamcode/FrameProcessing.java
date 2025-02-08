@@ -29,6 +29,7 @@ public class FrameProcessing {
     private final Mat floorHierarchy;
     private final Mat image;
 
+
     public List<MatOfPoint> contours = new ArrayList<>();
     public List<Integer> centerXVal = new ArrayList<>();
     public List<Integer> centerYVal = new ArrayList<>();
@@ -66,6 +67,8 @@ public class FrameProcessing {
     private static final Scalar HSV_RED2_HIGH = new Scalar(180, 255, 255);
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
+    private static final Scalar HSV_GREY_LOW = new Scalar(0, 0, 50);
+    private static final Scalar HSV_GREY_HIGH = new Scalar(255, 30, 150);
 
     private Telemetry telemetry;
 
@@ -86,7 +89,7 @@ public class FrameProcessing {
 
     // Shrinking these will cause smaller motion on detections
     private static final double IN_PER_PIXEL_LR = 0.0187;
-    private static final double IN_PER_PIXEL_FB = 0.019;//0.0244;
+    private static final double IN_PER_PIXEL_FB = 0.0244;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
@@ -464,5 +467,11 @@ public class FrameProcessing {
 
         // Just give them the original frame
         return input;
+    }
+
+    public Mat greyTesting(Mat input) {
+        Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
+        Core.inRange(hsv_floor, HSV_GREY_LOW, HSV_GREY_HIGH, mask);
+        return mask;
     }
 }

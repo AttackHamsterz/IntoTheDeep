@@ -32,7 +32,7 @@ public class GoBildaPinpointLocalizer implements Localizer
 
     public GoBildaPinpointLocalizer(HardwareMap hardwareMap){
         // Get the driver from the hardware map and setup
-        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo"); // Expansion IC2
         if(odo == null) return;
         odo.setOffsets(X_OFFSET_MM, Y_OFFSET_MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
