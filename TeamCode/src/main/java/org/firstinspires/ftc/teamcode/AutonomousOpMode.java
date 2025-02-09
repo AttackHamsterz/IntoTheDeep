@@ -97,7 +97,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 waitAction,
                 //new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
                 new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.45, dropPose), legs));
+                new CompleteAction(legs.moveToAction(0.6, dropPose), legs));
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
