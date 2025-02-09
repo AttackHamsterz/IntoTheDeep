@@ -52,7 +52,13 @@ import java.util.List;
 
 @Config
 public final class Legs extends BodyPart{
+     double leftFrontPower;
+     double leftBackPower;
+     double rightBackPower;
+     double rightFrontPower;
+
     public static class Params {
+
         // Mecanum kinematics parameters
         public double trackWidthInches = 16.55;
         public double wheelSlipMultiplier = 1.72;
@@ -246,6 +252,7 @@ public final class Legs extends BodyPart{
             double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
             double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
             double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
+
             mecanumCommandWriter.write(new MecanumCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
@@ -333,10 +340,10 @@ public final class Legs extends BodyPart{
             double voltage = voltageSensor.getVoltage();
             final MotorFeedforward feedforward = new MotorFeedforward(
                     PARAMS.kS, PARAMS.kV, PARAMS.kA);
-            double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
-            double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
-            double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
-            double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
+             leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
+             leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
+             rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
+             rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
             mecanumCommandWriter.write(new MecanumCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
