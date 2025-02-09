@@ -99,6 +99,7 @@ public class Shoulder extends BodyPart {
     private static final int ABSOLUTE_MAX = Mode.HANG.armInPos();
     private int MIN_POS = Mode.NONE.armInPos();
     public static int MAX_POS = Mode.HANG.armInPos();
+    private boolean aPressing = false;
 
     // Mode for the shoulder
     private Mode mode;
@@ -341,13 +342,17 @@ public class Shoulder extends BodyPart {
 
                 // Always recognize a ground press (overrides everything)
                 if(gamepad.a) {
+
                     // If we're on the ground and hand has stopped, hover to allow retraction
-                    if (mode == Mode.GROUND && !ssom.hand.isRunning()) {
+                    if (mode == Mode.GROUND && !aPressing) {
                         mode = Mode.HOVER;
                     } else {
+                        aPressing = true;
                         mode = Mode.GROUND;
                         ssom.hand.grab(600);
                     }
+                } else {
+                    aPressing = false;
                 }
 
                 // Reset pressing once buttons are all released
