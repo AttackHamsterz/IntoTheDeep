@@ -84,12 +84,12 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 366;//363;
-    private static final int FLOOR_ALIGNED_Y = 317;//292;
+    private static final int FLOOR_ALIGNED_X = 225;//366;//363;
+    private static final int FLOOR_ALIGNED_Y = 526;//317;//292;
 
     // Shrinking these will cause smaller motion on detections
-    private static final double IN_PER_PIXEL_LR = 0.0187;
-    private static final double IN_PER_PIXEL_FB = 0.0244;
+    private static final double IN_PER_PIXEL_LR = 0.0243902439;
+    private static final double IN_PER_PIXEL_FB = 0.08928571429;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
@@ -469,9 +469,12 @@ public class FrameProcessing {
         return input;
     }
 
+    /*
     public Mat greyTesting(Mat input) {
         Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
         Core.inRange(hsv_floor, HSV_GREY_LOW, HSV_GREY_HIGH, mask);
         return mask;
     }
+
+     */
 }

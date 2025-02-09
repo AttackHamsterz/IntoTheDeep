@@ -69,22 +69,23 @@ public class Eye extends BodyPart {
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     // Bar calibration values
-    protected static final int EXPECTED_LEFT_Y = 245;
-    protected static final int EXPECTED_RIGHT_Y = 245;
-    protected static final int TOO_CLOSE_LEFT_Y = 225;
-    protected static final int TOO_CLOSE_RIGHT_Y = 225;
-    protected static final int TOO_FAR_LEFT_Y = 320;
-    protected static final int TOO_FAR_RIGHT_Y = 320;
-    protected static final double TOO_CLOSE_DISTANCE_IN = 1.0;
+    protected static final int EXPECTED_LEFT_Y = 86;
+    protected static final int EXPECTED_RIGHT_Y = 92;
+    protected static final int TOO_CLOSE_LEFT_Y = 55;
+    protected static final int TOO_CLOSE_RIGHT_Y = 62;
+    protected static final int TOO_FAR_LEFT_Y = 141;
+    protected static final int TOO_FAR_RIGHT_Y = 151;
+    protected static final double TOO_CLOSE_DISTANCE_IN = 1.5;
     protected static final double TOO_FAR_DISTANCE_IN = 4.0;
 
     // values for the plane
     CalibrationPoint[] calibrationPlane = {
-            new CalibrationPoint(124, 128, 982, 8),
-            new CalibrationPoint(162, 360, 0, 3.5),
-            new CalibrationPoint(527, 372, 0, -3.25),
-            new CalibrationPoint(551, 150, 783, -6.25),
-            new CalibrationPoint(347, 252, 205, 0)
+            new CalibrationPoint(140, 445, 1250, 4), // top left
+            new CalibrationPoint(116, 505, 370, 4), // bottom left
+            new CalibrationPoint(352, 501, 370, -4), // bottom right
+            new CalibrationPoint(311, 445, 1250, -4), // top right
+            new CalibrationPoint(232, 557, 0, 0), // center
+            new CalibrationPoint(224, 449, 1250,0) // far center
     };
 
     PlaneFit plane = new PlaneFit(Arrays.asList(calibrationPlane));
@@ -142,7 +143,7 @@ public class Eye extends BodyPart {
             public void onOpened() {
                 if(ENABLE_DASHBOARD_CAMERA)
                     FtcDashboard.getInstance().startCameraStream(webcam, 60);
-                webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.SIDEWAYS_LEFT);
             }
 
             @Override
@@ -325,9 +326,12 @@ public class Eye extends BodyPart {
                 if(!extraGamepad.back)
                     pressing = false;
 
+                /*
                 if (gamepad.b) {
                     testGrey = true;
                 }
+
+                 */
             }
 
             try {
@@ -526,9 +530,12 @@ public class Eye extends BodyPart {
 
             }
 
+            /*
             if (testGrey) {
                 input = fp.greyTesting(input);
             }
+
+             */
 
 
             // Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
