@@ -37,7 +37,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
             Pose2d swivelPickPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(swivelAngle));
 
             Action armPick = telemetryPacket -> {
-                hand.release(600);
+                hand.grab(600);
                 return false;
             };
             Action armDrop = telemetryPacket -> {
@@ -49,13 +49,69 @@ public class AutonomousRightFast extends AutonomousOpMode{
                     new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPickPose, false), legs)
             );
 
-            int dropArmPosition = 2185;
+            // pick up sample
+            // rotate wrist
+            Action rotateWrist = telemetryPacket -> {
+                hand.setWrist(wristAngle);
+                return false;
+            };
+            // extend arm
+            Action extendArm = telemetryPacket -> {
+                arm.setPosition(AUTO_POWER, armPosition);
+              return false;
+            };
+            Action setShoulderPickup = telemetryPacket -> {
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, armPosition);
+                return false;
+            };
+            Action moveToPickup = new ParallelAction(
+              new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPickPose, false), legs),
+              rotateWrist,
+              new CompleteAction(extendArm, arm),
+              new CompleteAction(setShoulderPickup, shoulder)
+            );
+
+            //drop shoulder and intake
+            Action lowerShoulder = telemetryPacket -> {
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, armPosition);
+                return false;
+            };
+
+            Action grabAction = new ParallelAction(
+              lowerShoulder,
+              new CompleteAction(armPick, hand)
+            );
+
+            Action turnAndGrab = new SequentialAction(
+              moveToPickup,
+                    new CompleteAction(grabAction, hand)
+            );
+
+            Actions.runBlocking(turnAndGrab);
+
+            int dropArmPosition = 2150;
             Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-156));
 
+            Action extendArmForDrop = telemetryPacket -> {
+                arm.setPosition(AUTO_POWER, dropArmPosition);
+                return false;
+            };
+            Action hoverShoulder = telemetryPacket -> {
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.6, armPosition);
+                return false;
+            };
+
+            Action raiseAndRotate = new ParallelAction(
+              new CompleteAction(hoverShoulder, shoulder) ,
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, false), legs),
+                    new CompleteAction(extendArmForDrop, arm)
+            );
+            // rotate and release sample
             Action dropIt = new SequentialAction(
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, true), legs),
+                    raiseAndRotate,
                     new CompleteAction(release, hand)
             );
+            // drop sample
             Actions.runBlocking(dropIt);
 
         }
