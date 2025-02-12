@@ -22,6 +22,10 @@ public class AutonomousRightFast extends AutonomousOpMode{
         Pose2d barBackupPose = new Pose2d(new Vector2d(25 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
 
         // Actions
+        Action grab = telemetryPacket -> {
+            hand.grab(600);
+            return false;
+        };
         Action release = telemetryPacket -> {
             hand.release(600);
             return false;
@@ -36,19 +40,6 @@ public class AutonomousRightFast extends AutonomousOpMode{
             int armPosition = (i == 0) ? 316 : (i == 1) ? 1200 : 2185;
             Pose2d swivelPickPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(swivelAngle));
 
-            Action armPick = telemetryPacket -> {
-                hand.grab(600);
-                return false;
-            };
-            Action armDrop = telemetryPacket -> {
-                hand.release(600);
-                return false;
-            };
-
-            Action snagIt1 = new ParallelAction(
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPickPose, false), legs)
-            );
-
             // pick up sample
             // rotate wrist
             Action rotateWrist = telemetryPacket -> {
@@ -58,17 +49,17 @@ public class AutonomousRightFast extends AutonomousOpMode{
             // extend arm
             Action extendArm = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, armPosition);
-              return false;
+                return false;
             };
             Action setShoulderPickup = telemetryPacket -> {
                 shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, armPosition);
                 return false;
             };
             Action moveToPickup = new ParallelAction(
-              new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPickPose, false), legs),
-              rotateWrist,
-              new CompleteAction(extendArm, arm),
-              new CompleteAction(setShoulderPickup, shoulder)
+                new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPickPose, false), legs),
+                rotateWrist,
+                new CompleteAction(extendArm, arm),
+                new CompleteAction(setShoulderPickup, shoulder)
             );
 
             //drop shoulder and intake
@@ -78,18 +69,18 @@ public class AutonomousRightFast extends AutonomousOpMode{
             };
 
             Action grabAction = new ParallelAction(
-              lowerShoulder,
-              new CompleteAction(armPick, hand)
+                lowerShoulder,
+                new CompleteAction(grab, hand)
             );
 
             Action turnAndGrab = new SequentialAction(
-              moveToPickup,
-                    new CompleteAction(grabAction, hand)
+                moveToPickup,
+                new CompleteAction(grabAction, hand)
             );
 
             Actions.runBlocking(turnAndGrab);
 
-            int dropArmPosition = 2150;
+            int dropArmPosition = 2100;
             Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-156));
 
             Action extendArmForDrop = telemetryPacket -> {
@@ -102,18 +93,18 @@ public class AutonomousRightFast extends AutonomousOpMode{
             };
 
             Action raiseAndRotate = new ParallelAction(
-              new CompleteAction(hoverShoulder, shoulder) ,
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, false), legs),
-                    new CompleteAction(extendArmForDrop, arm)
+                new CompleteAction(hoverShoulder, shoulder) ,
+                new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, false), legs),
+                new CompleteAction(extendArmForDrop, arm)
             );
             // rotate and release sample
             Action dropIt = new SequentialAction(
-                    raiseAndRotate,
-                    new CompleteAction(release, hand)
+                raiseAndRotate,
+                new CompleteAction(release, hand)
             );
+
             // drop sample
             Actions.runBlocking(dropIt);
-
         }
         /*
         Action toSwivel = new ParallelAction(
