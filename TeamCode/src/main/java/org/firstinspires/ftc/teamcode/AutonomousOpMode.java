@@ -42,9 +42,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public void runOpMode() throws InterruptedException {
         super.runOpMode();
 
-        // Remove the floor protection (causing some position override issues in autonomous)
-        //arm.setShoulder(null);
-
         // Flip offsets if red (asymmetric field)
         if(color == COLOR.RED){
             X_OFFSET = -X_OFFSET;
@@ -58,7 +55,8 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // while the fingers release the sample.
         int searchArmPosition = 1250;
 
-        Pose2d dropPose = new Pose2d(new Vector2d(31 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d almostDropPose = new Pose2d(new Vector2d(26 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d dropPose = new Pose2d(new Vector2d(30 + X_OFFSET, Y_OFFSET), 0); //31 7/8
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {
@@ -85,20 +83,24 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
 
-
-        Action waitAction = new SequentialAction(
-          new SleepAction(0.1),
-                new CompleteAction(liftShoulderAction, shoulder) // Shoulder to bar drop position
+        Action liftExtendAction = new ParallelAction(
+            new CompleteAction(liftShoulderAction, shoulder),
+            new CompleteAction(extendArmAction, arm)
         );
 
-
+        Action waitThenLiftAction = new SequentialAction(
+            new SleepAction(0.1),
+            liftExtendAction
+        );
 
         Action liftExtendDrive = new ParallelAction(
-                waitAction,
-                //new CompleteAction(liftShoulderAction, shoulder), // Shoulder to bar drop position
-                new CompleteAction(extendArmAction, arm),         // Arm to bar drop position
-                new CompleteAction(legs.moveToAction(0.6, dropPose), legs));
+                waitThenLiftAction,
+                new CompleteAction(legs.moveToAction(0.6, almostDropPose, true), legs)
+        );
         Actions.runBlocking(liftExtendDrive);
+
+        // Drive the final bit a little slower
+        Actions.runBlocking(new CompleteAction(legs.moveToAction(0.4, dropPose, false), legs));
 
         // Extra alignment
         Action action = eye.safeHang();

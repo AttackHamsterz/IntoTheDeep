@@ -352,6 +352,12 @@ public class Eye extends BodyPart {
      * @return Action that aligns to the bar
      */
     public Action safeHang() {
+        // Wait for robot to stop moving
+        //try {
+        //    sleep(200);
+        //} catch (InterruptedException ignored) {
+        //}
+
         // Tell the opencv thread to get an answer and then wait for result
         hang = true;
 
@@ -392,6 +398,12 @@ public class Eye extends BodyPart {
      * @return Action that aligns to the specimen
      */
     public Action safeFloor(){
+        // Wait for robot to stop moving
+        //try {
+        //    sleep(200);
+        //} catch (InterruptedException ignored) {
+        //}
+
         // Tell the opencv thread to get an answer and then wait for the result
         floor = true;
 
@@ -512,8 +524,8 @@ public class Eye extends BodyPart {
                 if(Math.abs(fp.floor_left) > 0.1 || Math.abs(fp.floor_forward) > 0.1){
 
                     // Wiggle robot
-                    double inches_left = Range.clip(fp.floor_left,-1, 1);
-                    double inches_forward = Range.clip(fp.floor_forward,-1, 1);
+                    double inches_left = Range.clip(fp.floor_left,-3, 3);
+                    double inches_forward = Range.clip(fp.floor_forward,-3, 3);
                     Action moveToSpecimen = telemetryPacket -> {
                         ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
                         return false;

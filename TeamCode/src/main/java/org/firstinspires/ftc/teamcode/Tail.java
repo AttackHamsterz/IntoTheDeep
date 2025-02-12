@@ -125,14 +125,16 @@ public class Tail extends Thread{
                     pressing = true;
                     switch(ssom.shoulder.getMode()){
                         case SEARCH:
-                            ssom.eye.safeFloor();
+                            Action searchAction = ssom.eye.safeFloor();
                             ssom.eye.debugTelemetry(ssom.telemetry);
                             ssom.telemetry.update();
+                            Actions.runBlocking(searchAction);
                             break;
                         case HIGH_BAR:
-                            ssom.eye.safeHang();
+                            Action hangAction = ssom.eye.safeHang();
                             ssom.eye.debugTelemetry(ssom.telemetry);
                             ssom.telemetry.update();
+                            Actions.runBlocking(hangAction);
                             break;
                         default:
                             ssom.legs.debugTelemetry(ssom.telemetry);

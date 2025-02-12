@@ -66,11 +66,7 @@ public class IntoTheDeepOpMode extends StandardSetupOpMode {
             //arm.debugTelemetry(telemetry);
             //eye.debugTelemetry(telemetry);
             //hand.debugTelemetry(telemetry);
-            telemetry.addData("left back power", legs.leftBackPower);
-            telemetry.addData("left front power", legs.leftFrontPower);
-            telemetry.addData("right back power", legs.rightBackPower);
-            telemetry.addData("right front power", legs.rightFrontPower);
-            telemetry.update();
+            //telemetry.update();
 
             // Short sleep to keep this loop from saturating
             sleep(BodyPart.LOOP_PAUSE_MS);

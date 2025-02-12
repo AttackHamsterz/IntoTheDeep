@@ -248,10 +248,16 @@ public final class Legs extends BodyPart{
 
             final MotorFeedforward feedforward = new MotorFeedforward(
                     PARAMS.kS, PARAMS.kV, PARAMS.kA);
-            double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
-            double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
-            double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
-            double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
+            leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
+            leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
+            rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
+            rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
+
+            ssom.telemetry.addData("left back power", leftBackPower);
+            ssom.telemetry.addData("left front power", leftFrontPower);
+            ssom.telemetry.addData("right back power", rightBackPower);
+            ssom.telemetry.addData("right front power", rightFrontPower);
+            ssom.telemetry.update();
 
             mecanumCommandWriter.write(new MecanumCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
