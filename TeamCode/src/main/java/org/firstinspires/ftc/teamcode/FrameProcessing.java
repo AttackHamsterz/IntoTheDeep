@@ -84,12 +84,12 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 225;//366;//363;
-    private static final int FLOOR_ALIGNED_Y = 526;//317;//292;
+    private static final int FLOOR_ALIGNED_X = 235;//366;//363;
+    private static final int FLOOR_ALIGNED_Y = 593;//526 centroid;
 
     // Shrinking these will cause smaller motion on detections
-    private static final double IN_PER_PIXEL_LR = 0.0243902439;
-    private static final double IN_PER_PIXEL_FB = 0.08928571429;
+    private static final double IN_PER_PIXEL_LR = 0.025;
+    private static final double IN_PER_PIXEL_FB = 0.078125;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
@@ -401,7 +401,19 @@ public class FrameProcessing {
         for (MatOfPoint contour : floor_contours) {
             Moments moments = Imgproc.moments(contour);
             cx = (int)Math.round(moments.get_m10() / moments.get_m00());
-            cy = (int)Math.round(moments.get_m01() / moments.get_m00());
+            //cy = (int)Math.round(moments.get_m01() / moments.get_m00());
+
+            // Find maxy (bottom edge) since the top might not be illuminated
+            List<Point> points = contour.toList();
+            //double maxY = Double.MIN_VALUE;
+            cy = 0;
+            for (Point point : points) {
+                // Update maxY if a higher y value is found
+                if (point.y > cy) {
+                    cy = (int)Math.round(point.y);
+                }
+            }
+
             int dx = FLOOR_ALIGNED_X - cx;
             int dy = FLOOR_ALIGNED_Y - cy;
             int dd = dx * dx + dy * dy;

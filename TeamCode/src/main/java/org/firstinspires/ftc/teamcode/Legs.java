@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
@@ -185,10 +186,22 @@ public final class Legs extends BodyPart{
             maxPowerMag = Math.max(maxPowerMag, power.value());
         }
 
-        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
-        leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
-        rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
-        rightFront.setPower(wheelVels.rightFront.get(0) / maxPowerMag);
+        leftFrontPower = Range.clip(wheelVels.leftFront.get(0) / maxPowerMag, -1.0, 1.0);
+        leftBackPower = Range.clip(wheelVels.leftBack.get(0) / maxPowerMag, -1.0, 1.0);
+        rightBackPower = Range.clip(wheelVels.rightBack.get(0) / maxPowerMag, -1.0, 1.0);
+        rightFrontPower = Range.clip(wheelVels.rightFront.get(0) / maxPowerMag, -1.0, 1.0);
+
+        // Debug
+        //ssom.telemetry.addData("left back power", leftBackPower);
+        //ssom.telemetry.addData("left front power", leftFrontPower);
+        //ssom.telemetry.addData("right back power", rightBackPower);
+        //ssom.telemetry.addData("right front power", rightFrontPower);
+        //ssom.telemetry.update();
+
+        leftFront.setPower(leftFrontPower);
+        leftBack.setPower(leftBackPower);
+        rightBack.setPower(rightBackPower);
+        rightFront.setPower(rightFrontPower);
     }
 
     public final class FollowTrajectoryAction implements Action {
@@ -252,12 +265,6 @@ public final class Legs extends BodyPart{
             leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
             rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
             rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
-
-            ssom.telemetry.addData("left back power", leftBackPower);
-            ssom.telemetry.addData("left front power", leftFrontPower);
-            ssom.telemetry.addData("right back power", rightBackPower);
-            ssom.telemetry.addData("right front power", rightFrontPower);
-            ssom.telemetry.update();
 
             mecanumCommandWriter.write(new MecanumCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
@@ -591,11 +598,11 @@ public final class Legs extends BodyPart{
     private static final double RAMP_DOWN_FORWARD = 15.0;       // 15 inches from target, ramp down
     private static final double RAMP_DOWN_LEFT = 10.0;          // 10 inches left target, ramp down
     private static final double RAMP_DOWN_ANGLE = 60.0;         // 60 degrees from target, ramp down
-    private static final double MIN_FORWARD_POWER = 0.15;       // Minimum power when not close enough
-    private static final double MIN_LEFT_POWER = 0.2;           // Minimum power when not close enough
+    private static final double MIN_FORWARD_POWER = 0.075;      // Minimum power when not close enough
+    private static final double MIN_LEFT_POWER = 0.1;           // Minimum power when not close enough
     private static final double MIN_ROTATION_POWER = 0.15;      // Minimum power when not close enough
-    private static final double CLOSE_ENOUGH_POSITION = 0.5;    // Stop when this close
-    private static final double CLOSE_ENOUGH_ANGLE = 0.6;       // Stop within this angle
+    private static final double CLOSE_ENOUGH_POSITION = 0.1;   // Stop when this close
+    private static final double CLOSE_ENOUGH_ANGLE = 0.5;       // Stop within this angle
     private static final double CLOSE_ENOUGH_SPIN = 45.0;       // Flip spin direction if further
     private static final double OVERSHOOT_POWER = 0.3;          // More power than this will likely cause over shoot
 

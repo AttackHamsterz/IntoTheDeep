@@ -141,8 +141,10 @@ public class Eye extends BodyPart {
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                if(ENABLE_DASHBOARD_CAMERA)
+                if(ENABLE_DASHBOARD_CAMERA) {
+                    FtcDashboard.getInstance().clearTelemetry();
                     FtcDashboard.getInstance().startCameraStream(webcam, 60);
+                }
                 webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.SIDEWAYS_LEFT);
             }
 
@@ -530,7 +532,7 @@ public class Eye extends BodyPart {
                         ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
                         return false;
                     };
-                    floorAction = new CompleteAction(moveToSpecimen, ssom.legs, 750);
+                    floorAction = new CompleteAction(moveToSpecimen, ssom.legs, 1500);
                 }
                 else {
                     floorAction = telemetryPacket -> {
