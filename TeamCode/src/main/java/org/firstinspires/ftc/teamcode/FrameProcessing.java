@@ -85,7 +85,7 @@ public class FrameProcessing {
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
     private static final int FLOOR_ALIGNED_X = 235;//366;//363;
-    private static final int FLOOR_ALIGNED_Y = 593;//526 centroid;
+    private static final int FLOOR_ALIGNED_Y = 520;//526 centroid;
 
     // Shrinking these will cause smaller motion on detections
     private static final double IN_PER_PIXEL_LR = 0.025;
@@ -399,11 +399,18 @@ public class FrameProcessing {
         // Locate contour closest to our target point
         int wd = image.width() * image.width() + image.height() * image.height();
         for (MatOfPoint contour : floor_contours) {
-            Moments moments = Imgproc.moments(contour);
+            // smooth contour
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+            double epsilon = 0.005 * Imgproc.arcLength(contour2f, true);
+            MatOfPoint2f approxContour = new MatOfPoint2f();
+            Imgproc.approxPolyDP(contour2f, approxContour, epsilon, true);
+
+            Moments moments = Imgproc.moments(approxContour);
             cx = (int)Math.round(moments.get_m10() / moments.get_m00());
-            //cy = (int)Math.round(moments.get_m01() / moments.get_m00());
+            cy = (int)Math.round(moments.get_m01() / moments.get_m00());
 
             // Find maxy (bottom edge) since the top might not be illuminated
+            /*
             List<Point> points = contour.toList();
             //double maxY = Double.MIN_VALUE;
             cy = 0;
@@ -413,6 +420,7 @@ public class FrameProcessing {
                     cy = (int)Math.round(point.y);
                 }
             }
+            */
 
             int dx = FLOOR_ALIGNED_X - cx;
             int dy = FLOOR_ALIGNED_Y - cy;

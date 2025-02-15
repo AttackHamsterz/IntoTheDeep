@@ -142,7 +142,6 @@ public class Eye extends BodyPart {
             @Override
             public void onOpened() {
                 if(ENABLE_DASHBOARD_CAMERA) {
-                    FtcDashboard.getInstance().clearTelemetry();
                     FtcDashboard.getInstance().startCameraStream(webcam, 60);
                 }
                 webcam.startStreaming(WEBCAM_WIDTH, WEBCAM_HEIGHT, OpenCvCameraRotation.SIDEWAYS_LEFT);
