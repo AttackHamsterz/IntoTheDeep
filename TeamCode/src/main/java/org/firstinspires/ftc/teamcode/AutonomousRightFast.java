@@ -18,7 +18,9 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
         // All the poses for the right side
         Pose2d pickupPose = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d basicHangPose = new Pose2d(new Vector2d(31 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d hangPose1 = new Pose2d(new Vector2d(31 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d hangPose2 = new Pose2d(new Vector2d(31 + X_OFFSET, 2.5 + Y_OFFSET), Math.toRadians(0));
+        Pose2d hangPose3 = new Pose2d(new Vector2d(31 + X_OFFSET, 3 + Y_OFFSET), Math.toRadians(0));
         Pose2d barBackupPose = new Pose2d(new Vector2d(25 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
 
         // Actions
@@ -75,13 +77,14 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             Action turnAndGrab = new SequentialAction(
                 moveToPickup,
-                new CompleteAction(grabAction, hand)
+                grabAction
             );
 
             Actions.runBlocking(turnAndGrab);
 
             int dropArmPosition = 2100;
             Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-156));
+            Pose2d swivelInbetweenPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-145));
 
             Action extendArmForDrop = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, dropArmPosition);
@@ -94,9 +97,16 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             Action raiseAndRotate = new ParallelAction(
                 new CompleteAction(hoverShoulder, shoulder) ,
-                new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, false), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, true), legs),
                 new CompleteAction(extendArmForDrop, arm)
             );
+            /*
+            Action swingAndDrop = new ParallelAction(
+                    release,
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, true), legs)
+            );
+
+             */
             // rotate and release sample
             Action dropIt = new SequentialAction(
                 raiseAndRotate,
@@ -105,6 +115,85 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             // drop sample
             Actions.runBlocking(dropIt);
+        }
+
+        // Cycle specimens onto bar
+
+        // Actions for cycling
+        Action rotateWrist = telemetryPacket -> {
+            hand.hangSample();
+            return false;
+        };
+        Action armIn = telemetryPacket -> {
+            arm.setPosition(AUTO_POWER, -15);
+            return false;
+        };
+        Action hoverShoulder = telemetryPacket -> {
+            shoulder.setPosition(AUTO_POWER, Shoulder.Mode.SEARCH.armInPos());
+            return false;
+        };
+        Action ground = telemetryPacket -> {
+            shoulder.setPosition(0.8, Shoulder.Mode.GROUND.armInPos());
+            return false;
+        };
+        Action liftShoulderAction = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
+            return false;
+        };
+        Action extendArmAction = telemetryPacket -> {
+            arm.setPosition(0.8, dropArmPosition);
+            return false;
+        };
+        Action drop = telemetryPacket -> {
+            shoulder.setMode(Shoulder.Mode.NONE);
+            shoulder.setPosition(AUTO_POWER, Shoulder.DROP_SHOULDER_POS);
+            return false;
+        };
+
+        for (int i = 0; i < 3; i++) {
+            // move to grab the specimen
+            Action gotoPickup = new ParallelAction(
+                    rotateWrist,
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(hoverShoulder, shoulder),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, pickupPose, -1), legs));
+            Actions.runBlocking(gotoPickup);
+            // use camera to adjust position
+            Action adjust = eye.safeFloor();
+            if(adjust != null)
+                Actions.runBlocking(adjust);
+            // pick up specimen
+            Action grabAction = new SequentialAction(
+                    ground,
+                    new CompleteAction(grab, hand)
+            );
+            Actions.runBlocking(grabAction);
+            // move to bar
+            // go to different bar positions each time
+            Pose2d hangPose = (i == 0) ? hangPose1 : (i == 1) ? hangPose2 : hangPose3;
+            Action gotoHang = new ParallelAction(
+                    new CompleteAction(liftShoulderAction, shoulder),
+                    new CompleteAction(extendArmAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, hangPose, 1), legs)
+            );
+            Actions.runBlocking(gotoHang);
+
+            // Extra bar alignment
+            Action action = eye.safeHang();
+            if(action != null)
+                Actions.runBlocking(action);
+
+            // hook onto bar
+            Action retractReleaseBackup = new ParallelAction(
+                    new CompleteAction(armIn, arm),
+                    new CompleteAction(release, hand),
+                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, barBackupPose, true), legs)
+            );
+            Action dropAndRelease = new SequentialAction(
+                    new CompleteAction(drop, shoulder),
+                    retractReleaseBackup
+            );
+            Actions.runBlocking(dropAndRelease);
         }
         /*
         Action toSwivel = new ParallelAction(
