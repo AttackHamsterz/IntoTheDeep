@@ -598,10 +598,10 @@ public final class Legs extends BodyPart{
     private static final double RAMP_DOWN_FORWARD = 15.0;       // 15 inches from target, ramp down
     private static final double RAMP_DOWN_LEFT = 10.0;          // 10 inches left target, ramp down
     private static final double RAMP_DOWN_ANGLE = 60.0;         // 60 degrees from target, ramp down
-    private static final double MIN_FORWARD_POWER = 0.075;      // Minimum power when not close enough
-    private static final double MIN_LEFT_POWER = 0.1;           // Minimum power when not close enough
+    private static final double MIN_FORWARD_POWER = 0.15;      // Minimum power when not close enough
+    private static final double MIN_LEFT_POWER = 0.2;           // Minimum power when not close enough
     private static final double MIN_ROTATION_POWER = 0.15;      // Minimum power when not close enough
-    private static final double CLOSE_ENOUGH_POSITION = 0.1;   // Stop when this close
+    private static final double CLOSE_ENOUGH_POSITION = 0.25;   // Stop when this close
     private static final double CLOSE_ENOUGH_ANGLE = 0.5;       // Stop within this angle
     private static final double CLOSE_ENOUGH_SPIN = 45.0;       // Flip spin direction if further
     private static final double OVERSHOOT_POWER = 0.3;          // More power than this will likely cause over shoot
