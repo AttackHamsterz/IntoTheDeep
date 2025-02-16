@@ -235,6 +235,11 @@ public class Shoulder extends BodyPart {
         this.mode = mode;
     }
 
+    public void resetHomed()
+    {
+        this.homed = false;
+    }
+
     public int getPositionForMode(Mode mode, int targetArmPosition)
     {
         return (int)Math.round(ssom.arm.getArmRatio(targetArmPosition) * (double)(mode.armOutPos() - mode.armInPos())) + mode.armInPos();

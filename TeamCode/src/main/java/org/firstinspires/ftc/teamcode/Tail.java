@@ -164,16 +164,21 @@ public class Tail extends Thread{
                         ssom.shoulder.setMode(Shoulder.Mode.NONE);
                         lifting = 1;
                     }
+                    else if(gamepad.back && !gamepad.start){
+                        // Emergency shoulder reset if expansion hub disconnects
+                        // This will let the shoulder zero again
+                        ssom.shoulder.resetHomed();
+                    }
                 }
 
                 // Progress or repeat state
                 if(lifting > 1 && (lifting % 2 == 0)) {
                     // Repeat last state
-                    if (gamepad.back)
+                    if (gamepad.back && !gamepad.start)
                         lifting--;
 
                     // Onto next state
-                    if (gamepad.start)
+                    if (gamepad.start && !gamepad.back)
                         lifting++;
                 }
 
