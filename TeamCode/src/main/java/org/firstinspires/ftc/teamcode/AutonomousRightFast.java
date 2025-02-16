@@ -127,7 +127,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
             return false;
         };
         Action ground = telemetryPacket -> {
-            shoulder.setPosition(0.8, Shoulder.Mode.GROUND.armInPos());
+            shoulder.setPosition(0.6, Shoulder.Mode.GROUND.armInPos());
             return false;
         };
         Action liftShoulderAction = telemetryPacket -> {
@@ -160,7 +160,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
             if(adjust != null)
                 Actions.runBlocking(adjust);
             // pick up specimen
-            Action grabAction = new SequentialAction(
+            Action grabAction = new ParallelAction(
                     ground,
                     new CompleteAction(grab, hand)
             );
@@ -168,6 +168,10 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             // Check if we have enough time to hang (otherwise stay parked)
             if(runtime.seconds() > 26.0) break;
+
+            // TODO - Do we have a block?
+            //   No - Back up and wait a beat for human player
+            //   Yes - Continue
 
             // move to bar
             // go to different bar positions each time
