@@ -113,7 +113,7 @@ public class FrameProcessing {
         floorHierarchy = new Mat();
         if(DRAW)
             image = new Mat(height, width, CvType.CV_8U);
-        MIN_AREA = (int)Math.round((double)(width * height) * 0.0025);
+        MIN_AREA = (int)Math.round((double)(width * height) * 0.002);
 
         grab_slice = new Mat(40, 40, CvType.CV_8U);
         bar_left_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
@@ -396,37 +396,32 @@ public class FrameProcessing {
         // Contour mask
         Imgproc.findContours(floor_mask, floor_contours, floorHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
-        // Locate contour closest to our target point
+
+        // Locate contour center closest to our target point
         int wd = image.width() * image.width() + image.height() * image.height();
         for (MatOfPoint contour : floor_contours) {
-            // smooth contour
-            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
-            double epsilon = 0.005 * Imgproc.arcLength(contour2f, true);
-            MatOfPoint2f approxContour = new MatOfPoint2f();
-            Imgproc.approxPolyDP(contour2f, approxContour, epsilon, true);
-
-            Moments moments = Imgproc.moments(approxContour);
-            cx = (int)Math.round(moments.get_m10() / moments.get_m00());
-            cy = (int)Math.round(moments.get_m01() / moments.get_m00());
-
-            // Find maxy (bottom edge) since the top might not be illuminated
-            /*
+            // Excribe contour for slightly more accurate center
+            double minx = Double.MAX_VALUE;
+            double maxx = -Double.MAX_VALUE;
+            double miny = Double.MAX_VALUE;
+            double maxy = -Double.MAX_VALUE;
             List<Point> points = contour.toList();
-            //double maxY = Double.MIN_VALUE;
-            cy = 0;
             for (Point point : points) {
-                // Update maxY if a higher y value is found
-                if (point.y > cy) {
-                    cy = (int)Math.round(point.y);
-                }
+                if(point.x < minx) minx = point.x;
+                if(point.x > maxx) maxx = point.x;
+                if(point.y < miny) miny = point.y;
+                if(point.y > maxy) maxy = point.y;
             }
-            */
+            int tcx = (int)Math.round((maxx + minx ) / 2.0);
+            int tcy = (int)Math.round((maxy + miny ) / 2.0);
 
-            int dx = FLOOR_ALIGNED_X - cx;
-            int dy = FLOOR_ALIGNED_Y - cy;
+            int dx = FLOOR_ALIGNED_X - tcx;
+            int dy = FLOOR_ALIGNED_Y - tcy;
             int dd = dx * dx + dy * dy;
-            // If closest so far, convert to shift amounts
+            // If closest so far, convert to shift amounts and save position
             if (dd < wd) {
+                cx = tcx;
+                cy = tcy;
                 floor_left = (double)dx * IN_PER_PIXEL_LR;
                 floor_forward = (double)dy * IN_PER_PIXEL_FB;
                 wd = dd;
