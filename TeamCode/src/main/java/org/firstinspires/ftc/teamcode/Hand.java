@@ -169,7 +169,7 @@ public class Hand extends BodyPart{
         // Since we are always rotated clockwise we run the right servo (lower servo)
         // a little faster to get the sample to jump up a little bit when ejected.
 
-        startServosForTime( 0.3,-0.3, ms);
+        startServosForTime( 0.25,-0.25, ms);
 
         if(resetHand) {
             Thread thread = new Thread(() -> {
