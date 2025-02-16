@@ -98,7 +98,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
             // Extra floor alignment
 
-            Action adjust = eye.safeFloor();
+            Action adjust = eye.safeFloor(3);
             if(adjust != null)
                 Actions.runBlocking(adjust);
 
@@ -120,7 +120,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(gotoSecondHang);
 
             // Extra bar alignment
-            Action action = eye.safeHang();
+            Action action = eye.safeHang(2);
             if(action != null)
                 Actions.runBlocking(action);
 
@@ -158,7 +158,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Actions.runBlocking(driveAction);
 
         // Extra floor alignment
-        Action adjust2 = eye.safeFloor();
+        Action adjust2 = eye.safeFloor(3);
         if(adjust2 != null)
             Actions.runBlocking(adjust2);
         //eye.debugTelemetry(telemetry);
@@ -178,7 +178,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Actions.runBlocking(gotoThirdHang);
 
         // Extra bar alignment
-        Action action = eye.safeHang();
+        Action action = eye.safeHang(2);
         if(action != null)
             Actions.runBlocking(action);
 
@@ -205,7 +205,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(finalPickup);
 
             // Extra floor alignment
-            Action adjust3 = eye.safeFloor();
+            Action adjust3 = eye.safeFloor(3);
             if(adjust3 != null)
                 Actions.runBlocking(adjust3);
             //eye.debugTelemetry(telemetry);
@@ -225,7 +225,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(repeatSecondHang);
 
             // Extra bar alignment
-            Action action2 = eye.safeHang();
+            Action action2 = eye.safeHang(2);
             if(action2 != null)
                 Actions.runBlocking(action2);
 
@@ -251,7 +251,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Actions.runBlocking(resetAction);
 
         // Extra floor alignment
-        Action adjust4 = eye.safeFloor();
+        Action adjust4 = eye.safeFloor(3);
         if(adjust4 != null)
             Actions.runBlocking(adjust4);
         //eye.debugTelemetry(telemetry);

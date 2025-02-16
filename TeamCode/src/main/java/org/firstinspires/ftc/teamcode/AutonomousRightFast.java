@@ -25,7 +25,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
         // Actions
         Action grab = telemetryPacket -> {
-            hand.grab(600);
+            hand.grab(500);
             return false;
         };
         Action release = telemetryPacket -> {
@@ -39,7 +39,8 @@ public class AutonomousRightFast extends AutonomousOpMode{
             // Variables
             double wristAngle = (i == 0) ? 0.4 : (i ==1) ? 0.2 : 0.1;
             double swivelAngle = (i == 0) ? -33.18 : (i == 1) ? -56.24 : -67.15;
-            int armPosition = (i == 0) ? 316 : (i == 1) ? 1200 : 2185;
+            int armPosition = (i == 0) ? 316 : (i == 1) ? 1200 : 2150;
+            double armExtendPower = (i==0) ? 0.5 : (i ==1) ? AUTO_POWER : 0.2;
             Pose2d swivelPickPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(swivelAngle));
 
             // pick up sample
@@ -50,11 +51,11 @@ public class AutonomousRightFast extends AutonomousOpMode{
             };
             // extend arm
             Action extendArm = telemetryPacket -> {
-                arm.setPosition(AUTO_POWER, armPosition);
+                arm.setPosition(armExtendPower, armPosition);
                 return false;
             };
             Action setShoulderPickup = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, armPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, armPosition);
                 return false;
             };
             Action moveToPickup = new ParallelAction(
@@ -82,16 +83,15 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             Actions.runBlocking(turnAndGrab);
 
-            int dropArmPosition = 2100;
+            int dropArmPosition = 2050;
             Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-156));
-            Pose2d swivelInbetweenPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-145));
 
             Action extendArmForDrop = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, dropArmPosition);
                 return false;
             };
             Action hoverShoulder = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.6, armPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, armPosition);
                 return false;
             };
 
@@ -100,17 +100,11 @@ public class AutonomousRightFast extends AutonomousOpMode{
                 new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, true), legs),
                 new CompleteAction(extendArmForDrop, arm)
             );
-            /*
-            Action swingAndDrop = new ParallelAction(
-                    release,
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, swivelDropPose, true), legs)
-            );
 
-             */
             // rotate and release sample
             Action dropIt = new SequentialAction(
                 raiseAndRotate,
-                new CompleteAction(release, hand)
+                release //new CompleteAction(release, hand)
             );
 
             // drop sample
@@ -151,6 +145,9 @@ public class AutonomousRightFast extends AutonomousOpMode{
         };
 
         for (int i = 0; i < 3; i++) {
+            // Do we have enough time to drive back?
+            if(runtime.seconds() > 28.0) break;
+
             // move to grab the specimen
             Action gotoPickup = new ParallelAction(
                     rotateWrist,
@@ -159,7 +156,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
                     new CompleteAction(legs.moveToAction(AUTO_POWER, pickupPose, -1), legs));
             Actions.runBlocking(gotoPickup);
             // use camera to adjust position
-            Action adjust = eye.safeFloor();
+            Action adjust = eye.safeFloor(2);
             if(adjust != null)
                 Actions.runBlocking(adjust);
             // pick up specimen
@@ -168,6 +165,10 @@ public class AutonomousRightFast extends AutonomousOpMode{
                     new CompleteAction(grab, hand)
             );
             Actions.runBlocking(grabAction);
+
+            // Check if we have enough time to hang (otherwise stay parked)
+            if(runtime.seconds() > 26.0) break;
+
             // move to bar
             // go to different bar positions each time
             Pose2d hangPose = (i == 0) ? hangPose1 : (i == 1) ? hangPose2 : hangPose3;
@@ -179,7 +180,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
             Actions.runBlocking(gotoHang);
 
             // Extra bar alignment
-            Action action = eye.safeHang();
+            Action action = eye.safeHang(2);
             if(action != null)
                 Actions.runBlocking(action);
 
@@ -195,270 +196,5 @@ public class AutonomousRightFast extends AutonomousOpMode{
             );
             Actions.runBlocking(dropAndRelease);
         }
-        /*
-        Action toSwivel = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, swivelPose, false), legs),
-        );
-        Actions.runBlocking(toSwivel);
-
-
-        Action avoidAndHover = new ParallelAction(
-
-                new CompleteAction(armIn, arm),
-                new CompleteAction(hoverShoulder, shoulder)
-        );
-
-        Action avoidAndHover = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub, true), legs),
-                new CompleteAction(armIn, arm),
-                new CompleteAction(hoverShoulder, shoulder)
-        );
-
-
-        Pose2d dropAndPickup2 = new Pose2d(new Vector2d(8.0 + X_OFFSET, -32.5 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
-        Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
-        Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
-        Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
-        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
-        Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
-        Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
-        Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(32 + X_OFFSET, 9 + Y_OFFSET), Math.toRadians(0));
-        Pose2d repeatSecondHangPose = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
-        Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-
-        Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
-
-        // Common actions for the right side
-        Action hoverShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, Shoulder.Mode.SEARCH.armInPos());
-            return false;
-        };
-
-        Action armIn = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, -15);
-            return false;
-        };
-
-        Action grab = telemetryPacket -> {
-            hand.grab(500);
-            return false;
-        };
-
-        Action ground = telemetryPacket -> {
-            shoulder.setPosition(0.8, Shoulder.Mode.GROUND.armInPos());
-            return false;
-        };
-
-        Action liftShoulderAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.HIGH_BAR);
-            return false;
-        };
-
-        Action extendArmAction = telemetryPacket -> {
-            arm.setPosition(0.8, dropArmPosition);
-            return false;
-        };
-
-        Action drop = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.NONE);
-            shoulder.setPosition(AUTO_POWER, Shoulder.DROP_SHOULDER_POS);
-            return false;
-        };
-
-        Action release = telemetryPacket -> {
-            hand.release(800);
-            return false;
-        };
-
-        Action resetArm = telemetryPacket -> {
-            hand.hangSample();
-            arm.setPosition(AUTO_POWER, 0);
-            return false;
-        };
-
-        Action resetShoulder = telemetryPacket -> {
-            shoulder.setPosition(AUTO_POWER, 0);
-            return false;
-        };
-
-        // If our partner is not using the alliance color specimen (do second hang)
-        double APPROACH_POWER = 0.8;
-        if(!partnerHasSpecimen) {
-            Action gotoPickup = new ParallelAction(
-                    new CompleteAction(armIn, arm),
-                    new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup2, -1), legs));
-            Actions.runBlocking(gotoPickup);
-
-            // Extra floor alignment
-
-            Action adjust = eye.safeFloor();
-            if(adjust != null)
-                Actions.runBlocking(adjust);
-
-
-            //eye.debugTelemetry(telemetry);
-            //telemetry.update();
-
-            Action grabAction = new SequentialAction(
-                    ground,
-                    new CompleteAction(grab, hand)
-            );
-            Actions.runBlocking(grabAction);
-
-            Action gotoSecondHang = new ParallelAction(
-                    new CompleteAction(liftShoulderAction, shoulder),
-                    new CompleteAction(extendArmAction, arm),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, secondHang, 1), legs)
-            );
-            Actions.runBlocking(gotoSecondHang);
-
-            // Extra bar alignment
-            Action action = eye.safeHang();
-            if(action != null)
-                Actions.runBlocking(action);
-
-            Action retractReleaseBackup = new ParallelAction(
-                    new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand),
-                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
-            );
-
-
-            Action dropAndRelease = new SequentialAction(
-                    new CompleteAction(drop, shoulder),
-                    retractReleaseBackup
-            );
-            Actions.runBlocking(dropAndRelease);
-        }
-
-        Action avoidAndHover = new ParallelAction(
-                new CompleteAction(legs.moveToAction(AUTO_POWER, avoidSub, true), legs),
-                new CompleteAction(armIn, arm),
-                new CompleteAction(hoverShoulder, shoulder)
-        );
-
-        Action driveAction = new SequentialAction(
-                avoidAndHover,
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2Backup, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
-                new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd), legs)
-        );
-        Actions.runBlocking(driveAction);
-
-        // Extra floor alignment
-        Action adjust2 = eye.safeFloor();
-        if(adjust2 != null)
-            Actions.runBlocking(adjust2);
-        //eye.debugTelemetry(telemetry);
-        //telemetry.update();
-
-        Action grab2Action = new SequentialAction(
-                ground,
-                new CompleteAction(grab, hand)
-        );
-        Actions.runBlocking(grab2Action);
-
-        Action gotoThirdHang = new ParallelAction(
-                new CompleteAction(liftShoulderAction, shoulder),
-                new CompleteAction(extendArmAction, arm),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, thirdHang, 1), legs)
-        );
-        Actions.runBlocking(gotoThirdHang);
-
-        // Extra bar alignment
-        Action action = eye.safeHang();
-        if(action != null)
-            Actions.runBlocking(action);
-
-        Action retractReleaseBackup2 = new ParallelAction(
-                new CompleteAction(armIn, arm),
-                new CompleteAction(release, hand),
-                new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
-        );
-
-        Action dropAndRelease2 = new SequentialAction(
-                new CompleteAction(drop, shoulder),
-                retractReleaseBackup2
-        );
-
-        Actions.runBlocking(dropAndRelease2);
-
-        // If our partner used a specimen we have time for one more hang
-        if(partnerHasSpecimen){
-            Action finalPickup = new ParallelAction(
-                    new CompleteAction(resetArm, arm),
-                    new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, -1), legs),
-                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
-            Actions.runBlocking(finalPickup);
-
-            // Extra floor alignment
-            Action adjust3 = eye.safeFloor();
-            if(adjust3 != null)
-                Actions.runBlocking(adjust3);
-            //eye.debugTelemetry(telemetry);
-            //telemetry.update();
-
-            Action grab3Action = new SequentialAction(
-                    ground,
-                    new CompleteAction(grab, hand)
-            );
-            Actions.runBlocking(grab3Action);
-
-            Action repeatSecondHang = new ParallelAction(
-                    new CompleteAction(liftShoulderAction, shoulder),
-                    new CompleteAction(extendArmAction, arm),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, repeatSecondHangPose, 1), legs)
-            );
-            Actions.runBlocking(repeatSecondHang);
-
-            // Extra bar alignment
-            Action action2 = eye.safeHang();
-            if(action2 != null)
-                Actions.runBlocking(action2);
-
-            Action retractReleaseBackup3 = new ParallelAction(
-                    new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand),
-                    new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
-            );
-
-            Action dropAndRelease3 = new SequentialAction(
-                    new CompleteAction(drop, shoulder),
-                    retractReleaseBackup3
-            );
-            Actions.runBlocking(dropAndRelease3);
-        }
-
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, -1, false), legs));
-
-        Action resetAction = new ParallelAction(
-                new CompleteAction(resetArm, arm),
-                new CompleteAction(hoverShoulder, shoulder),
-                new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
-        Actions.runBlocking(resetAction);
-
-        // Extra floor alignment
-        Action adjust4 = eye.safeFloor();
-        if(adjust4 != null)
-            Actions.runBlocking(adjust4);
-        //eye.debugTelemetry(telemetry);
-        //telemetry.update();
-
-        Action extraResetAction = new ParallelAction(
-                new CompleteAction(resetShoulder, shoulder),
-                new CompleteAction(grab, hand));
-        Actions.runBlocking(extraResetAction);
-
-         */
     }
 }

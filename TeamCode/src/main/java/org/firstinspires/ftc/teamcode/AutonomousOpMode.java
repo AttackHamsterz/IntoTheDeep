@@ -55,7 +55,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // while the fingers release the sample.
         int searchArmPosition = 1250;
 
-        Pose2d almostDropPose = new Pose2d(new Vector2d(26 + X_OFFSET, Y_OFFSET), 0);
         Pose2d dropPose = new Pose2d(new Vector2d(30 + X_OFFSET, Y_OFFSET), 0); //31 7/8
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
@@ -69,7 +68,6 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             return false;
         };
         Action dropAction = telemetryPacket -> {
-            //hand.grab(100);
             shoulder.setMode(Shoulder.Mode.NONE);
             shoulder.setPosition(AUTO_POWER, Shoulder.DROP_SHOULDER_POS);
             return false;
@@ -89,21 +87,18 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         );
 
         Action waitThenLiftAction = new SequentialAction(
-            new SleepAction(0.1),
+            new SleepAction(0.075),
             liftExtendAction
         );
 
         Action liftExtendDrive = new ParallelAction(
                 waitThenLiftAction,
-                new CompleteAction(legs.moveToAction(0.6, almostDropPose, true), legs)
+                new CompleteAction(legs.moveToAction(0.6, dropPose, false), legs)
         );
         Actions.runBlocking(liftExtendDrive);
 
-        // Drive the final bit a little slower
-        Actions.runBlocking(new CompleteAction(legs.moveToAction(0.4, dropPose, false), legs));
-
         // Extra alignment
-        Action action = eye.safeHang();
+        Action action = eye.safeHang(1);
         if(action != null)
             Actions.runBlocking(action);
 
@@ -136,7 +131,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
             Actions.runBlocking(setupSearch);
 
             // Real Search (should block until complete)
-            Action safeSearch = eye.safeSearch();
+            Action safeSearch = eye.safeSearch(4);
             shoulder.setMode(Shoulder.Mode.NONE);
             Actions.runBlocking(safeSearch);
 

@@ -106,6 +106,9 @@ public class Eye extends BodyPart {
     public boolean search = false;
     private boolean hang = false;
     private boolean floor = false;
+    private double maxSearchDist;
+    private double maxHangDist;
+    private double maxFloorDist;
     public boolean searching;
     private boolean testGrey = false;
 
@@ -352,7 +355,7 @@ public class Eye extends BodyPart {
      * Tell the camera to check the bar and return an action to align to it
      * @return Action that aligns to the bar
      */
-    public Action safeHang() {
+    public Action safeHang(double maxDist) {
         // Wait for robot to stop moving
         //try {
         //    sleep(200);
@@ -360,6 +363,7 @@ public class Eye extends BodyPart {
         //}
 
         // Tell the opencv thread to get an answer and then wait for result
+        maxHangDist = Math.abs(maxDist);
         hang = true;
 
         // Spin wait until we get a result
@@ -378,8 +382,9 @@ public class Eye extends BodyPart {
      * Tell the camera to check the bar and return an action to align to it
      * @return Action that aligns to the bar
      */
-    public Action safeSearch() {
+    public Action safeSearch(double maxDist) {
         // Tell the opencv thread to get an answer and then wait for result
+        maxSearchDist = Math.abs(maxDist);
         search = true;
 
         // Spin wait until we get a result
@@ -398,7 +403,7 @@ public class Eye extends BodyPart {
      * Tell the camera to check the floor and return an action to align to specimen
      * @return Action that aligns to the specimen
      */
-    public Action safeFloor(){
+    public Action safeFloor(double maxDist){
         // Wait for robot to stop moving
         //try {
         //    sleep(200);
@@ -406,6 +411,7 @@ public class Eye extends BodyPart {
         //}
 
         // Tell the opencv thread to get an answer and then wait for the result
+        maxFloorDist = Math.abs(maxDist);
         floor = true;
 
         // Spin wait until we get a result
@@ -502,9 +508,9 @@ public class Eye extends BodyPart {
 
                 if(Math.abs(deltaLeft) > 0.1 || Math.abs(deltaRight) > 0.1){
 
-                    // Wiggle robot
-                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -0.5, 1.0);
-                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -0.5, 1.0);
+                    // Wiggle robot (never let it back up too far)
+                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -0.5, maxHangDist);
+                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -0.5, maxHangDist);
                     barAction = moveLegsToBar(inchesLeft, inchesRight);
                 }
                 else {
@@ -525,13 +531,14 @@ public class Eye extends BodyPart {
                 if(Math.abs(fp.floor_left) > 0.1 || Math.abs(fp.floor_forward) > 0.1){
 
                     // Wiggle robot
-                    double inches_left = Range.clip(fp.floor_left,-3, 3);
-                    double inches_forward = Range.clip(fp.floor_forward,-3, 3);
+                    double inches_left = Range.clip(fp.floor_left,-maxFloorDist, maxFloorDist);
+                    double inches_forward = Range.clip(fp.floor_forward,-maxFloorDist, maxFloorDist);
                     Action moveToSpecimen = telemetryPacket -> {
                         ssom.legs.moveForwardAndLeft(inches_forward, inches_left, false);
                         return false;
                     };
-                    floorAction = new CompleteAction(moveToSpecimen, ssom.legs, 1500);
+                    // Give yourselves half a second per inch
+                    floorAction = new CompleteAction(moveToSpecimen, ssom.legs, Math.round(500* maxFloorDist));
                 }
                 else {
                     floorAction = telemetryPacket -> {
