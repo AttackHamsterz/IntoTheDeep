@@ -61,10 +61,10 @@ public class FrameProcessing {
 
     private static final Scalar HSV_YELLOW_LOW = new Scalar(20, 100, 100);
     private static final Scalar HSV_YELLOW_HIGH = new Scalar(40, 255, 255);
-    private static final Scalar HSV_RED1_LOW = new Scalar(0, 100, 100);
-    private static final Scalar HSV_RED1_HIGH = new Scalar(10, 255, 255);
-    private static final Scalar HSV_RED2_LOW = new Scalar(170, 100, 100);
-    private static final Scalar HSV_RED2_HIGH = new Scalar(180, 255, 255);
+    private static final Scalar HSV_RED1_LOW = new Scalar(0, 90, 90);
+    private static final Scalar HSV_RED1_HIGH = new Scalar(20, 255, 255);
+    private static final Scalar HSV_RED2_LOW = new Scalar(160, 90, 90);
+    private static final Scalar HSV_RED2_HIGH = new Scalar(190, 255, 255);
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
     private static final Scalar HSV_GREY_LOW = new Scalar(0, 0, 50);
@@ -84,12 +84,12 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 235;//366;//363;
-    private static final int FLOOR_ALIGNED_Y = 520;//526 centroid;
+    private static final int FLOOR_ALIGNED_X = 227;//366;//363;
+    private static final int FLOOR_ALIGNED_Y = 516;//526 centroid;
 
     // Shrinking these will cause smaller motion on detections
-    private static final double IN_PER_PIXEL_LR = 0.025;
-    private static final double IN_PER_PIXEL_FB = 0.078125;
+    private static final double IN_PER_PIXEL_LR = 0.0241935483870968;
+    private static final double IN_PER_PIXEL_FB = 0.1097560975609756;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;

@@ -55,7 +55,7 @@ public class Shoulder extends BodyPart {
             2226, // High Bucket
             2450, // Hang
             105,   // None is like ground
-            200
+            300
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
@@ -68,7 +68,7 @@ public class Shoulder extends BodyPart {
             2226, // High Bucket
             2450, // Hang
             369,   // None is like ground
-            400
+            500
     ));
 
     public static final int DROP_SHOULDER_POS = 1143;

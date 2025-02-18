@@ -358,10 +358,13 @@ public class Eye extends BodyPart {
      */
     public Action safeHang(double maxDist) {
         // Wait for robot to stop moving
-        //try {
-        //    sleep(200);
-        //} catch (InterruptedException ignored) {
-        //}
+        /*
+        try {
+            sleep(200);
+        } catch (InterruptedException ignored) {
+        }
+
+         */
 
         // Tell the opencv thread to get an answer and then wait for result
         maxHangDist = Math.abs(maxDist);
