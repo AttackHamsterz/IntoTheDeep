@@ -24,10 +24,11 @@ import java.util.Arrays;
 public class Eye extends BodyPart {
 
     private static final boolean ENABLE_DASHBOARD_CAMERA = true;
-    private static final double OFF_POWER = 0.0;
+    private static final double BLACK_POWER = 0.0;
     private static final double RED_POWER = 0.279;
     private static final double YELLOW_POWER = 0.388;
     private static final double BLUE_POWER = 0.611;
+    private static final double WHITE_POWER = 1.0;
 
     // variable to store the color of alliance
     public static final int NONE_ID = 0;
@@ -411,6 +412,7 @@ public class Eye extends BodyPart {
         //}
 
         // Tell the opencv thread to get an answer and then wait for the result
+        searchLight.setPosition(WHITE_POWER);
         maxFloorDist = Math.abs(maxDist);
         floor = true;
 
@@ -422,6 +424,7 @@ public class Eye extends BodyPart {
             } catch (InterruptedException ignored) {
             }
         }while(floorAction == null);
+        searchLight.setPosition(BLACK_POWER);
 
         return floorAction;
     }
@@ -453,10 +456,10 @@ public class Eye extends BodyPart {
                     else if (grabColor == BLUE_ID)
                         grabLight.setPosition(BLUE_POWER);
                     else
-                        grabLight.setPosition(OFF_POWER);
+                        grabLight.setPosition(BLACK_POWER);
                 }
                 else
-                    grabLight.setPosition(OFF_POWER);
+                    grabLight.setPosition(BLACK_POWER);
 
                 // What color did I search and find
                 switch (fp.colorID){
@@ -470,7 +473,7 @@ public class Eye extends BodyPart {
                         searchLight.setPosition(RED_POWER);
                         break;
                     default:
-                        searchLight.setPosition(OFF_POWER);
+                        searchLight.setPosition(BLACK_POWER);
                 };
             }
 
