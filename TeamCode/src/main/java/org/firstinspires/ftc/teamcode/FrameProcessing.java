@@ -61,11 +61,11 @@ public class FrameProcessing {
 
     private static final Scalar HSV_YELLOW_LOW = new Scalar(20, 100, 100);
     private static final Scalar HSV_YELLOW_HIGH = new Scalar(40, 255, 255);
-    private static final Scalar HSV_RED1_LOW = new Scalar(0, 90, 90);
-    private static final Scalar HSV_RED1_HIGH = new Scalar(20, 255, 255);
-    private static final Scalar HSV_RED2_LOW = new Scalar(160, 90, 90);
-    private static final Scalar HSV_RED2_HIGH = new Scalar(190, 255, 255);
-    private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
+    private static final Scalar HSV_RED1_LOW = new Scalar(0, 30, 50);
+    private static final Scalar HSV_RED1_HIGH = new Scalar(10, 255, 255);
+    private static final Scalar HSV_RED2_LOW = new Scalar(170, 30, 50);
+    private static final Scalar HSV_RED2_HIGH = new Scalar(255, 255, 255);
+    private static final Scalar HSV_BLUE_LOW = new Scalar(100, 150, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
     private static final Scalar HSV_GREY_LOW = new Scalar(0, 0, 50);
     private static final Scalar HSV_GREY_HIGH = new Scalar(255, 30, 150);
@@ -84,8 +84,8 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 227;//366;//363;
-    private static final int FLOOR_ALIGNED_Y = 516;//526 centroid;
+    private static final int FLOOR_ALIGNED_X = 231;//366;//363;
+    private static final int FLOOR_ALIGNED_Y = 524;//526 centroid;
 
     // Shrinking these will cause smaller motion on detections
     private static final double IN_PER_PIXEL_LR = 0.0241935483870968;
@@ -102,6 +102,7 @@ public class FrameProcessing {
 
     public int cx;
     public int cy;
+
 
 
     public FrameProcessing(int width, int height, Telemetry telemetry){
@@ -379,6 +380,8 @@ public class FrameProcessing {
         floor_contours.clear();
         floor_left = 0;
         floor_forward = 0;
+        cx = 0;
+        cy = 0;
 
         // Convert slices form RGB to HSV
         Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
@@ -401,6 +404,7 @@ public class FrameProcessing {
         int wd = image.width() * image.width() + image.height() * image.height();
         for (MatOfPoint contour : floor_contours) {
             // Excribe contour for slightly more accurate center
+            /*
             double minx = Double.MAX_VALUE;
             double maxx = -Double.MAX_VALUE;
             double miny = Double.MAX_VALUE;
@@ -414,6 +418,18 @@ public class FrameProcessing {
             }
             int tcx = (int)Math.round((maxx + minx ) / 2.0);
             int tcy = (int)Math.round((maxy + miny ) / 2.0);
+
+             */
+            // smooth contour
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+            double epsilon = 0.005 * Imgproc.arcLength(contour2f, true);
+            MatOfPoint2f approxContour = new MatOfPoint2f();
+            Imgproc.approxPolyDP(contour2f, approxContour, epsilon, true);
+
+            Moments moments = Imgproc.moments(approxContour);
+            int tcx = (int)Math.round(moments.get_m10() / moments.get_m00());
+            int tcy = (int)Math.round(moments.get_m01() / moments.get_m00());
+
 
             int dx = FLOOR_ALIGNED_X - tcx;
             int dy = FLOOR_ALIGNED_Y - tcy;
@@ -440,6 +456,7 @@ public class FrameProcessing {
 
 
         // Just return the original input Mat
+        Core.flip(floor_mask, floor_mask, -1);
         return floor_mask;
     }
 
