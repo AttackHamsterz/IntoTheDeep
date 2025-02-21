@@ -154,11 +154,13 @@ public class AutonomousRightFast extends AutonomousOpMode{
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
                     new CompleteAction(legs.moveToAction(AUTO_POWER, pickupPose, -1), legs));
+            eye.lightOn();
             Actions.runBlocking(gotoPickup);
             // use camera to adjust position
             Action adjust = eye.safeFloor(2);
             if(adjust != null)
                 Actions.runBlocking(adjust);
+            eye.lightOff();
             // pick up specimen
             Action grabAction = new ParallelAction(
                     ground,

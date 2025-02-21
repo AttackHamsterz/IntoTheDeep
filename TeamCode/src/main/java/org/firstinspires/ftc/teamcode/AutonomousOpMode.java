@@ -17,6 +17,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long GRAB_MS = 900;
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
+    public static final double APPROACH_POWER = 0.8;
 
     protected static int dropArmPosition = 270;
 

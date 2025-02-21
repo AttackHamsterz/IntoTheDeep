@@ -131,11 +131,9 @@ public class Eye extends BodyPart {
         searchColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
         if(grabColor == BLUE_ID) {
             grabLight.setPosition(BLUE_COLOR);
-            //searchLight.setPosition(BLUE_POWER);
         }
         else {
             grabLight.setPosition(RED_COLOR);
-            //searchLight.setPosition(RED_POWER);
         }
 
         int cameraMonitorViewId = ssom.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", ssom.hardwareMap.appContext.getPackageName());
@@ -194,6 +192,14 @@ public class Eye extends BodyPart {
             telemetry.addData("Cx", fp.cx);
             telemetry.addData("Cy", fp.cy);
         }
+    }
+
+    public void lightOn(){
+        searchLight.setPosition(WHITE_COLOR);
+    }
+
+    public void lightOff(){
+        searchLight.setPosition(BLACK_COLOR);
     }
 
     public Action moveToColor() {
@@ -415,8 +421,6 @@ public class Eye extends BodyPart {
         //}
 
         // Tell the opencv thread to get an answer and then wait for the result
-        searchLight.setPosition(WHITE_COLOR);
-
         maxFloorDist = Math.abs(maxDist);
         floor = true;
 
@@ -428,7 +432,6 @@ public class Eye extends BodyPart {
             } catch (InterruptedException ignored) {
             }
         }while(floorAction == null);
-        //searchLight.setPosition(BLACK_POWER);
 
         return floorAction;
     }
