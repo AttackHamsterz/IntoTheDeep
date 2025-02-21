@@ -414,6 +414,7 @@ public class FrameProcessing {
             }
 
             // Start at the top and look for the first row with a clip notch
+            boolean foundNotch = false;
             for (int y = min_y; y < max_y; y++) {
                 // Look for the left-up and left-down notch
                 int lu = -1;
@@ -445,6 +446,7 @@ public class FrameProcessing {
 
                 // Check if the left-down and right-down notches are valid
                 if (ld >= 0 && rd >= ld) {
+                    foundNotch = true;
                     int tcx = (ld + rd) / 2;
                     int tcy = y;
 
@@ -464,8 +466,26 @@ public class FrameProcessing {
                     break;
                 }
             }
-        }
 
+            // No notch, fall back to center and top of contour
+            if(!foundNotch){
+                int tcx = (min_x + max_x) / 2;
+                int tcy = min_y;
+
+                int dx = FLOOR_ALIGNED_X - tcx;
+                int dy = FLOOR_ALIGNED_Y - tcy;
+                int dd = dx * dx + dy * dy;
+                // If closest so far, convert to shift amounts and save position
+                // The motor gets detected at 200 pixels away (more than 200 away ignore)
+                if (dd < 200 * 200 && dd < wd) {
+                    cx = tcx;
+                    cy = tcy;
+                    floor_left = (double)dx * IN_PER_PIXEL_LR;
+                    floor_forward = (double)dy * IN_PER_PIXEL_FB;
+                    wd = dd;
+                }
+            }
+        }
 
         // Debug
         /*
