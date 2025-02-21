@@ -377,6 +377,8 @@ public class FrameProcessing {
         floor_contours.clear();
         floor_left = 0;
         floor_forward = 0;
+        cx = 0;
+        cy = 0;
 
         // Convert slices form RGB to HSV
         Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
@@ -476,6 +478,7 @@ public class FrameProcessing {
 
 
         // Just return the original input Mat
+        Core.flip(floor_mask, floor_mask, -1);
         return floor_mask;
     }
 
