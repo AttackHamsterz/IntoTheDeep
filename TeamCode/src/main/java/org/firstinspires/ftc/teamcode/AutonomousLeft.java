@@ -17,6 +17,7 @@ public class AutonomousLeft extends AutonomousOpMode{
         // If we grabbed a sample from the center, drive and place in lower bucket
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
         Pose2d highBucketDropPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
+        Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(0));
         int lowBucketDropArmPosition = 1730;
         int highBucketDropArmPosition = 2200;
@@ -76,6 +77,22 @@ public class AutonomousLeft extends AutonomousOpMode{
             shoulder.setPositionForMode(Shoulder.Mode.HIGH_BUCKET, AUTO_POWER, highBucketDropArmPosition);
             return false;
         };
+
+        //Setting pose to grab first sample
+        Action initialSamplePickup = new CompleteAction (legs.moveToAction(AUTO_POWER, samplePickupPose, false), legs);
+        Actions.runBlocking(initialSamplePickup);
+
+        //Extending arm while turning
+        Action armOut = telemetryPacket -> {
+            arm.setPosition(0.8, 1885);
+                    return false;
+        };
+
+        Action samplePickupOne = new ParallelAction(
+                new CompleteAction(initialSamplePickup, legs),
+                new CompleteAction(armOut, arm)
+        );
+
 
         // Repeat this 3 times for each floor sample
         for(int i = 0; i < 3; i++)

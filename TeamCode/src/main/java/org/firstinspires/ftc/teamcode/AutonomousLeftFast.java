@@ -16,7 +16,8 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
-        Pose2d highBucketDropPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
+        Pose2d highBucketDropPose = new Pose2d(new Vector2d(2 + X_OFFSET, 50 + Y_OFFSET), Math.toRadians(135));
+        Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(0));
         int lowBucketDropArmPosition = 1730;
         int highBucketDropArmPosition = 2200;
@@ -72,17 +73,72 @@ public class AutonomousLeftFast extends AutonomousOpMode{
          */
 
         Action raiseAction = telemetryPacket -> {
-            shoulder.setMode(Shoulder.Mode.HIGH_BUCKET);
+            //shoulder.setMode(Shoulder.Mode.HIGH_BUCKET);
             shoulder.setPositionForMode(Shoulder.Mode.HIGH_BUCKET, AUTO_POWER, highBucketDropArmPosition);
             return false;
         };
 
-        // Repeat this 3 times for each floor sample
-        for(int i = 0; i < 3; i++)
+
+
+        //Setting pose to grab first sample
+        Action driveToFirstPickup = new CompleteAction (legs.moveToAction(AUTO_POWER, samplePickupPose, false), legs);
+
+        //Extending arm while turning
+        Action armOut = telemetryPacket -> {
+            arm.setPosition(AUTO_POWER, 1885);
+            return false;
+        };
+
+        Action firstWristGrab = telemetryPacket -> {
+            hand.setWrist(0.8);
+            return false;
+        };
+
+
+        Action samplePickupOne = new ParallelAction(
+                driveToFirstPickup,
+                new CompleteAction(armOut, arm),
+                firstWristGrab
+                );
+
+        Actions.runBlocking(
+                samplePickupOne
+        );
+
+
+
+        Action firstGrab = telemetryPacket -> {
+            //shoulder.setMode(Shoulder.Mode.GROUND);
+            shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, 1885);
+            hand.grab(GRAB_MS);
+            return false;
+        };
+
+        Actions.runBlocking(
+                new CompleteAction(firstGrab, hand)
+        );
+
+        Action firstDrop = new ParallelAction(
+                new CompleteAction(legs.moveToAction(AUTO_POWER, highBucketDropPose), legs),
+                new CompleteAction(raiseAction, shoulder),
+                new CompleteAction(extendArmAction, arm)
+        );
+
+        Action dropInBucket = new SequentialAction(
+                firstDrop,
+                new CompleteAction(releaseSample, hand)
+        );
+
+        Actions.runBlocking(
+                firstDrop
+        );
+
+        // Repeat this 2 times for each floor sample
+        for(int i = 0; i < 2; i++)
         {
             Double wristAngle = 0.35 + (double)i * 0.15;
             //Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 990;
-            Integer searchPosition = (i==2) ? 1660 : (i==1) ? 1420 : 1550;
+            Integer searchPosition = (i==1) ? 1420 : 1550;
 
 
             Action retractForPickupAction = telemetryPacket -> {
@@ -92,8 +148,8 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
             // Cycle from bucket to floor samples
             Action lowerAction = telemetryPacket -> {
-                shoulder.setMode(Shoulder.Mode.SEARCH);
-                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, searchPosition);
+               // shoulder.setMode(Shoulder.Mode.GROUND);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.8, searchPosition);
                 return false;
             };
 
@@ -102,13 +158,13 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                 return false;
             };
 
-            Action searchAction = telemetryPacket -> {
-                hand.setWrist(wristAngle);
-                return false;
-            };
+            //Action searchAction = telemetryPacket -> {
+              //  hand.setWrist(wristAngle);
+                //return false;
+            //};
 
             // Turn to ground samples, pick one up
-            double turnAngle = 1 + ((i==2) ? 32 : (i==1) ? 2 : -29);
+            double turnAngle = 1 + ((i==1) ? 32 : 2);
             Pose2d pickupPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             //int direction = (i==0 && !haveBlock) ? -1 : 1;
             int direction = (i==0) ? -1 : 1;
@@ -147,30 +203,31 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
                  */
             //} else {
+            Action grabAction = telemetryPacket -> {
+                //shoulder.setMode(Shoulder.Mode.GROUND);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, searchPosition);
+                hand.grab(GRAB_MS);
+                return false;
+            };
 
-                Action grabAction = telemetryPacket -> {
-                    shoulder.setMode(Shoulder.Mode.GROUND);
-                    shoulder.setPositionForMode(Shoulder.Mode.GROUND, 0.6, searchPosition);
-                    hand.grab(GRAB_MS);
-                    return false;
-                };
-
-                Action pickupAction = new SequentialAction(
-                        turnAndLower,
-                        new CompleteAction(grabAction, hand));
-                Actions.runBlocking(pickupAction);
+            Action pickupAction = new SequentialAction(
+                    turnAndLower,
+                    new CompleteAction(grabAction, hand));
+            Actions.runBlocking(pickupAction);
             //}
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
             Action turnToBucket = legs.moveToAction(0.4, highBucketDropPose, -1);
             Action turnRaiseAndExtend = new ParallelAction(
-                    new CompleteAction(turnToBucket, legs),
                     new CompleteAction(raiseAction, shoulder),
+                    new CompleteAction(turnToBucket, legs),
                     new CompleteAction(extendArmAction, arm));
+
             Action dropAction = new SequentialAction(
                     turnRaiseAndExtend,
                     new CompleteAction(releaseSample, hand)
             );
+
             Actions.runBlocking(dropAction);
         }
 
