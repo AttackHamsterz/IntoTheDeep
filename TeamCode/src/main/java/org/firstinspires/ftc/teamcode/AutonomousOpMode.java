@@ -17,6 +17,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final long GRAB_MS = 900;
     public static final long RELEASE_MS = 900;
     public static final double AUTO_POWER = 1.0;
+    public static final double APPROACH_POWER = 0.8;
 
     protected static int dropArmPosition = 270;
 
@@ -56,7 +57,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         int searchArmPosition = 1250;
 
         Pose2d dropPose = new Pose2d(new Vector2d(30 + X_OFFSET, Y_OFFSET), 0); //31 7/8
-        Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
+        Pose2d searchPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {
             shoulder.setMode(Shoulder.Mode.HIGH_BAR);
@@ -93,7 +94,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
 
         Action liftExtendDrive = new ParallelAction(
                 waitThenLiftAction,
-                new CompleteAction(legs.moveToAction(0.6, dropPose, false), legs)
+                new CompleteAction(legs.moveToAction(0.5, dropPose, false), legs)
         );
         Actions.runBlocking(liftExtendDrive);
 

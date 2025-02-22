@@ -19,8 +19,8 @@ public class AutonomousRightFast extends AutonomousOpMode{
         // All the poses for the right side
         Pose2d pickupPose = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d hangPose1 = new Pose2d(new Vector2d(31 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
-        Pose2d hangPose2 = new Pose2d(new Vector2d(31 + X_OFFSET, 2.5 + Y_OFFSET), Math.toRadians(0));
-        Pose2d hangPose3 = new Pose2d(new Vector2d(31 + X_OFFSET, 3 + Y_OFFSET), Math.toRadians(0));
+        Pose2d hangPose2 = new Pose2d(new Vector2d(31 + X_OFFSET, 3 + Y_OFFSET), Math.toRadians(0));
+        Pose2d hangPose3 = new Pose2d(new Vector2d(31 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
         Pose2d barBackupPose = new Pose2d(new Vector2d(25 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
 
         // Actions
@@ -39,7 +39,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
             // Variables
             double wristAngle = (i == 0) ? 0.4 : (i ==1) ? 0.2 : 0.1;
             double swivelAngle = (i == 0) ? -33.18 : (i == 1) ? -56.24 : -67.15;
-            int armPosition = (i == 0) ? 316 : (i == 1) ? 1200 : 2150;
+            int armPosition = (i == 0) ? 316 : (i == 1) ? 1200 : 2100;
             double armExtendPower = (i==0) ? 0.5 : (i ==1) ? AUTO_POWER : 0.2;
             Pose2d swivelPickPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(swivelAngle));
 
@@ -55,7 +55,7 @@ public class AutonomousRightFast extends AutonomousOpMode{
                 return false;
             };
             Action setShoulderPickup = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.SEARCH, AUTO_POWER, armPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.HOVER, AUTO_POWER, 1800);
                 return false;
             };
             Action moveToPickup = new ParallelAction(
@@ -83,8 +83,8 @@ public class AutonomousRightFast extends AutonomousOpMode{
 
             Actions.runBlocking(turnAndGrab);
 
-            int dropArmPosition = 2050;
-            Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-156));
+            int dropArmPosition = 1950;
+            Pose2d swivelDropPose = new Pose2d(new Vector2d(25.55, -33.71), Math.toRadians(-148));
 
             Action extendArmForDrop = telemetryPacket -> {
                 arm.setPosition(AUTO_POWER, dropArmPosition);
@@ -104,12 +104,12 @@ public class AutonomousRightFast extends AutonomousOpMode{
             // rotate and release sample
             Action dropIt = new SequentialAction(
                 raiseAndRotate,
-                release //new CompleteAction(release, hand)
+                new CompleteAction(release, hand)
             );
 
             // drop sample
             Actions.runBlocking(dropIt);
-        }
+        } // end of swivel for-loop
 
         // Cycle specimens onto bar
 
@@ -154,11 +154,13 @@ public class AutonomousRightFast extends AutonomousOpMode{
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
                     new CompleteAction(legs.moveToAction(AUTO_POWER, pickupPose, -1), legs));
+            eye.lightOn();
             Actions.runBlocking(gotoPickup);
             // use camera to adjust position
             Action adjust = eye.safeFloor(2);
             if(adjust != null)
                 Actions.runBlocking(adjust);
+            eye.lightOff();
             // pick up specimen
             Action grabAction = new ParallelAction(
                     ground,

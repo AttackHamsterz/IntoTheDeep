@@ -63,12 +63,10 @@ public class FrameProcessing {
     private static final Scalar HSV_YELLOW_HIGH = new Scalar(40, 255, 255);
     private static final Scalar HSV_RED1_LOW = new Scalar(0, 100, 100);
     private static final Scalar HSV_RED1_HIGH = new Scalar(10, 255, 255);
-    private static final Scalar HSV_RED2_LOW = new Scalar(170, 100, 100);
+    private static final Scalar HSV_RED2_LOW = new Scalar(160, 100, 100);
     private static final Scalar HSV_RED2_HIGH = new Scalar(180, 255, 255);
     private static final Scalar HSV_BLUE_LOW = new Scalar(100, 100, 100);
     private static final Scalar HSV_BLUE_HIGH = new Scalar(140, 255, 255);
-    private static final Scalar HSV_GREY_LOW = new Scalar(0, 0, 50);
-    private static final Scalar HSV_GREY_HIGH = new Scalar(255, 30, 150);
 
     private Telemetry telemetry;
 
@@ -84,12 +82,12 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 235;//366;//363;
-    private static final int FLOOR_ALIGNED_Y = 520;//526 centroid;
+    private static final int FLOOR_ALIGNED_X = 225;
+    private static final int FLOOR_ALIGNED_Y = 452;
 
     // Shrinking these will cause smaller motion on detections
-    private static final double IN_PER_PIXEL_LR = 0.025;
-    private static final double IN_PER_PIXEL_FB = 0.078125;
+    private static final double IN_PER_PIXEL_LR = 0.0241935483870968;
+    private static final double IN_PER_PIXEL_FB = 0.1097560975609756;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
@@ -379,12 +377,13 @@ public class FrameProcessing {
         floor_contours.clear();
         floor_left = 0;
         floor_forward = 0;
+        cx = 0;
+        cy = 0;
 
         // Convert slices form RGB to HSV
         Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
 
-        // Mask based on color
-        // Detect bar
+        // Mask based on color to detect specimen with clip notch
         if (alliance == StandardSetupOpMode.COLOR.BLUE) {
             Core.inRange(hsv_floor, HSV_BLUE_LOW, HSV_BLUE_HIGH, floor_mask);
         }else{
@@ -393,41 +392,100 @@ public class FrameProcessing {
             Core.add(floor_low_mask, floor_high_mask, floor_mask);
         }
 
-        // Contour mask
+        // Find large contours in mask and fill them
         Imgproc.findContours(floor_mask, floor_contours, floorHierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= MIN_AREA);
+        floor_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= 1000);
+        Imgproc.drawContours(floor_mask, floor_contours, -1, new Scalar(255), Imgproc.FILLED);
 
-        // Locate contour center closest to our target point
+        // Locate specimen clip closest to our target point
         int wd = image.width() * image.width() + image.height() * image.height();
         for (MatOfPoint contour : floor_contours) {
-            // Excribe contour for slightly more accurate center
-            double minx = Double.MAX_VALUE;
-            double maxx = -Double.MAX_VALUE;
-            double miny = Double.MAX_VALUE;
-            double maxy = -Double.MAX_VALUE;
+            // Excribe contour for region of interest
+            int min_x = Integer.MAX_VALUE;
+            int max_x = -Integer.MAX_VALUE;
+            int min_y = Integer.MAX_VALUE;
+            int max_y = -Integer.MAX_VALUE;
             List<Point> points = contour.toList();
             for (Point point : points) {
-                if(point.x < minx) minx = point.x;
-                if(point.x > maxx) maxx = point.x;
-                if(point.y < miny) miny = point.y;
-                if(point.y > maxy) maxy = point.y;
+                if(point.x < min_x) min_x = (int)point.x;
+                if(point.x > max_x) max_x = (int)point.x;
+                if(point.y < min_y) min_y = (int)point.y;
+                if(point.y > max_y) max_y = (int)point.y;
             }
-            int tcx = (int)Math.round((maxx + minx ) / 2.0);
-            int tcy = (int)Math.round((maxy + miny ) / 2.0);
 
-            int dx = FLOOR_ALIGNED_X - tcx;
-            int dy = FLOOR_ALIGNED_Y - tcy;
-            int dd = dx * dx + dy * dy;
-            // If closest so far, convert to shift amounts and save position
-            if (dd < wd) {
-                cx = tcx;
-                cy = tcy;
-                floor_left = (double)dx * IN_PER_PIXEL_LR;
-                floor_forward = (double)dy * IN_PER_PIXEL_FB;
-                wd = dd;
+            // Start at the top and look for the first row with a clip notch
+            boolean foundNotch = false;
+            for (int y = min_y; y < max_y; y++) {
+                // Look for the left-up and left-down notch
+                int lu = -1;
+                int ld = -1;
+                for (int x = min_x; x < max_x; x++) {
+                    if (lu < 0 && floor_mask.get(y, x)[0] == 255) {
+                        lu = x;
+                    } else if (lu >= 0 && ld < 0 && floor_mask.get(y, x)[0] == 0) {
+                        ld = x;
+                    }
+                    if (lu >= 0 && ld >= 0) {
+                        break;
+                    }
+                }
+
+                // Look for the right-up and right-down notch
+                int ru = -1;
+                int rd = -1;
+                for (int x = max_x - 1; x >= min_x; x--) {
+                    if (ru < 0 && floor_mask.get(y, x)[0] == 255) {
+                        ru = x;
+                    } else if (ru >= 0 && rd < 0 && floor_mask.get(y, x)[0] == 0) {
+                        rd = x;
+                    }
+                    if (ru >= 0 && rd >= 0) {
+                        break;
+                    }
+                }
+
+                // Check if the left-down and right-down notches are valid
+                if (ld >= 0 && rd >= ld) {
+                    foundNotch = true;
+                    int tcx = (ld + rd) / 2;
+                    int tcy = y;
+
+                    int dx = FLOOR_ALIGNED_X - tcx;
+                    int dy = FLOOR_ALIGNED_Y - tcy;
+                    int dd = dx * dx + dy * dy;
+                    // If closest so far, convert to shift amounts and save position
+                    // The motor gets detected at 200 pixels away (more than 200 away ignore)
+                    if (dd < 200 * 200 && dd < wd) {
+                        cx = tcx;
+                        cy = tcy;
+                        floor_left = (double)dx * IN_PER_PIXEL_LR;
+                        floor_forward = (double)dy * IN_PER_PIXEL_FB;
+                        wd = dd;
+                    }
+
+                    break;
+                }
+            }
+
+            // No notch, fall back to center and top of contour
+            if(!foundNotch){
+                int tcx = (min_x + max_x) / 2;
+                int tcy = min_y;
+
+                int dx = FLOOR_ALIGNED_X - tcx;
+                int dy = FLOOR_ALIGNED_Y - tcy;
+                int dd = dx * dx + dy * dy;
+                // If closest so far, convert to shift amounts and save position
+                // The motor gets detected at 200 pixels away (more than 200 away ignore)
+                if (dd < 200 * 200 && dd < wd) {
+                    cx = tcx;
+                    cy = tcy;
+                    floor_left = (double)dx * IN_PER_PIXEL_LR;
+                    floor_forward = (double)dy * IN_PER_PIXEL_FB;
+                    wd = dd;
+                }
             }
         }
-
 
         // Debug
         /*
@@ -440,6 +498,7 @@ public class FrameProcessing {
 
 
         // Just return the original input Mat
+        Core.flip(floor_mask, floor_mask, -1);
         return floor_mask;
     }
 

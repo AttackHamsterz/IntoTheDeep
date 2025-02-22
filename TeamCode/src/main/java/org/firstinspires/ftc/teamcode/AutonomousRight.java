@@ -88,12 +88,13 @@ public class AutonomousRight extends AutonomousOpMode{
         };
 
         // If our partner is not using the alliance color specimen (do second hang)
-        double APPROACH_POWER = 0.8;
         if(!partnerHasSpecimen) {
             Action gotoPickup = new ParallelAction(
                     new CompleteAction(armIn, arm),
                     new CompleteAction(hoverShoulder, shoulder),
-                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickup2, -1), legs));
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
+                    new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickup2, -1), legs));
+            eye.lightOn();
             Actions.runBlocking(gotoPickup);
 
             // Extra floor alignment
@@ -101,7 +102,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Action adjust = eye.safeFloor(3);
             if(adjust != null)
                 Actions.runBlocking(adjust);
-
+            eye.lightOff();
 
             //eye.debugTelemetry(telemetry);
             //telemetry.update();
@@ -155,12 +156,14 @@ public class AutonomousRight extends AutonomousOpMode{
                 new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
                 new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd), legs)
         );
+        eye.lightOn();
         Actions.runBlocking(driveAction);
 
         // Extra floor alignment
         Action adjust2 = eye.safeFloor(3);
         if(adjust2 != null)
             Actions.runBlocking(adjust2);
+        eye.lightOff();
         //eye.debugTelemetry(telemetry);
         //telemetry.update();
 
@@ -202,12 +205,14 @@ public class AutonomousRight extends AutonomousOpMode{
                     new CompleteAction(hoverShoulder, shoulder),
                     new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, -1), legs),
                     new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
+            eye.lightOn();
             Actions.runBlocking(finalPickup);
 
             // Extra floor alignment
             Action adjust3 = eye.safeFloor(3);
             if(adjust3 != null)
                 Actions.runBlocking(adjust3);
+            eye.lightOff();
             //eye.debugTelemetry(telemetry);
             //telemetry.update();
 
@@ -248,12 +253,14 @@ public class AutonomousRight extends AutonomousOpMode{
                 new CompleteAction(resetArm, arm),
                 new CompleteAction(hoverShoulder, shoulder),
                 new CompleteAction(legs.moveToAction(APPROACH_POWER, dropAndPickupEnd, -1), legs));
+        eye.lightOn();
         Actions.runBlocking(resetAction);
 
         // Extra floor alignment
         Action adjust4 = eye.safeFloor(3);
         if(adjust4 != null)
             Actions.runBlocking(adjust4);
+        eye.lightOff();
         //eye.debugTelemetry(telemetry);
         //telemetry.update();
 

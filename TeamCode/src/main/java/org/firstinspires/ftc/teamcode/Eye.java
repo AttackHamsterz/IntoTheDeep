@@ -24,10 +24,11 @@ import java.util.Arrays;
 public class Eye extends BodyPart {
 
     private static final boolean ENABLE_DASHBOARD_CAMERA = true;
-    private static final double OFF_POWER = 0.0;
-    private static final double RED_POWER = 0.279;
-    private static final double YELLOW_POWER = 0.388;
-    private static final double BLUE_POWER = 0.611;
+    private static final double BLACK_COLOR = 0.0;
+    private static final double RED_COLOR = 0.279;
+    private static final double YELLOW_COLOR = 0.388;
+    private static final double BLUE_COLOR = 0.611;
+    private static final double WHITE_COLOR = 1.0;
 
     // variable to store the color of alliance
     public static final int NONE_ID = 0;
@@ -129,12 +130,10 @@ public class Eye extends BodyPart {
         grabColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
         searchColor = (color == StandardSetupOpMode.COLOR.RED) ? RED_ID : BLUE_ID;
         if(grabColor == BLUE_ID) {
-            grabLight.setPosition(BLUE_POWER);
-            searchLight.setPosition(BLUE_POWER);
+            grabLight.setPosition(BLUE_COLOR);
         }
         else {
-            grabLight.setPosition(RED_POWER);
-            searchLight.setPosition(RED_POWER);
+            grabLight.setPosition(RED_COLOR);
         }
 
         int cameraMonitorViewId = ssom.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", ssom.hardwareMap.appContext.getPackageName());
@@ -193,6 +192,14 @@ public class Eye extends BodyPart {
             telemetry.addData("Cx", fp.cx);
             telemetry.addData("Cy", fp.cy);
         }
+    }
+
+    public void lightOn(){
+        searchLight.setPosition(WHITE_COLOR);
+    }
+
+    public void lightOff(){
+        searchLight.setPosition(BLACK_COLOR);
     }
 
     public Action moveToColor() {
@@ -357,10 +364,13 @@ public class Eye extends BodyPart {
      */
     public Action safeHang(double maxDist) {
         // Wait for robot to stop moving
-        //try {
-        //    sleep(200);
-        //} catch (InterruptedException ignored) {
-        //}
+        /*
+        try {
+            sleep(200);
+        } catch (InterruptedException ignored) {
+        }
+
+         */
 
         // Tell the opencv thread to get an answer and then wait for result
         maxHangDist = Math.abs(maxDist);
@@ -447,19 +457,21 @@ public class Eye extends BodyPart {
                 if(wp > Hand.CTR_POS - 0.1 && wp < Hand.CTR_POS + 0.1) {
                     grabColor = fp.grabColor(input);
                     if (grabColor == YELLOW_ID)
-                        grabLight.setPosition(YELLOW_POWER);
+                        grabLight.setPosition(YELLOW_COLOR);
                     else if (grabColor == RED_ID)
-                        grabLight.setPosition(RED_POWER);
+                        grabLight.setPosition(RED_COLOR);
                     else if (grabColor == BLUE_ID)
-                        grabLight.setPosition(BLUE_POWER);
+                        grabLight.setPosition(BLUE_COLOR);
                     else
-                        grabLight.setPosition(OFF_POWER);
+                        grabLight.setPosition(BLACK_COLOR);
                 }
                 else
-                    grabLight.setPosition(OFF_POWER);
+                    grabLight.setPosition(BLACK_COLOR);
 
                 // What color did I search and find
+                /*
                 switch (fp.colorID){
+
                     case YELLOW_ID:
                         searchLight.setPosition(YELLOW_POWER);
                         break;
@@ -470,8 +482,10 @@ public class Eye extends BodyPart {
                         searchLight.setPosition(RED_POWER);
                         break;
                     default:
-                        searchLight.setPosition(OFF_POWER);
+                        searchLight.setPosition(BLACK_POWER);
                 };
+
+                 */
             }
 
             if(search){
@@ -524,7 +538,7 @@ public class Eye extends BodyPart {
 
                 // Check only once
                 floorAction = null;
-                floor = false;
+                //floor = false;
                 input = fp.matToFloor(input, color);
 
                 // Act on the positions
