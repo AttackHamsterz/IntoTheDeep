@@ -20,9 +20,10 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickup2 = new Pose2d(new Vector2d(8.0 + X_OFFSET, -32.5 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 1.5 + Y_OFFSET), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
-        Pose2d behind1 = new Pose2d(new Vector2d(46 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind1 = new Pose2d(new Vector2d(44 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind1Sideways = new Pose2d(new Vector2d(35 + X_OFFSET, -36 + Y_OFFSET), Math.toRadians(-90));
         Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
         Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
@@ -127,7 +128,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
             Action retractReleaseBackup = new ParallelAction(
                     new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand),
+                    release,
                     new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
             );
 
@@ -187,7 +188,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
         Action retractReleaseBackup2 = new ParallelAction(
                 new CompleteAction(armIn, arm),
-                new CompleteAction(release, hand),
+                release,
                 new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
         );
 
@@ -236,7 +237,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
             Action retractReleaseBackup3 = new ParallelAction(
                     new CompleteAction(armIn, arm),
-                    new CompleteAction(release, hand),
+                    release,
                     new CompleteAction(legs.moveToAction(AUTO_POWER, searchPose, true), legs)
             );
 
