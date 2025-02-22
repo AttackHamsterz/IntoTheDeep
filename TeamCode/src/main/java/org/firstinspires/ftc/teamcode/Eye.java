@@ -538,7 +538,7 @@ public class Eye extends BodyPart {
 
                 // Check only once
                 floorAction = null;
-                //floor = false;
+                floor = false;
                 input = fp.matToFloor(input, color);
 
                 // Act on the positions

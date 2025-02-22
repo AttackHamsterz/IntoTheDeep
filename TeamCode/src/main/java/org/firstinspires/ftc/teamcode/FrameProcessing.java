@@ -82,12 +82,12 @@ public class FrameProcessing {
 
     // Floor calibration values (start with specimen, search height, arm in,
     // place specimen in ideal location, then back on motion controller to get centroid
-    private static final int FLOOR_ALIGNED_X = 225;
-    private static final int FLOOR_ALIGNED_Y = 452;
+    private static final int FLOOR_ALIGNED_X = 183;
+    private static final int FLOOR_ALIGNED_Y = 128;
 
     // Shrinking these will cause smaller motion on detections
-    private static final double IN_PER_PIXEL_LR = 0.0241935483870968;
-    private static final double IN_PER_PIXEL_FB = 0.1097560975609756;
+    private static final double IN_PER_PIXEL_LR = 0.025;
+    private static final double IN_PER_PIXEL_FB = 0.11;
 
     public List<MatOfPoint> floor_contours = new ArrayList<>();
     private final Mat hsv_floor;
@@ -381,7 +381,8 @@ public class FrameProcessing {
         cy = 0;
 
         // Convert slices form RGB to HSV
-        Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
+        Rect ROI = new Rect(50, input.height()/2, input.width()-100, input.height()/2);
+        Imgproc.cvtColor(input.submat(ROI), hsv_floor, Imgproc.COLOR_RGB2HSV);
 
         // Mask based on color to detect specimen with clip notch
         if (alliance == StandardSetupOpMode.COLOR.BLUE) {
