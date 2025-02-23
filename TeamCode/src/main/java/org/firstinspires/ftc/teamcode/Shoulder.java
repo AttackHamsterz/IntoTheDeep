@@ -348,7 +348,10 @@ public class Shoulder extends BodyPart {
                 // Always recognize a ground press (overrides everything)
                 if(gamepad.a) {
                     int shoulderPos = ssom.shoulder.getCurrentPosition();
-                    int targetPos = ssom.shoulder.getPositionForMode(Mode.HOVER, ssom.arm.getCurrentPosition());
+                    int groundPos = ssom.shoulder.getPositionForMode(Mode.GROUND, ssom.arm.getCurrentPosition());
+                    int hoverPos = ssom.shoulder.getPositionForMode(Mode.HOVER, ssom.arm.getCurrentPosition());
+                    int targetPos = (hoverPos - groundPos) * 2 / 3 + groundPos;
+
                     // If we're on the ground and hand has stopped, hover to allow retraction
                     if (shoulderPos < targetPos && !aPressing) {
                         mode = Mode.HOVER;
