@@ -56,7 +56,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         // while the fingers release the sample.
         int searchArmPosition = 1250;
 
-        Pose2d dropPose = new Pose2d(new Vector2d(31 + X_OFFSET, Y_OFFSET), 0); //31 7/8
+        Pose2d dropPose = new Pose2d(new Vector2d(30.75 + X_OFFSET, Y_OFFSET), 0); //31 7/8
         Pose2d searchPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, Y_OFFSET), 0);
 
         Action liftShoulderAction = telemetryPacket -> {

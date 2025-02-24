@@ -70,12 +70,12 @@ public class Eye extends BodyPart {
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     // Bar calibration values
-    protected static final int EXPECTED_LEFT_Y = 86;
-    protected static final int EXPECTED_RIGHT_Y = 92;
-    protected static final int TOO_CLOSE_LEFT_Y = 55;
-    protected static final int TOO_CLOSE_RIGHT_Y = 62;
-    protected static final int TOO_FAR_LEFT_Y = 141;
-    protected static final int TOO_FAR_RIGHT_Y = 151;
+    protected static final int EXPECTED_LEFT_Y = 88;//86;
+    protected static final int EXPECTED_RIGHT_Y = 96;//92;
+    protected static final int TOO_CLOSE_LEFT_Y = 60;//55;
+    protected static final int TOO_CLOSE_RIGHT_Y = 68;//62;
+    protected static final int TOO_FAR_LEFT_Y = 144;//141;
+    protected static final int TOO_FAR_RIGHT_Y = 152;//151;
     protected static final double TOO_CLOSE_DISTANCE_IN = 1.5;
     protected static final double TOO_FAR_DISTANCE_IN = 4.0;
 

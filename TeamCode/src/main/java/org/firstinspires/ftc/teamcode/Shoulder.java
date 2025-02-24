@@ -71,7 +71,7 @@ public class Shoulder extends BodyPart {
             400
     ));
 
-    public static final int DROP_SHOULDER_POS = 1143;
+    public static final int DROP_SHOULDER_POS = 1175;
 
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_POWER = -1.0;

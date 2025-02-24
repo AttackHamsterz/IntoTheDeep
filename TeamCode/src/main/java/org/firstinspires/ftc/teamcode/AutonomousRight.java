@@ -20,18 +20,19 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d dropAndPickup = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickup2 = new Pose2d(new Vector2d(8.0 + X_OFFSET, -32.5 + Y_OFFSET), Math.toRadians(-135));
         Pose2d dropAndPickupEnd = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d secondHang = new Pose2d(new Vector2d(31 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
+        Pose2d secondHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 2 + Y_OFFSET), Math.toRadians(0));
         Pose2d avoidSub = new Pose2d(new Vector2d(22 + X_OFFSET, -24.2 + Y_OFFSET), Math.toRadians(0));
-        Pose2d behind1 = new Pose2d(new Vector2d(44 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
-        Pose2d behind1Sideways = new Pose2d(new Vector2d(35 + X_OFFSET, -36 + Y_OFFSET), Math.toRadians(-90));
-        Pose2d push1 = new Pose2d(new Vector2d(8 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
-        Pose2d behind2 = new Pose2d(new Vector2d(46 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind1 = new Pose2d(new Vector2d(43 + X_OFFSET, -39 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind1Sideways = new Pose2d(new Vector2d(37 + X_OFFSET, -36 + Y_OFFSET), Math.toRadians(-90));
+        Pose2d push1 = new Pose2d(new Vector2d(6 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
+        Pose2d behind2 = new Pose2d(new Vector2d(45 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
-        Pose2d thirdHang = new Pose2d(new Vector2d(32 + X_OFFSET, -1.5 + Y_OFFSET), Math.toRadians(0));
+        Pose2d thirdHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, -1.5 + Y_OFFSET), Math.toRadians(0));
         Pose2d repeatSecondHangPose = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
+        Pose2d fourthHang = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5 + Y_OFFSET), Math.toRadians(0));
 
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
@@ -148,7 +149,7 @@ public class AutonomousRight extends AutonomousOpMode{
 
         Action driveAction = new SequentialAction(
                 avoidAndHover,
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, -1, true), legs),
+                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1Sideways, -1, false), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
                 new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
@@ -264,6 +265,42 @@ public class AutonomousRight extends AutonomousOpMode{
         eye.lightOff();
         //eye.debugTelemetry(telemetry);
         //telemetry.update();
+
+        if (!partnerHasSpecimen) {
+            Action grab4Action = new SequentialAction(
+                    ground,
+                    new CompleteAction(grab, hand)
+            );
+            Actions.runBlocking(grab4Action);
+
+            Action fourthHangAction = new ParallelAction(
+                    new CompleteAction(liftShoulderAction, shoulder),
+                    new CompleteAction(extendArmAction, arm),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, fourthHang, 1), legs)
+            );
+            Actions.runBlocking(fourthHangAction);
+
+            // Extra bar alignment
+            /*
+            Action action2 = eye.safeHang(2);
+            if(action2 != null)
+                Actions.runBlocking(action2);
+
+             */
+
+            Action retractReleaseBackup4 = new ParallelAction(
+                    new CompleteAction(armIn, arm),
+                    release,
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, searchPose, true), legs)
+            );
+
+            Action dropAndRelease4 = new SequentialAction(
+                    new CompleteAction(drop, shoulder),
+                    retractReleaseBackup4
+            );
+            Actions.runBlocking(dropAndRelease4);
+        }
+
 
         Action extraResetAction = new ParallelAction(
                 new CompleteAction(resetShoulder, shoulder),
