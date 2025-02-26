@@ -55,7 +55,7 @@ public class Shoulder extends BodyPart {
             2226, // High Bucket
             2450, // Hang
             105,   // None is like ground
-            300
+            200
     ));
 
     // Shoulder positions for each mode when the arm is all the way out
@@ -68,10 +68,10 @@ public class Shoulder extends BodyPart {
             2226, // High Bucket
             2450, // Hang
             369,   // None is like ground
-            500
+            400
     ));
 
-    public static final int DROP_SHOULDER_POS = 1143;
+    public static final int DROP_SHOULDER_POS = 1175;
 
     //Variables for shoulder speed
     private static final double MIN_SHOULDER_POWER = -1.0;
@@ -347,9 +347,13 @@ public class Shoulder extends BodyPart {
 
                 // Always recognize a ground press (overrides everything)
                 if(gamepad.a) {
+                    int shoulderPos = ssom.shoulder.getCurrentPosition();
+                    int groundPos = ssom.shoulder.getPositionForMode(Mode.GROUND, ssom.arm.getCurrentPosition());
+                    int hoverPos = ssom.shoulder.getPositionForMode(Mode.HOVER, ssom.arm.getCurrentPosition());
+                    int targetPos = (hoverPos - groundPos) * 2 / 3 + groundPos;
 
                     // If we're on the ground and hand has stopped, hover to allow retraction
-                    if (mode == Mode.GROUND && !aPressing) {
+                    if (shoulderPos < targetPos && !aPressing) {
                         mode = Mode.HOVER;
                     } else {
                         aPressing = true;
