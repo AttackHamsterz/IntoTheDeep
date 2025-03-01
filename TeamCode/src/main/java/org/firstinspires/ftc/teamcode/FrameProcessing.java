@@ -95,12 +95,11 @@ public class FrameProcessing {
     private final Mat floor_high_mask;
     private final Mat floor_mask;
 
-    private Mat hsv_grabbed;
+    private final Mat hsv_grabbed;
     private final Mat grabbed_mask;
     private final Mat grabbed_low_mask;
     private final Mat grabbed_high_mask;
     private final Rect GRABBED_SAMPLE_ROI = new Rect(200, 360, 60, 60);
-    private final int MIN_GRABBED_MASK = 50;
 
     public double floor_left;
     public double floor_forward;
@@ -143,6 +142,7 @@ public class FrameProcessing {
         floor_high_mask = new Mat(height, width, CvType.CV_8UC1);
         floor_mask = new Mat(height, width, CvType.CV_8UC1);
 
+        hsv_grabbed = new Mat(height, width, CvType.CV_8UC1);
         grabbed_mask = new Mat(height, width, CvType.CV_8UC1);
         grabbed_low_mask = new Mat(height, width, CvType.CV_8UC1);
         grabbed_high_mask = new Mat(height, width, CvType.CV_8UC1);
@@ -571,6 +571,7 @@ public class FrameProcessing {
         Core.countNonZero(grabbed_mask);
         int blueNum = Core.countNonZero(grabbed_mask);
         // set color id
+        int MIN_GRABBED_MASK = 50;
         if (redNum > yellowNum && redNum > blueNum && redNum > MIN_GRABBED_MASK) {
             // we grabbed a red
             colorID = Eye.RED_ID;

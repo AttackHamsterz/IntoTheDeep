@@ -33,6 +33,8 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d repeatSecondHangPose = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
         Pose2d park = new Pose2d(new Vector2d(8.3 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d fourthHang = new Pose2d(new Vector2d(32 + X_OFFSET, 6 + Y_OFFSET), Math.toRadians(0));
+        Pose2d behind3 = new Pose2d(new Vector2d(42 + X_OFFSET, -54 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push3 = new Pose2d(new Vector2d(6 + X_OFFSET, -54 + Y_OFFSET), Math.toRadians(180));
 
         Pose2d searchPose = new Pose2d(new Vector2d(22.0 + X_OFFSET, Y_OFFSET), 0);
 
@@ -146,20 +148,38 @@ public class AutonomousRight extends AutonomousOpMode{
                 new CompleteAction(armIn, arm),
                 new CompleteAction(hoverShoulder, shoulder)
         );
-
-        Action driveAction = new SequentialAction(
-                avoidAndHover,
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1Sideways, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
-                new CompleteAction(legs.moveToAction(0.8, push2Backup, -1, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
-                new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickupEnd), legs)
-        );
-        eye.lightOn();
-        Actions.runBlocking(driveAction);
+        if (!partnerHasSpecimen) {
+            Action driveAction = new SequentialAction(
+                    avoidAndHover,
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind1Sideways, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
+                    new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(0.8, push2Backup, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickupEnd), legs)
+            );
+            eye.lightOn();
+            Actions.runBlocking(driveAction);
+        } else {
+            Action driveAction = new SequentialAction(
+                    avoidAndHover,
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind1Sideways, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, push1, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
+                    new CompleteAction(legs.moveToAction(0.8, push2, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind2, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, behind3, true), legs),
+                    new CompleteAction(legs.moveToAction(0.8, push3, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(0.8, push2Backup, -1, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, safeSpot, true), legs),
+                    new CompleteAction(legs.moveToAction(AUTO_POWER, dropAndPickupEnd), legs)
+            );
+            eye.lightOn();
+            Actions.runBlocking(driveAction);
+        }
 
         // Extra floor alignment
         Action adjust2 = eye.safeFloor(3);
@@ -258,6 +278,7 @@ public class AutonomousRight extends AutonomousOpMode{
         eye.lightOn();
         Actions.runBlocking(resetAction);
 
+        // attempt to pick up a fourth specimen
         if (!partnerHasSpecimen) {
         // Extra floor alignment
         Action adjust4 = eye.safeFloor(3);

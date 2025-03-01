@@ -16,7 +16,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
         // If we grabbed a sample from the center, drive and place in lower bucket
         Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
-        Pose2d highBucketDropPose = new Pose2d(new Vector2d(5.5 + X_OFFSET, 49.5 + Y_OFFSET), Math.toRadians(135));
+        Pose2d highBucketDropPose = new Pose2d(new Vector2d(4.5 + X_OFFSET, 49.5 + Y_OFFSET), Math.toRadians(135));
         Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(45));
         Pose2d intermediatePose = new Pose2d(new Vector2d(10 + X_OFFSET, 40 + Y_OFFSET), Math.toRadians(135));
@@ -152,7 +152,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         // Repeat this 2 times for each floor sample
         for(int i = 0; i < 2; i++)
         {
-            Double wristAngle = (i==0) ? 0.65 : 0.65;
+            Double wristAngle = (i==0) ? 0.5 : 0.65;
             //Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 990;
             Integer searchPosition = (i==0) ? 1500 : 1620;
 
