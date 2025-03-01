@@ -95,6 +95,13 @@ public class FrameProcessing {
     private final Mat floor_high_mask;
     private final Mat floor_mask;
 
+    private Mat hsv_grabbed;
+    private final Mat grabbed_mask;
+    private final Mat grabbed_low_mask;
+    private final Mat grabbed_high_mask;
+    private final Rect GRABBED_SAMPLE_ROI = new Rect(200, 360, 60, 60);
+    private final int MIN_GRABBED_MASK = 50;
+
     public double floor_left;
     public double floor_forward;
 
@@ -135,6 +142,10 @@ public class FrameProcessing {
         floor_low_mask = new Mat(height, width, CvType.CV_8UC1);
         floor_high_mask = new Mat(height, width, CvType.CV_8UC1);
         floor_mask = new Mat(height, width, CvType.CV_8UC1);
+
+        grabbed_mask = new Mat(height, width, CvType.CV_8UC1);
+        grabbed_low_mask = new Mat(height, width, CvType.CV_8UC1);
+        grabbed_high_mask = new Mat(height, width, CvType.CV_8UC1);
     }
 
     private static final int MIN_NUM_FOR_GRAB = 40;
@@ -544,12 +555,36 @@ public class FrameProcessing {
         return input;
     }
 
-    /*
-    public Mat greyTesting(Mat input) {
-        Imgproc.cvtColor(input, hsv_floor, Imgproc.COLOR_RGB2HSV);
-        Core.inRange(hsv_floor, HSV_GREY_LOW, HSV_GREY_HIGH, mask);
-        return mask;
-    }
+    public int checkHoldingColor(Mat input) {
+        // switch to HSV color space
+        Imgproc.cvtColor(input.submat(GRABBED_SAMPLE_ROI), hsv_grabbed, Imgproc.COLOR_RGB2HSV);
+        // check amount of yellow
+        Core.inRange(hsv_grabbed, HSV_YELLOW_LOW, HSV_YELLOW_HIGH, grabbed_mask);
+        int yellowNum = Core.countNonZero(grabbed_mask);
+        // check amount of red
+        Core.inRange(hsv_grabbed, HSV_RED1_LOW, HSV_RED1_HIGH, grabbed_low_mask);
+        Core.inRange(hsv_grabbed, HSV_RED2_LOW, HSV_RED2_HIGH, grabbed_high_mask);
+        Core.add(grabbed_low_mask, grabbed_high_mask, grabbed_mask);
+        int redNum = Core.countNonZero(grabbed_mask);
+        // check amount of blue
+        Core.inRange(hsv_grabbed, HSV_BLUE_LOW, HSV_BLUE_HIGH, grabbed_mask);
+        Core.countNonZero(grabbed_mask);
+        int blueNum = Core.countNonZero(grabbed_mask);
+        // set color id
+        if (redNum > yellowNum && redNum > blueNum && redNum > MIN_GRABBED_MASK) {
+            // we grabbed a red
+            colorID = Eye.RED_ID;
+        } else if (blueNum > yellowNum && blueNum > MIN_GRABBED_MASK) {
+            // we grabbed a blue
+            colorID = Eye.BLUE_ID;
+        } else if (yellowNum > MIN_GRABBED_MASK){
+            // we grabbed a yellow
+            colorID = Eye.YELLOW_ID;
+        } else {
+            // we did not grab a color
+            colorID = Eye.NONE_ID;
+        }
 
-     */
+        return colorID;
+    }
 }

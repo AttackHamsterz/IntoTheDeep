@@ -453,9 +453,11 @@ public class Eye extends BodyPart {
 
             if(frameCount % EVERY_NTH_FRAME == 0){
                 // What color did I grab (only check if hand position is close to centered)
+                // Also only check if arm is fully in and we are in search mode
                 double wp = ssom.hand.getWristPosition();
-                if(wp > Hand.CTR_POS - 0.1 && wp < Hand.CTR_POS + 0.1) {
-                    grabColor = fp.grabColor(input);
+                if(wp > Hand.CTR_POS - 0.1 && wp < Hand.CTR_POS + 0.1 && ssom.shoulder.getMode() == Shoulder.Mode.SEARCH && ssom.arm.getCurrentPosition() <= 50) {
+                    //grabColor = fp.grabColor(input);
+                    grabColor = fp.checkHoldingColor(input);
                     if (grabColor == YELLOW_ID)
                         grabLight.setPosition(YELLOW_COLOR);
                     else if (grabColor == RED_ID)
