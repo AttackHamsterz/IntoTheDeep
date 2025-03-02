@@ -15,14 +15,14 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         super.runOpMode();
 
         // If we grabbed a sample from the center, drive and place in lower bucket
-        Pose2d lowBucketDropPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(162));
         Pose2d highBucketDropPose = new Pose2d(new Vector2d(4.5 + X_OFFSET, 49.5 + Y_OFFSET), Math.toRadians(135));
         Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(45));
         Pose2d intermediatePose = new Pose2d(new Vector2d(10 + X_OFFSET, 40 + Y_OFFSET), Math.toRadians(135));
+        int firstSearchArmPosition = 1885;
         int midHighDropArmPosition = 1000;
         int highBucketDropArmPosition = 2150;
-
+        int highBucketShoulderPosition = shoulder.getPositionForMode(Shoulder.Mode.HIGH_BUCKET, highBucketDropArmPosition) - 25;
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, highBucketDropArmPosition);
@@ -37,7 +37,6 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         };
 
         Action releaseSample = telemetryPacket -> {
-
             hand.halfRelease(RELEASE_MS, false);
             return false;
         };
@@ -53,51 +52,19 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         );
         Actions.runBlocking(checkAndSpin);
 
-
-
-        // Check if we have a block
-        /*
-        boolean haveBlock = eye.getGrabColor() != Eye.NONE_ID;
-
-        if(haveBlock) {
-            Action driveToLowBucketDrop = legs.moveToAction(AUTO_POWER, lowBucketDropPose);
-
-            Action raiseShoulderAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.LOW_BUCKET, AUTO_POWER, bucketDropArmPosition);
-                return false;
-            };
-            Action driveAndExtendAction = new ParallelAction(
-                    new CompleteAction(driveToLowBucketDrop, legs),
-                    new CompleteAction(raiseShoulderAction, shoulder),
-                    new CompleteAction(extendArmAction, arm)
-            );
-
-            Action binDrop = new SequentialAction(
-                    driveAndExtendAction,
-                    new CompleteAction(releaseSample, hand));
-            Actions.runBlocking(binDrop);
-        }
-
-         */
-
-        Action raiseAction = telemetryPacket -> {
-            //shoulder.setMode(Shoulder.Mode.HIGH_BUCKET);
-            shoulder.setPositionForMode(Shoulder.Mode.HIGH_BUCKET, 0.9, highBucketDropArmPosition);
+        Action highBucketRaiseAction = telemetryPacket -> {
+            shoulder.setPosition(0.9, highBucketShoulderPosition);
             return false;
         };
 
-
-
-        //Setting pose to grab first sample
+        // Setting pose to grab first sample
         Action driveToFirstPickup = new CompleteAction (legs.moveToAction(AUTO_POWER, samplePickupPose, false), legs);
 
-
-        //Extending arm while turning
+        // Extending arm while turning
         Action armOut = telemetryPacket -> {
-            arm.setPosition(AUTO_POWER, 1885);
+            arm.setPosition(AUTO_POWER, firstSearchArmPosition);
             return false;
         };
-
 
         Action firstWristGrab = telemetryPacket -> {
             hand.setWrist(0.8);
@@ -105,10 +72,9 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         };
 
         Action setShoulderToSearch = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, 1885);
+            shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, firstSearchArmPosition);
                     return false;
         };
-
 
         Action samplePickupOne = new ParallelAction(
                 driveToFirstPickup,
@@ -121,11 +87,8 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                 samplePickupOne
         );
 
-
-
         Action firstGrab = telemetryPacket -> {
-            //shoulder.setMode(Shoulder.Mode.GROUND);
-            shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, 1885);
+            shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, firstSearchArmPosition);
             hand.grab(GRAB_MS);
             return false;
         };
@@ -136,7 +99,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
         Action firstDrop = new ParallelAction(
                 new CompleteAction(legs.moveToAction(AUTO_POWER, highBucketDropPose), legs),
-                new CompleteAction(raiseAction, shoulder),
+                new CompleteAction(highBucketRaiseAction, shoulder),
                 new CompleteAction(extendArmAction, arm)
         );
 
@@ -152,10 +115,8 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         // Repeat this 2 times for each floor sample
         for(int i = 0; i < 2; i++)
         {
-            Double wristAngle = (i==0) ? 0.5 : 0.65;
-            //Integer searchPosition = (i==2) ? 1160 : (i==1) ? 920 : 990;
-            Integer searchPosition = (i==0) ? 1500 : 1620;
-
+            double wristAngle = (i==0) ? 0.5 : 0.65;
+            int searchPosition = (i==0) ? 1500 : 1620;
 
             Action retractForPickupAction = telemetryPacket -> {
                 arm.setPosition(0.9, searchPosition);
@@ -164,7 +125,6 @@ public class AutonomousLeftFast extends AutonomousOpMode{
 
             // Cycle from bucket to floor samples
             Action lowerAction = telemetryPacket -> {
-               // shoulder.setMode(Shoulder.Mode.GROUND);
                 shoulder.setPositionForMode(Shoulder.Mode.SEARCH, 0.8, searchPosition);
                 return false;
             };
@@ -174,14 +134,10 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                 return false;
             };
 
-
-
             // Turn to ground samples, pick one up
             double turnAngle = (i==0) ? 3 : 25;
             Pose2d pickupPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
-            //int direction = (i==0 && !haveBlock) ? -1 : 1;
-            int direction = 1;
-            Action turnToPickup = legs.moveToAction(0.5, pickupPose, direction);
+            Action turnToPickup = legs.moveToAction(0.5, pickupPose, 1);
 
             Action lower = new ParallelAction(
                     new CompleteAction(retractForPickupAction, arm),
@@ -193,7 +149,6 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             );
 
             Action grabAction = telemetryPacket -> {
-                //shoulder.setMode(Shoulder.Mode.GROUND);
                 shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, searchPosition);
                 hand.grab(GRAB_MS);
                 return false;
@@ -208,15 +163,12 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                     new CompleteAction(grabAction, hand));
             Actions.runBlocking(pickupAction);
 
-
-
             // Turn to bucket from whatever position we ended up, drop sample in bucket
             Action turnToBucket = legs.moveToAction(0.4, intermediatePose, -1);
             Action turnRaiseAndExtend = new ParallelAction(
-                    new CompleteAction(raiseAction, shoulder),
+                    new CompleteAction(highBucketRaiseAction, shoulder),
                     new CompleteAction(turnToBucket, legs),
                     new CompleteAction(extendArmHalfway, arm));
-
 
             Action driveToBucket = legs.moveToAction(0.4, highBucketDropPose,-1);
 
@@ -247,7 +199,6 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             return false;
         };
 
-        //Pose2d parkPose = new Pose2d(new Vector2d(21 + X_OFFSET, 45 + Y_OFFSET), Math.toRadians(-45));
         Pose2d parkPose1 = new Pose2d(new Vector2d(32.5+X_OFFSET, 30+Y_OFFSET), Math.toRadians(90));
         Pose2d parkPose2 = new Pose2d(new Vector2d(53+X_OFFSET, 32+Y_OFFSET), Math.toRadians(90));
         Pose2d parkPose3 = new Pose2d(new Vector2d(53+X_OFFSET, 12.5+Y_OFFSET), Math.toRadians(90));
@@ -262,7 +213,6 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                 new CompleteAction(legs.moveToAction(0.5, parkPose3, 1, true), legs)
         );
         Actions.runBlocking(moveToPark);
-
         sleep(1500);
     }
 }
