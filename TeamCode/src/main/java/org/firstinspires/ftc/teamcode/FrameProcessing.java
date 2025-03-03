@@ -42,17 +42,22 @@ public class FrameProcessing {
     private final Mat grab_slice;
     private final Mat grab_mask;
 
-    private final Mat bar_left_slice;
-    private final Mat bar_right_slice;
-    private final Mat bar_left_mask;
-    private final Mat bar_right_mask;
+    private final Mat bar_slice;
+    private final Mat bar_mask;
     private final Mat bar_low_mask;
     private final Mat bar_high_mask;
 
-    public List<MatOfPoint> bar_left_contours = new ArrayList<>();
-    public List<MatOfPoint> bar_right_contours = new ArrayList<>();
-    public int bar_left_y;
-    public int bar_right_y;
+    //private final Mat bar_left_slice;
+    //private final Mat bar_right_slice;
+    //private final Mat bar_left_mask;
+    //private final Mat bar_right_mask;
+
+    public List<MatOfPoint> bar_contours = new ArrayList<>();
+    //public List<MatOfPoint> bar_left_contours = new ArrayList<>();
+    //public List<MatOfPoint> bar_right_contours = new ArrayList<>();
+    public int bar_y;
+    //public int bar_left_y;
+    //public int bar_right_y;
 
     private final int BAR_SAMPLE_WIDTH = 40;
     private final int BAR_MIN_AREA = BAR_SAMPLE_WIDTH * 2;
@@ -120,14 +125,16 @@ public class FrameProcessing {
         MIN_AREA = (int)Math.round((double)(width * height) * 0.002);
 
         grab_slice = new Mat(40, 40, CvType.CV_8U);
-        bar_left_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
-        bar_right_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
+        bar_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
+        //bar_left_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
+        //bar_right_slice = new Mat(height, BAR_SAMPLE_WIDTH * 3, CvType.CV_8U);
 
         grab_mask = new Mat(40, 40, CvType.CV_8UC1);
-        bar_left_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
-        bar_right_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
+        bar_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_low_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
         bar_high_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
+        //bar_left_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
+        //bar_right_mask = new Mat(height, BAR_SAMPLE_WIDTH, CvType.CV_8UC1);
 
         this.telemetry = telemetry;
 
@@ -517,39 +524,51 @@ public class FrameProcessing {
     public Mat matToBar(Mat input, StandardSetupOpMode.COLOR alliance)
     {
         // Reset
-        bar_left_contours.clear();
-        bar_right_contours.clear();
-        bar_left_y = -1;
-        bar_right_y = -1;
+        bar_contours.clear();
+        //bar_left_contours.clear();
+        //bar_right_contours.clear();
+        bar_y = -1;
+        //bar_left_y = -1;
+        //bar_right_y = -1;
 
         // Convert slices from RGB to HSV
-        Rect leftROI = new Rect(0, 0, BAR_SAMPLE_WIDTH, input.height());
-        Rect rightROI = new Rect(input.width()-BAR_SAMPLE_WIDTH-1, 0, BAR_SAMPLE_WIDTH, input.height());
-        Imgproc.cvtColor(input.submat(leftROI), bar_left_slice, Imgproc.COLOR_RGB2HSV);
-        Imgproc.cvtColor(input.submat(rightROI), bar_right_slice, Imgproc.COLOR_RGB2HSV);
+        Rect centerROI = new Rect( 230-(BAR_SAMPLE_WIDTH/2), 0, BAR_SAMPLE_WIDTH, input.height());
+        Imgproc.cvtColor(input.submat(centerROI), bar_slice, Imgproc.COLOR_RGB2HSV);
+
+        //Rect leftROI = new Rect(0, 0, BAR_SAMPLE_WIDTH, input.height());
+        //Rect rightROI = new Rect(input.width()-BAR_SAMPLE_WIDTH-1, 0, BAR_SAMPLE_WIDTH, input.height());
+        //Imgproc.cvtColor(input.submat(leftROI), bar_left_slice, Imgproc.COLOR_RGB2HSV);
+        //Imgproc.cvtColor(input.submat(rightROI), bar_right_slice, Imgproc.COLOR_RGB2HSV);
 
         // Detect bar
         if (alliance == StandardSetupOpMode.COLOR.BLUE) {
-            Core.inRange(bar_left_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, bar_left_mask);
-            Core.inRange(bar_right_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, bar_right_mask);
+            Core.inRange(bar_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, bar_mask);
+            //Core.inRange(bar_left_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, bar_left_mask);
+            //Core.inRange(bar_right_slice, HSV_BLUE_LOW, HSV_BLUE_HIGH, bar_right_mask);
         }else{
-            Core.inRange(bar_left_slice, HSV_RED1_LOW, HSV_RED1_HIGH, bar_low_mask);
-            Core.inRange(bar_left_slice, HSV_RED2_LOW, HSV_RED2_HIGH, bar_high_mask);
-            Core.add(bar_low_mask, bar_high_mask, bar_left_mask);
-            Core.inRange(bar_right_slice, HSV_RED1_LOW, HSV_RED1_HIGH, bar_low_mask);
-            Core.inRange(bar_right_slice, HSV_RED2_LOW, HSV_RED2_HIGH, bar_high_mask);
-            Core.add(bar_low_mask, bar_high_mask, bar_right_mask);
+            Core.inRange(bar_slice, HSV_RED1_LOW, HSV_RED1_HIGH, bar_low_mask);
+            Core.inRange(bar_slice, HSV_RED2_LOW, HSV_RED2_HIGH, bar_high_mask);
+            Core.add(bar_low_mask, bar_high_mask, bar_mask);
+            //Core.inRange(bar_left_slice, HSV_RED1_LOW, HSV_RED1_HIGH, bar_low_mask);
+            //Core.inRange(bar_left_slice, HSV_RED2_LOW, HSV_RED2_HIGH, bar_high_mask);
+            //Core.add(bar_low_mask, bar_high_mask, bar_left_mask);
+            //Core.inRange(bar_right_slice, HSV_RED1_LOW, HSV_RED1_HIGH, bar_low_mask);
+            //Core.inRange(bar_right_slice, HSV_RED2_LOW, HSV_RED2_HIGH, bar_high_mask);
+            //Core.add(bar_low_mask, bar_high_mask, bar_right_mask);
         }
 
         // Locate bar end centers (left and right edges)
-        Imgproc.findContours(bar_left_mask, bar_left_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.findContours(bar_right_mask, bar_right_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        bar_left_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
-        bar_right_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
+        Imgproc.findContours(bar_mask, bar_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        bar_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
+        //Imgproc.findContours(bar_left_mask, bar_left_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        //Imgproc.findContours(bar_right_mask, bar_right_contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        //bar_left_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
+        //bar_right_contours.removeIf(cnt -> Imgproc.contourArea(cnt) <= BAR_MIN_AREA);
 
         // Find the largest contour (the one with the max area)
-        bar_left_y = getHighestContourY(bar_left_contours);
-        bar_right_y = getHighestContourY(bar_right_contours);
+        bar_y = getHighestContourY(bar_contours);
+        //bar_left_y = getHighestContourY(bar_left_contours);
+        //bar_right_y = getHighestContourY(bar_right_contours);
 
         // Just give them the original frame
         return input;

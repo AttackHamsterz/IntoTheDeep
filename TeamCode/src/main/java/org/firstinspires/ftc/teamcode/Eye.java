@@ -70,13 +70,16 @@ public class Eye extends BodyPart {
     protected static final double SHIFT_B = SHIFT_NEAR_M - (SHIFT_M * (double) SHIFT_NEAR_Y);
 
     // Bar calibration values
-    protected static final int EXPECTED_LEFT_Y = 88;//86;
-    protected static final int EXPECTED_RIGHT_Y = 96;//92;
-    protected static final int TOO_CLOSE_LEFT_Y = 60;//55;
-    protected static final int TOO_CLOSE_RIGHT_Y = 68;//62;
-    protected static final int TOO_FAR_LEFT_Y = 144;//141;
-    protected static final int TOO_FAR_RIGHT_Y = 152;//151;
-    protected static final double TOO_CLOSE_DISTANCE_IN = 1.5;
+    //protected static final int EXPECTED_LEFT_Y = 88;//86;
+    //protected static final int EXPECTED_RIGHT_Y = 96;//92;
+    //protected static final int TOO_CLOSE_LEFT_Y = 60;//55;
+    //protected static final int TOO_CLOSE_RIGHT_Y = 68;//62;
+    //protected static final int TOO_FAR_LEFT_Y = 144;//141;
+    //protected static final int TOO_FAR_RIGHT_Y = 152;//151;
+    protected static final int EXPECTED_Y = 90;
+    protected static final int TOO_CLOSE_Y = 62;
+    protected static final int TOO_FAR_Y = 145;
+    protected static final double TOO_CLOSE_DISTANCE_IN = 1.25;
     protected static final double TOO_FAR_DISTANCE_IN = 4.0;
 
     // values for the plane
@@ -99,8 +102,9 @@ public class Eye extends BodyPart {
     public Servo searchLight;
     private final FrameProcessing fp;
     private int smallestDistIndex = 0;
-    public double inchesLeft;
-    public double inchesRight;
+    public double inches;
+    //public double inchesLeft;
+    //public double inchesRight;
     public Action barAction;
     public Action searchAction;
     public Action floorAction;
@@ -178,12 +182,16 @@ public class Eye extends BodyPart {
         }
 
         // Bar detection debug
-        if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
-            telemetry.addData("Inches left", inchesLeft);
-            telemetry.addData("Inches right", inchesRight);
-            telemetry.addData("left bar y", fp.bar_left_y);
-            telemetry.addData("right bar y", fp.bar_right_y);
+        if(fp.bar_y > 0) {
+            telemetry.addData("Inches", inches);
+            telemetry.addData("bar y", fp.bar_y);
         }
+        //if(fp.bar_left_y > 0 && fp.bar_right_y > 0) {
+        //    telemetry.addData("Inches left", inchesLeft);
+        //    telemetry.addData("Inches right", inchesRight);
+        //    telemetry.addData("left bar y", fp.bar_left_y);
+        //    telemetry.addData("right bar y", fp.bar_right_y);
+        //}
 
 
         if(fp.floor_left != 0 || fp.floor_forward != 0){
@@ -514,28 +522,33 @@ public class Eye extends BodyPart {
                 input = fp.matToBar(input, color);
 
                 // Act on the y positions
-                final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
-                final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
-                final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
-                final double IN_PER_PIXEL_TOO_FAR_RIGHT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_RIGHT_Y - EXPECTED_RIGHT_Y);
+                final double IN_PER_PIXEL_TOO_CLOSE = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_Y - TOO_CLOSE_Y);
+                final double IN_PER_PIXEL_TOO_FAR = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_Y - EXPECTED_Y);
+                //final double IN_PER_PIXEL_TOO_CLOSE_LEFT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_LEFT_Y - TOO_CLOSE_LEFT_Y);
+                //final double IN_PER_PIXEL_TOO_FAR_LEFT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_LEFT_Y - EXPECTED_LEFT_Y);
+                //final double IN_PER_PIXEL_TOO_CLOSE_RIGHT = TOO_CLOSE_DISTANCE_IN / (double)(EXPECTED_RIGHT_Y - TOO_CLOSE_RIGHT_Y);
+                //final double IN_PER_PIXEL_TOO_FAR_RIGHT = TOO_FAR_DISTANCE_IN / (double)(TOO_FAR_RIGHT_Y - EXPECTED_RIGHT_Y);
 
-                int deltaLeft = (fp.bar_left_y > 0) ? fp.bar_left_y - EXPECTED_LEFT_Y : 0;
-                int deltaRight = (fp.bar_right_y > 0) ? fp.bar_right_y - EXPECTED_RIGHT_Y : 0;
+                //int deltaLeft = (fp.bar_left_y > 0) ? fp.bar_left_y - EXPECTED_LEFT_Y : 0;
+                //int deltaRight = (fp.bar_right_y > 0) ? fp.bar_right_y - EXPECTED_RIGHT_Y : 0;
+                int delta = (fp.bar_y > 0) ? fp.bar_y - EXPECTED_Y : 0;
 
-                if(fp.bar_left_y < 0) deltaLeft = deltaRight;
-                if(fp.bar_right_y < 0) deltaRight = deltaLeft;
+                //if(fp.bar_left_y < 0) deltaLeft = deltaRight;
+                //if(fp.bar_right_y < 0) deltaRight = deltaLeft;
 
-                if(Math.abs(deltaLeft) > 0.1 || Math.abs(deltaRight) > 0.1){
-
+                //if(Math.abs(deltaLeft) > 0.1 || Math.abs(deltaRight) > 0.1){
+                if(Math.abs(delta) > 0.1){
                     // Wiggle robot (never let it back up too far)
-                    inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -0.5, maxHangDist);
-                    inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -0.5, maxHangDist);
-                    barAction = moveLegsToBar(inchesLeft, inchesRight);
+                    inches = Range.clip((double)delta * ((delta < 0) ? IN_PER_PIXEL_TOO_CLOSE : IN_PER_PIXEL_TOO_FAR), -0.75, maxHangDist);
+                    barAction = moveLegsToBar(inches, inches);
+                    //inchesLeft = Range.clip((double)deltaLeft * ((deltaLeft < 0) ? IN_PER_PIXEL_TOO_CLOSE_LEFT : IN_PER_PIXEL_TOO_FAR_LEFT), -0.5, maxHangDist);
+                    //inchesRight = Range.clip((double)deltaRight * ((deltaRight < 0) ? IN_PER_PIXEL_TOO_CLOSE_RIGHT : IN_PER_PIXEL_TOO_FAR_RIGHT), -0.5, maxHangDist);
+                    //barAction = moveLegsToBar(inchesLeft, inchesRight);
                 }
                 else {
-                    barAction = telemetryPacket -> {
-                        return false;
-                    };
+                        barAction = telemetryPacket -> {
+                            return false;
+                        };
                 }
             }
 
