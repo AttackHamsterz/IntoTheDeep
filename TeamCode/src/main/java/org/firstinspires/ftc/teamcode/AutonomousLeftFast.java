@@ -137,7 +137,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             // Turn to ground samples, pick one up
             double turnAngle = (i==0) ? 3 : 25;
             Pose2d pickupPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
-            Action turnToPickup = legs.moveToAction(0.5, pickupPose, 1);
+            Action turnToPickup = legs.moveToAction(0.7, pickupPose, 1);
 
             Action lower = new ParallelAction(
                     new CompleteAction(retractForPickupAction, arm),
@@ -149,7 +149,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             );
 
             Action grabAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, searchPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.7, searchPosition);
                 hand.grab(GRAB_MS);
                 return false;
             };
@@ -164,7 +164,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             Actions.runBlocking(pickupAction);
 
             // Turn to bucket from whatever position we ended up, drop sample in bucket
-            Action turnToBucket = legs.moveToAction(0.4, intermediatePose, -1);
+            Action turnToBucket = legs.moveToAction(0.8, intermediatePose, -1);
             Action turnRaiseAndExtend = new ParallelAction(
                     new CompleteAction(highBucketRaiseAction, shoulder),
                     new CompleteAction(turnToBucket, legs),
