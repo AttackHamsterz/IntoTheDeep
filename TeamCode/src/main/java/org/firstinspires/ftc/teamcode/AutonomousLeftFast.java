@@ -135,7 +135,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             };
 
             // Turn to ground samples, pick one up
-            double turnAngle = (i==0) ? 3 : 25;
+            double turnAngle = (i==0) ? 3.2 : 25.2;
             Pose2d pickupPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             Action turnToPickup = legs.moveToAction(0.7, pickupPose, 1);
 
