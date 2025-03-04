@@ -17,7 +17,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         // If we grabbed a sample from the center, drive and place in lower bucket
         Pose2d highBucketDropPose = new Pose2d(new Vector2d(4.5 + X_OFFSET, 49.5 + Y_OFFSET), Math.toRadians(135));
         Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
-        Pose2d colorCheckPose = new Pose2d(new Vector2d(27.0 + X_OFFSET, Y_OFFSET), Math.toRadians(45));
+        Pose2d colorCheckPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, Y_OFFSET), Math.toRadians(45));
         Pose2d intermediatePose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(135));
         int firstSearchArmPosition = 1885;
         int midHighDropArmPosition = 1000;
