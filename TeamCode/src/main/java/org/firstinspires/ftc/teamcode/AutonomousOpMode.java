@@ -19,7 +19,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
     public static final double AUTO_POWER = 1.0;
     public static final double APPROACH_POWER = 0.8;
 
-    protected static int dropArmPosition = 270;
+    protected static int dropArmPosition = 300;
 
     protected boolean submersibleSearch = false;
     protected boolean partnerHasSpecimen = false;
@@ -99,9 +99,11 @@ public class AutonomousOpMode extends StandardSetupOpMode {
         Actions.runBlocking(liftExtendDrive);
 
         // Extra alignment
-        Action action = eye.safeHang(1);
+        Action action = eye.safeHang(2);
         if(action != null)
             Actions.runBlocking(action);
+
+        Actions.runBlocking(new CompleteAction(dropAction, shoulder));
 
         Action retractReleaseBackup = new ParallelAction(
                 new CompleteAction(retractArmAction, arm),
@@ -109,10 +111,7 @@ public class AutonomousOpMode extends StandardSetupOpMode {
                 new CompleteAction(legs.moveToAction(AUTO_MOVE_POWER, searchPose, true), legs)
         );
 
-        Action hangSampleToolAction = new SequentialAction(                 // Drive and extend
-                new CompleteAction(dropAction, shoulder),    // Run dropAction
-                retractReleaseBackup);
-        Actions.runBlocking(hangSampleToolAction);
+        Actions.runBlocking(retractReleaseBackup);
 
         // This action will grab a sample from the submersible
         // and then stow for travel (retract the arm and set the shoulder)
