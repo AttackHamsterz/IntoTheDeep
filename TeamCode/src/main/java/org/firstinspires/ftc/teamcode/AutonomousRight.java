@@ -26,7 +26,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d behind1Sideways = new Pose2d(new Vector2d(37 + X_OFFSET, -36 + Y_OFFSET), Math.toRadians(-90));
         Pose2d push1 = new Pose2d(new Vector2d(6 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(180));
         Pose2d behind2 = new Pose2d(new Vector2d(42 + X_OFFSET, -46 + Y_OFFSET), Math.toRadians(180));
-        Pose2d push2 = new Pose2d(new Vector2d(10 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
+        Pose2d push2 = new Pose2d(new Vector2d(8.5 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d push2Backup = new Pose2d(new Vector2d(18 + X_OFFSET, -50 + Y_OFFSET), Math.toRadians(180));
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d thirdHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
