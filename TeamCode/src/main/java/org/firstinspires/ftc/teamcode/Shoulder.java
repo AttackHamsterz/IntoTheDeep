@@ -305,12 +305,13 @@ public class Shoulder extends BodyPart {
                     pressing = true;
                     if(mode == Mode.HIGH_BAR) {
                         mode = Mode.NONE;
+                        ssom.arm.setPosition(1.0, 250);
                         setPosition(1.0, DROP_SHOULDER_POS);
                     }
                     else {
                         mode = Mode.HIGH_BAR;
+                        ssom.arm.setPosition(1.0, 250);
                     }
-                    ssom.arm.setPosition(1.0, 250);
                 }
                 else if(gamepad.y && !pressing){
                     pressing = true;
