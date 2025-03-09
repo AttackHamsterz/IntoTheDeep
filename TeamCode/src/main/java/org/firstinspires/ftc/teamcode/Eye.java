@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 public class Eye extends BodyPart {
 
-    private static final boolean ENABLE_DASHBOARD_CAMERA = true;
+    private static final boolean ENABLE_DASHBOARD_CAMERA = false;
     private static final double BLACK_COLOR = 0.0;
     private static final double RED_COLOR = 0.279;
     private static final double YELLOW_COLOR = 0.388;

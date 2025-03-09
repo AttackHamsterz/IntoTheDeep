@@ -19,10 +19,12 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         Pose2d samplePickupPose = new Pose2d(new Vector2d(24.8 + X_OFFSET, 16.2 + Y_OFFSET), Math.toRadians(62.8));
         Pose2d colorCheckPose = new Pose2d(new Vector2d(20.0 + X_OFFSET, Y_OFFSET), Math.toRadians(45));
         Pose2d intermediatePose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(135));
-        int firstSearchArmPosition = 1885;
+        int firstSearchArmPosition = 1900;
         int midHighDropArmPosition = 1000;
         int highBucketDropArmPosition = 2150;
-        int highBucketShoulderPosition = shoulder.getPositionForMode(Shoulder.Mode.HIGH_BUCKET, highBucketDropArmPosition) - 25;
+        double lowerShoulderPower = 0.5;
+        double waitTime = 0.5;
+        int highBucketShoulderPosition = shoulder.getPositionForMode(Shoulder.Mode.HIGH_BUCKET, highBucketDropArmPosition) - 50;
 
         Action extendArmAction = telemetryPacket -> {
             arm.setPosition(AUTO_POWER, highBucketDropArmPosition);
@@ -83,13 +85,18 @@ public class AutonomousLeftFast extends AutonomousOpMode{
                 firstWristGrab
                 );
 
+        Action waitBeforePickup = new SequentialAction(
+          samplePickupOne,
+          new SleepAction(waitTime)
+        );
+
         Actions.runBlocking(
-                samplePickupOne
+                waitBeforePickup
         );
 
         Action firstGrab = telemetryPacket -> {
-            shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.6, firstSearchArmPosition);
-            hand.grab(GRAB_MS);
+            shoulder.setPositionForMode(Shoulder.Mode.GROUND,lowerShoulderPower, firstSearchArmPosition);
+            hand.grab(800);
             return false;
         };
 
@@ -104,6 +111,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
         );
 
         Action dropInBucket = new SequentialAction(
+                new SleepAction(waitTime),
                 firstDrop,
                 new CompleteAction(releaseSample, hand)
         );
@@ -135,7 +143,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             };
 
             // Turn to ground samples, pick one up
-            double turnAngle = (i==0) ? 3.2 : 25.2;
+            double turnAngle = (i==0) ? 3.2 : 26.2;
             Pose2d pickupPose = new Pose2d(new Vector2d(15 + X_OFFSET, 47.5 + Y_OFFSET), Math.toRadians(turnAngle));
             Action turnToPickup = legs.moveToAction(0.7, pickupPose, 1);
 
@@ -149,7 +157,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             );
 
             Action grabAction = telemetryPacket -> {
-                shoulder.setPositionForMode(Shoulder.Mode.GROUND,0.7, searchPosition);
+                shoulder.setPositionForMode(Shoulder.Mode.GROUND,lowerShoulderPower, searchPosition);
                 hand.grab(GRAB_MS);
                 return false;
             };
@@ -160,6 +168,7 @@ public class AutonomousLeftFast extends AutonomousOpMode{
             );
             Action pickupAction = new SequentialAction(
                     turnAndLower,
+                    new SleepAction(waitTime),
                     new CompleteAction(grabAction, hand));
             Actions.runBlocking(pickupAction);
 

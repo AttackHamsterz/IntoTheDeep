@@ -30,7 +30,7 @@ public class AutonomousRight extends AutonomousOpMode{
         Pose2d safeSpot = new Pose2d(new Vector2d(18 + X_OFFSET, -32.2 + Y_OFFSET), Math.toRadians(-135));
         Pose2d thirdHang = new Pose2d(new Vector2d(30.5 + X_OFFSET, 4 + Y_OFFSET), Math.toRadians(0));
         Pose2d repeatSecondHangPose = new Pose2d(new Vector2d(32 + X_OFFSET, 4.5+ Y_OFFSET), Math.toRadians(0));
-        Pose2d fourthHang = new Pose2d(new Vector2d(32 + X_OFFSET, 6 + Y_OFFSET), Math.toRadians(0));
+        Pose2d fourthHang = new Pose2d(new Vector2d(31.5 + X_OFFSET, 6 + Y_OFFSET), Math.toRadians(0));
         Pose2d behind3 = new Pose2d(new Vector2d(42 + X_OFFSET, -54 + Y_OFFSET), Math.toRadians(180));
         Pose2d push3 = new Pose2d(new Vector2d(6 + X_OFFSET, -54 + Y_OFFSET), Math.toRadians(180));
         Pose2d parkPose = new Pose2d(new Vector2d(4 + X_OFFSET, -35 + Y_OFFSET), Math.toRadians(45));
@@ -288,11 +288,11 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(fourthHangAction);
 
             // Extra bar alignment
-            /*
+
             Action action2 = eye.safeHang(2);
             if(action2 != null)
                 Actions.runBlocking(action2);
-             */
+
 
             Action retractReleaseBackup4 = new ParallelAction(
                     new CompleteAction(armIn, arm),
@@ -307,7 +307,7 @@ public class AutonomousRight extends AutonomousOpMode{
             Actions.runBlocking(dropAndRelease4);
 
             // If we have time park
-            if(runtime.seconds() < 28.5)
+            if(runtime.seconds() < 29)
                 Actions.runBlocking(new CompleteAction(legs.moveToAction(AUTO_POWER, parkPose, true), legs));
         }
 
